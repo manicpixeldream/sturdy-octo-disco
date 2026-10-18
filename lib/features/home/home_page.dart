@@ -8,6 +8,9 @@ import '../../core/router/routes.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/widgets/section_header.dart';
 import '../../core/widgets/stat_tile.dart';
+import '../../core/widgets/workspace_columns.dart';
+import '../../core/widgets/workspace_page.dart';
+import '../../core/widgets/workspace_scroll_view.dart';
 import '../../state/case_controller.dart';
 import '../../state/session_controller.dart';
 import '../../state/task_controller.dart';
@@ -30,18 +33,11 @@ class HomePage extends StatelessWidget {
     final me = team.byId(session.currentTeammateId);
     final greeting = greetingFor(session.clock.now());
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(me == null ? 'Home' : '$greeting, ${me.firstName}'),
-      ),
-      body: loaded
-          ? ListView(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.lg,
-                0,
-                Spacing.lg,
-                Spacing.xxl,
-              ),
+    return WorkspacePage(
+      title: me == null ? 'Home' : '$greeting, ${me.firstName}',
+      child: loaded
+          ? WorkspaceScrollView(
+              storageKey: const PageStorageKey('home_scroll'),
               children: [
                 ActiveCaseCard(
                   key: GavelKeys.homeActiveCase,
@@ -49,7 +45,7 @@ class HomePage extends StatelessWidget {
                   daysUntilTrial: caseCtrl.daysUntilTrial,
                   readiness: tasks.teamReadiness,
                 ),
-                const SizedBox(height: Spacing.md),
+                const SizedBox(height: Spacing.xxl),
                 Row(
                   children: [
                     Expanded(
@@ -57,53 +53,59 @@ class HomePage extends StatelessWidget {
                         key: GavelKeys.homeStatExhibits,
                         value: '${caseCtrl.exhibits.length}',
                         label: 'Exhibits',
-                        icon: Icons.folder_outlined,
                       ),
                     ),
-                    const SizedBox(width: Spacing.sm),
                     Expanded(
                       child: StatTile(
                         key: GavelKeys.homeStatWitnesses,
                         value: '${caseCtrl.witnesses.length}',
                         label: 'Witnesses',
-                        icon: Icons.record_voice_over_outlined,
                       ),
                     ),
-                    const SizedBox(width: Spacing.sm),
                     Expanded(
                       child: StatTile(
                         key: GavelKeys.homeStatTasks,
                         value: '${tasks.tasks.length}',
                         label: 'Team tasks',
-                        icon: Icons.checklist,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: Spacing.md),
-                AskCaseCard(
-                  key: GavelKeys.homeAskCase,
-                  onTap: () => context.go(Routes.research),
-                ),
-                const SectionHeader(title: 'Your assignments'),
-                ...[
-                  for (final task in tasks.tasksFor(session.currentTeammateId))
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: Spacing.sm),
-                      child: AssignmentTile(
-                        key: GavelKeys.homeAssignment(task.id),
-                        task: task,
-                        dueLabel: dueLabel(task.dueDate, session.clock.now()),
+                const SizedBox(height: Spacing.xxl),
+                const Divider(),
+                const SizedBox(height: Spacing.lg),
+                WorkspaceColumns(
+                  primary: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionHeader(title: 'Your assignments'),
+                      for (final task in tasks.tasksFor(
+                        session.currentTeammateId,
+                      ))
+                        AssignmentTile(
+                          key: GavelKeys.homeAssignment(task.id),
+                          task: task,
+                          dueLabel: dueLabel(task.dueDate, session.clock.now()),
+                        ),
+                    ],
+                  ),
+                  secondary: Column(
+                    children: [
+                      AskCaseCard(
+                        key: GavelKeys.homeAskCase,
+                        onTap: () => context.go(Routes.research),
                       ),
-                    ),
-                ],
-                TeamReadinessCard(
-                  key: GavelKeys.homeTeamReadiness,
-                  readiness: tasks.teamReadiness,
-                  doneCount: tasks.doneCount,
-                  taskCount: tasks.tasks.length,
-                  teammates: team.teammates,
-                  readinessFor: tasks.readinessFor,
+                      const SizedBox(height: Spacing.xxl),
+                      TeamReadinessCard(
+                        key: GavelKeys.homeTeamReadiness,
+                        readiness: tasks.teamReadiness,
+                        doneCount: tasks.doneCount,
+                        taskCount: tasks.tasks.length,
+                        teammates: team.teammates,
+                        readinessFor: tasks.readinessFor,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             )

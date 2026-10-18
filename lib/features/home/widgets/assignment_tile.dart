@@ -15,6 +15,7 @@ class AssignmentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return GavelCard(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.lg),
       child: Row(
         children: [
           Expanded(
@@ -30,6 +31,7 @@ class AssignmentTile extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: Spacing.md),
           StatusPill(
             status: task.isDone ? GavelStatus.ready : GavelStatus.inProgress,
             label: task.isDone ? 'Done' : 'Open',

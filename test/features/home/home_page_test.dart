@@ -39,6 +39,8 @@ void main() {
   testWidgets('Ask the case opens Research', (tester) async {
     await pumpGavelApp(tester, clock: clock);
 
+    await tester.ensureVisible(find.byKey(GavelKeys.homeAskCase));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(GavelKeys.homeAskCase));
     await tester.pumpAndSettle();
 

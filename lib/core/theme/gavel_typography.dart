@@ -18,7 +18,7 @@ abstract final class GavelTypography {
       double size,
       FontWeight weight, {
       Color? tint,
-      double height = 1.4,
+      double height = 1.6,
       double letterSpacing = 0,
     }) => TextStyle(
       fontFamily: bodyFamily,
@@ -30,18 +30,18 @@ abstract final class GavelTypography {
     );
 
     return TextTheme(
-      displayLarge: display(40, FontWeight.w700),
-      displayMedium: display(34, FontWeight.w700),
-      displaySmall: display(28, FontWeight.w600),
-      headlineLarge: display(26, FontWeight.w600),
-      headlineMedium: display(22, FontWeight.w600),
-      headlineSmall: display(20, FontWeight.w600),
+      displayLarge: display(48, FontWeight.w600),
+      displayMedium: display(40, FontWeight.w600),
+      displaySmall: display(32, FontWeight.w600),
+      headlineLarge: display(30, FontWeight.w600),
+      headlineMedium: display(26, FontWeight.w600),
+      headlineSmall: display(22, FontWeight.w600),
       titleLarge: display(18, FontWeight.w600, height: 1.25),
       titleMedium: body(16, FontWeight.w600),
       titleSmall: body(14, FontWeight.w600),
       bodyLarge: body(16, FontWeight.w400),
-      bodyMedium: body(14, FontWeight.w400),
-      bodySmall: body(12, FontWeight.w400, tint: muted),
+      bodyMedium: body(15, FontWeight.w400),
+      bodySmall: body(13, FontWeight.w400, tint: muted),
       labelLarge: body(14, FontWeight.w600),
       labelMedium: body(12, FontWeight.w600),
       labelSmall: body(11, FontWeight.w600, tint: muted, letterSpacing: 0.8),

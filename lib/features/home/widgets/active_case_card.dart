@@ -2,7 +2,6 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/dates.dart';
 import '../../../core/theme/spacing.dart';
-import '../../../core/widgets/gavel_card.dart';
 import '../../../core/widgets/progress_bar.dart';
 import '../../../core/widgets/status_pill.dart';
 import '../../../data/models/case_file.dart';
@@ -14,44 +13,51 @@ class ActiveCaseCard extends StatelessWidget {
     required this.daysUntilTrial,
     required this.readiness,
   });
-
   final CaseFile caseFile;
   final int daysUntilTrial;
   final double readiness;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final text = Theme.of(context).textTheme;
     final percent = (readiness * 100).round();
-    return GavelCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('YOUR ACTIVE CASE', style: text.labelSmall),
+        const SizedBox(height: Spacing.md),
+        Semantics(
+          header: true,
+          child: Text(caseFile.title, style: text.displayMedium),
+        ),
+        const SizedBox(height: Spacing.sm),
+        Text(trialCountdownLabel(daysUntilTrial), style: text.bodySmall),
+        const SizedBox(height: Spacing.xl),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
             children: [
-              Expanded(
-                child: Text('ACTIVE CASE', style: theme.textTheme.labelSmall),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$percent% team readiness',
+                      style: text.labelMedium,
+                    ),
+                  ),
+                  StatusPill(
+                    status: percent >= 80
+                        ? GavelStatus.ready
+                        : GavelStatus.inProgress,
+                  ),
+                ],
               ),
-              StatusPill(
-                status: percent >= 80
-                    ? GavelStatus.ready
-                    : GavelStatus.inProgress,
-              ),
+              const SizedBox(height: Spacing.sm),
+              ProgressBar(value: readiness, height: 3),
             ],
           ),
-          const SizedBox(height: Spacing.sm),
-          Text(caseFile.title, style: theme.textTheme.headlineSmall),
-          const SizedBox(height: Spacing.xs),
-          Text(
-            trialCountdownLabel(daysUntilTrial),
-            style: theme.textTheme.bodySmall,
-          ),
-          const SizedBox(height: Spacing.md),
-          ProgressBar(value: readiness),
-          const SizedBox(height: Spacing.xs),
-          Text('$percent% team readiness', style: theme.textTheme.labelMedium),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -19,6 +19,32 @@ void main() {
     expect(light.textTheme.bodyMedium!.color, GavelColors.ink);
   });
 
+  test(
+    'editorial palette uses the requested colors and readable text contrast',
+    () {
+      expect(GavelColors.cream, const Color(0xFFF8F6F1));
+      expect(GavelColors.ink, const Color(0xFF292421));
+      expect(GavelColors.maroon, const Color(0xFF641F32));
+      double contrast(Color foreground, Color background) {
+        final a = foreground.computeLuminance();
+        final b = background.computeLuminance();
+        return a > b ? (a + 0.05) / (b + 0.05) : (b + 0.05) / (a + 0.05);
+      }
+
+      for (final color in [
+        GavelColors.ink,
+        GavelColors.inkMuted,
+        GavelColors.maroon,
+        GavelColors.ready,
+        GavelColors.inProgress,
+        GavelColors.flagged,
+        GavelColors.info,
+      ]) {
+        expect(contrast(color, GavelColors.cream), greaterThanOrEqualTo(4.5));
+      }
+    },
+  );
+
   test('dark theme uses deep plum with cream text', () {
     expect(dark.brightness, Brightness.dark);
     expect(dark.colorScheme.primary, GavelColors.maroon);

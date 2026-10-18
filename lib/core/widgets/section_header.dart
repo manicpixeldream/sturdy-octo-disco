@@ -18,14 +18,14 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final showAction = actionLabel != null && onAction != null;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.lg),
       child: Row(
         children: [
           Expanded(
             child: Text(
               title,
               style: Theme.of(context).textTheme.titleLarge,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),

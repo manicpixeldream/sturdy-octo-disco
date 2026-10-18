@@ -1,9 +1,14 @@
 import '../models/case_file.dart';
+import '../models/affidavit.dart';
+import '../models/case_brief.dart';
+import '../models/stipulation.dart';
+import '../models/timing_rule.dart';
 import '../models/exhibit.dart';
 import '../models/task_item.dart';
 import '../models/teammate.dart';
 import '../models/trial_side.dart';
 import '../models/witness.dart';
+import 'harmon_packet.dart';
 
 /// The State v. Harmon demo case. Dates are relative to [today] so the demo
 /// never goes stale.
@@ -205,6 +210,11 @@ class SeedData {
   final List<Witness> witnesses;
   final List<Teammate> teammates;
   final List<TaskItem> tasks;
+
+  List<Affidavit> get affidavits => HarmonPacket.affidavits;
+  List<Stipulation> get stipulations => HarmonPacket.stipulations;
+  List<TimingRule> get timingRules => HarmonPacket.timingRules;
+  CaseBrief get caseBrief => HarmonPacket.brief;
 
   /// The signed-in user's teammate id until real accounts arrive in v2.
   final String currentTeammateId;

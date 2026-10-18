@@ -7,6 +7,7 @@ import 'package:gavel/data/mock/seed_data.dart';
 import 'package:gavel/data/repositories/case_repository.dart';
 import 'package:gavel/data/repositories/task_repository.dart';
 import 'package:gavel/data/repositories/team_repository.dart';
+import 'package:gavel/data/services/case_brief_service.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Pumps a single widget inside a themed [MaterialApp] and [Scaffold].
@@ -32,6 +33,7 @@ Future<void> pumpGavelApp(
   CaseRepository? caseRepository,
   TeamRepository? teamRepository,
   TaskRepository? taskRepository,
+  CaseBriefService? caseBriefService,
 }) async {
   await tester.pumpWidget(
     GavelApp(
@@ -41,6 +43,7 @@ Future<void> pumpGavelApp(
       caseRepository: caseRepository,
       teamRepository: teamRepository,
       taskRepository: taskRepository,
+      caseBriefService: caseBriefService,
     ),
   );
   await tester.pumpAndSettle();

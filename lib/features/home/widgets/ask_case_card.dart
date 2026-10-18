@@ -14,6 +14,8 @@ class AskCaseCard extends StatelessWidget {
     final theme = Theme.of(context);
     final accent = GavelTheme.accent(theme);
     return GavelCard(
+      color: theme.colorScheme.surface,
+      padding: const EdgeInsets.all(Spacing.xl),
       onTap: onTap,
       child: Row(
         children: [

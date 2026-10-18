@@ -87,7 +87,6 @@ abstract final class GavelTheme {
     );
     final cardShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(Radii.card),
-      side: BorderSide(color: scheme.outlineVariant),
     );
 
     return ThemeData(
@@ -99,13 +98,54 @@ abstract final class GavelTheme {
       fontFamily: GavelTypography.bodyFamily,
       textTheme: textTheme,
       pageTransitionsTheme: pageTransitions,
+      visualDensity: VisualDensity.standard,
+      splashFactory: InkRipple.splashFactory,
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: scheme.surface,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: Spacing.lg,
+          vertical: Spacing.md,
+        ),
+        hintStyle: textTheme.bodyMedium?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.card),
+          borderSide: BorderSide(color: scheme.outlineVariant),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.card),
+          borderSide: BorderSide(color: scheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.card),
+          borderSide: BorderSide(
+            color: scheme.brightness == Brightness.dark
+                ? scheme.secondary
+                : scheme.primary,
+            width: 2,
+          ),
+        ),
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: scheme.primary,
+        selectionColor: scheme.primary.withValues(alpha: 0.16),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: scheme.surface,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.card),
+        ),
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: background,
         foregroundColor: scheme.onSurface,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: textTheme.headlineSmall,
+        titleTextStyle: textTheme.labelLarge,
       ),
       cardTheme: CardThemeData(
         color: scheme.surface,
@@ -120,7 +160,9 @@ abstract final class GavelTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          shape: const StadiumBorder(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Radii.card),
+          ),
           minimumSize: const Size(0, 48),
           padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
           textStyle: textTheme.labelLarge,
@@ -129,7 +171,9 @@ abstract final class GavelTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: scheme.onSurface,
-          shape: const StadiumBorder(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Radii.card),
+          ),
           minimumSize: const Size(0, 48),
           padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
           side: BorderSide(color: scheme.outlineVariant),

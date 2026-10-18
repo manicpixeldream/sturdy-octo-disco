@@ -26,6 +26,19 @@ abstract final class GavelKeys {
 
   static const ValueKey<String> meOpenGallery = ValueKey('me_open_gallery');
 
+  static const caseHeader = ValueKey('case_header');
+  static const caseSections = ValueKey('case_sections');
+  static const caseContent = ValueKey('case_content');
+  static const caseBriefRetry = ValueKey('case_brief_retry');
+  static const caseEvidenceDialog = ValueKey('case_evidence_dialog');
+  static const caseEvidenceClose = ValueKey('case_evidence_close');
+
+  static ValueKey<String> caseSection(String section) =>
+      ValueKey('case_section_$section');
+  static ValueKey<String> caseRecord(String id) => ValueKey('case_record_$id');
+  static ValueKey<String> caseEvidence(String factId, String sourceId) =>
+      ValueKey('case_evidence_${factId}_$sourceId');
+
   static const ValueKey<String> galleryThemeToggle = ValueKey(
     'gallery_theme_toggle',
   );

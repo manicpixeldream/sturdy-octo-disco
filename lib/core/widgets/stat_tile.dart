@@ -24,10 +24,7 @@ class StatTile extends StatelessWidget {
     final iconColor = GavelTheme.accent(theme);
     return GavelCard(
       onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.md,
-        vertical: Spacing.lg,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: Spacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

@@ -6,6 +6,8 @@ import 'core/clock.dart';
 import 'core/router/app_router.dart';
 import 'core/router/routes.dart';
 import 'data/mock/mock_case_repository.dart';
+import 'data/mock/mock_case_brief_service.dart';
+import 'data/services/case_brief_service.dart';
 import 'data/mock/mock_task_repository.dart';
 import 'data/mock/mock_team_repository.dart';
 import 'data/mock/seed_data.dart';
@@ -27,6 +29,7 @@ class GavelApp extends StatefulWidget {
     this.caseRepository,
     this.teamRepository,
     this.taskRepository,
+    this.caseBriefService,
   });
 
   final String initialLocation;
@@ -35,6 +38,7 @@ class GavelApp extends StatefulWidget {
   final CaseRepository? caseRepository;
   final TeamRepository? teamRepository;
   final TaskRepository? taskRepository;
+  final CaseBriefService? caseBriefService;
 
   @override
   State<GavelApp> createState() => _GavelAppState();
@@ -65,8 +69,13 @@ class _GavelAppState extends State<GavelApp> {
             activeCase: seed.caseFile,
             exhibits: seed.exhibits,
             witnesses: seed.witnesses,
+            affidavits: seed.affidavits,
+            stipulations: seed.stipulations,
+            timingRules: seed.timingRules,
           ),
       clock,
+      briefService:
+          widget.caseBriefService ?? MockCaseBriefService(seed.caseBrief),
     )..load();
     _team = TeamController(
       widget.teamRepository ?? MockTeamRepository(seed.teammates),

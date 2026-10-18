@@ -25,14 +25,15 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = status.color;
+    final color = Theme.of(context).brightness == Brightness.dark
+        ? Color.lerp(status.color, GavelColors.white, 0.45)!
+        : status.color;
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.md,
+        horizontal: Spacing.xs,
         vertical: Spacing.xs,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Row(

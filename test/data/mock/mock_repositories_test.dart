@@ -12,6 +12,9 @@ void main() {
     activeCase: seed.caseFile,
     exhibits: seed.exhibits,
     witnesses: seed.witnesses,
+    affidavits: seed.affidavits,
+    stipulations: seed.stipulations,
+    timingRules: seed.timingRules,
   );
   final teamRepo = MockTeamRepository(seed.teammates);
   final taskRepo = MockTaskRepository(seed.tasks);
@@ -20,6 +23,12 @@ void main() {
     expect(await caseRepo.fetchActiveCase(), seed.caseFile);
     expect(await caseRepo.fetchExhibits(seed.caseFile.id), seed.exhibits);
     expect(await caseRepo.fetchWitnesses(seed.caseFile.id), seed.witnesses);
+    expect(await caseRepo.fetchAffidavits(seed.caseFile.id), seed.affidavits);
+    expect(
+      await caseRepo.fetchStipulations(seed.caseFile.id),
+      seed.stipulations,
+    );
+    expect(await caseRepo.fetchTimingRules(seed.caseFile.id), seed.timingRules);
     expect(await teamRepo.fetchTeammates(), seed.teammates);
     expect(await taskRepo.fetchTasks(), seed.tasks);
   });
@@ -27,6 +36,9 @@ void main() {
   test('case repository filters exhibits and witnesses by case id', () async {
     expect(await caseRepo.fetchExhibits('other'), isEmpty);
     expect(await caseRepo.fetchWitnesses('other'), isEmpty);
+    expect(await caseRepo.fetchAffidavits('other'), isEmpty);
+    expect(await caseRepo.fetchStipulations('other'), isEmpty);
+    expect(await caseRepo.fetchTimingRules('other'), isEmpty);
     expect(
       await caseRepo.fetchExhibits(seed.caseFile.id),
       isA<List<Exhibit>>(),

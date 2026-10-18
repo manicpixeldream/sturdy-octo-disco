@@ -20,9 +20,9 @@ class InitialsAvatar extends StatelessWidget {
   /// Plum is excluded so avatars stay visible on the dark plum pages.
   static const List<Color> palette = [
     GavelColors.maroon,
-    GavelColors.gold,
-    GavelColors.info,
-    GavelColors.ready,
+    GavelColors.inkMuted,
+    Color(0xFF876D75),
+    Color(0xFF6D716C),
   ];
 
   /// First letter of the first and last words, e.g. "Mara Okafor" -> "MO".
@@ -57,7 +57,7 @@ class InitialsAvatar extends StatelessWidget {
         initialsFor(name),
         semanticsLabel: name,
         style: TextStyle(
-          fontFamily: GavelTypography.displayFamily,
+          fontFamily: GavelTypography.bodyFamily,
           fontSize: size * 0.4,
           fontWeight: FontWeight.w600,
           color: GavelColors.white,

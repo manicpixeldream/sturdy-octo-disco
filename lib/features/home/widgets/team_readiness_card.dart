@@ -27,6 +27,7 @@ class TeamReadinessCard extends StatelessWidget {
     final theme = Theme.of(context);
     final percent = (readiness * 100).round();
     return GavelCard(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -37,7 +38,7 @@ class TeamReadinessCard extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: Spacing.md),
-          ProgressBar(value: readiness),
+          ProgressBar(value: readiness, height: 3),
           const SizedBox(height: Spacing.lg),
           for (final teammate in teammates) ...[
             if (teammate != teammates.first) const SizedBox(height: Spacing.md),
@@ -74,7 +75,7 @@ class _TeammateReadinessRow extends StatelessWidget {
             children: [
               Text(teammate.name, style: theme.textTheme.titleSmall),
               const SizedBox(height: Spacing.xs),
-              ProgressBar(value: readiness, height: 6),
+              ProgressBar(value: readiness, height: 2),
             ],
           ),
         ),

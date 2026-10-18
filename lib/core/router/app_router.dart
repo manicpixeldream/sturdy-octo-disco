@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/case_file/case_page.dart';
+import '../../features/case_file/affidavit_page.dart';
 import '../../features/gallery/gallery_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/me/me_page.dart';
@@ -19,7 +20,21 @@ GoRouter createAppRouter({String initialLocation = Routes.home}) {
             AppShell(navigationShell: navigationShell),
         branches: [
           _branch(Routes.home, const HomePage()),
-          _branch(Routes.caseFile, const CasePage()),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.caseFile,
+                builder: (context, state) => const CasePage(),
+                routes: [
+                  GoRoute(
+                    path: 'affidavit/:id',
+                    builder: (context, state) =>
+                        AffidavitPage(affidavitId: state.pathParameters['id']!),
+                  ),
+                ],
+              ),
+            ],
+          ),
           _branch(Routes.research, const ResearchPage()),
           _branch(Routes.team, const TeamPage()),
           _branch(Routes.me, const MePage()),
