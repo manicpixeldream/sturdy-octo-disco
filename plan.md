@@ -1,4 +1,4 @@
-# Gavel v1: Iterative Build Plan
+# Gavel v1 (Alpha): Iterative Build Plan
 
 ## Product description (north star)
 
@@ -18,16 +18,19 @@ Every iteration below delivers part of this description. In v1, the "AI" feature
 
 ## Starting point
 
-The repo is the default Flutter template. [lib/main.dart](lib/main.dart) is the counter demo, [test/widget_test.dart](test/widget_test.dart) is the counter test, and [pubspec.yaml](pubspec.yaml) only has `cupertino_icons`. The SDK is Flutter 3.47.6 / Dart 3.13.5. [ios/](ios/) already exists with deployment target iOS 15.0 and the placeholder bundle ID `com.example.gavel`.
+The repo is the default Flutter template. [lib/main.dart](lib/main.dart) is the counter demo, [test/widget_test.dart](test/widget_test.dart) is the counter test, and [pubspec.yaml](pubspec.yaml) only has `cupertino_icons`. The SDK is Flutter 3.47.6 / Dart 3.13.5. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
 
-## Target platforms and device testing
+## Alpha target: web only
 
-- **iPhone (main mobile target)**: the student builds on his Mac with Xcode and a connected iPhone.
-  - One-time setup: install Xcode and CocoaPods, open `ios/Runner.xcworkspace`, sign in with an Apple ID under Signing & Capabilities, choose a Team, and change the bundle ID from `com.example.gavel` to something unique, such as `com.<team>.gavel`. On the iPhone, turn on Developer Mode and trust the developer certificate.
-  - Run with `flutter devices`, then `flutter run -d <iphone-id>`. Run integration tests on the device with `flutter test integration_test -d <iphone-id>`.
-  - iOS-specific checks in every UI iteration: safe areas (notch and home indicator) around the bottom nav, swipe-back gesture on pushed pages (`CupertinoPageTransitionsBuilder` in the theme), keyboard insets on the Research and chat input bars, and Dynamic Type at larger text sizes.
-- **Android and web (Edge/Chrome)**: these are used on the Windows machine for quick iteration.
-- **Done checklist for each iteration**: `flutter analyze` passes, `flutter test` passes, a manual smoke test on iPhone (Mac) and on Edge or Android (Windows), then commit and tag `v0.x`.
+The goal of v1 is a working **alpha** that is built and tested entirely in the browser on Windows.
+
+- **Run locally**: `flutter run -d edge` or `flutter run -d chrome`. To review the app at phone size, use the browser's DevTools device toolbar (for example 390x844), since Gavel is designed as a phone app.
+- **Done checklist for each iteration**: `flutter analyze` passes, `flutter test` passes, a manual smoke test in Edge or Chrome, then commit and tag `v0.x`.
+- **CI catches errors on other platforms** even though all coding happens on Windows. Each push runs jobs on separate GitHub-hosted virtual machines (set up in v0.1):
+  - **Ubuntu (Linux) job**: `flutter analyze`, `flutter test`, and `flutter build web`
+  - **macOS job**: `flutter build ios --no-codesign`, so iOS-only build errors show up early without needing a Mac or an iPhone yet
+  - **Optional Android build** on the Ubuntu job: `flutter build apk --debug`
+- Mobile device testing (iPhone and Android hardware) is deferred to the Beta phase in **Future plans**.
 
 ## Guiding rules for every iteration
 
@@ -131,6 +134,7 @@ lib/
 test/             mirrors lib/ (one *_test.dart per page, controller, model, and repository)
   helpers/        pump_app.dart, fake_repositories.dart, test_clock.dart
 integration_test/ app_flow_test.dart
+test_driver/      integration_test.dart (driver for running integration tests in Chrome)
 assets/           fonts/, images/
 ```
 
@@ -151,15 +155,15 @@ assets/           fonts/, images/
 
 ### v0.1: Foundation and theme
 - Replace the template with `GavelApp`. Add `go_router`, `provider`, and `intl`, and bundle the fonts.
-- Add `GavelTheme.light()` and `GavelTheme.dark()`. Both use iOS-style page transitions and swipe-back on all platforms.
+- Add `GavelTheme.light()` and `GavelTheme.dark()`, using the same slide-in page transitions on every platform.
 - Add the core widgets (one file each) under `lib/core/widgets/`.
-- iOS: set a unique bundle ID and display name "Gavel", then confirm it launches on the iPhone.
-- CI in `.github/workflows/ci.yml`: an Ubuntu job runs `flutter analyze` and `flutter test`, and a macOS job runs `flutter build ios --no-codesign` so iOS build problems are caught early.
+- Set the web page title and app name to "Gavel" in [web/index.html](web/index.html) and [web/manifest.json](web/manifest.json).
+- CI in `.github/workflows/ci.yml`: an Ubuntu job runs `flutter analyze`, `flutter test`, and `flutter build web`, and a macOS job runs `flutter build ios --no-codesign`. This catches errors on other platforms while coding on Windows.
 - Tests: theme values and rendering of each core widget. Delete the counter test.
 
 ### v0.2: Navigation shell
 - `StatefulShellRoute.indexedStack` with five branches (`/home`, `/case`, `/research`, `/team`, `/me`). Each branch has its own page file with placeholder content.
-- `GavelBottomNav` respects the bottom safe area on iPhone.
+- `GavelBottomNav` is wrapped in `SafeArea`. This does nothing on web but makes it ready for phones in Beta.
 - Tests: all five nav items render, tapping each one switches tabs, tab state is kept when switching, and the app starts at `/home`.
 
 ### v0.3: Data models and mock repositories
@@ -179,7 +183,7 @@ assets/           fonts/, images/
 
 ### v0.6: Research hub (precedents, definitions, articles, citation tracking)
 - `research_page.dart`: a dark page with two modes, **Ask** and **Library**.
-  - **Ask** is the chat from the mockup: bubbles, numbered AI answers with citation chips, suggestion chips, and an input bar that stays above the iOS keyboard.
+  - **Ask** is the chat from the mockup: bubbles, numbered AI answers with citation chips, suggestion chips, and an input bar pinned to the bottom of the page.
   - **Library** holds saved sources grouped by Precedent, Definition, and Article.
 - `source_detail_page.dart`: a single source with its citation and a "Cited in" list that tracks where the source is used (AI answers, exam questions, the case brief).
 - `ResearchService` interface, with `MockResearchService` returning keyword-matched answers that include citations.
@@ -208,11 +212,11 @@ assets/           fonts/, images/
 - `welcome_page.dart`: dark hero with "Win the room. Master the case.", three feature cards, and an "Enter the war room" button. A router redirect shows it on first launch.
 - Tests: a first launch shows Welcome, the button goes to `/home`, and Welcome is skipped once the user is onboarded.
 
-### v1.0: Polish, hardening, and full test pass
-- Empty, loading, and error states on every list, tested with a `FailingFake` repository. Add semantics labels, checks at 1.3x text scale and with iOS Dynamic Type, and a maximum content width on web.
-- Golden tests for each page at an iPhone size (390x844), using bundled fonts.
-- `integration_test/app_flow_test.dart` runs on both a physical iPhone and Android. The flow: Welcome, Home, Research (ask a question and save a source), Case brief, Team (assign the closing attorney), team chat, Me (check off a task), then Schedule.
-- At least 80% coverage on `lib/state` and `lib/data`. Update [README.md](README.md) with setup steps, including Mac/Xcode/iPhone steps, test commands, and the version history.
+### v1.0: Alpha release (polish, hardening, and full test pass on web)
+- Empty, loading, and error states on every list, tested with a `FailingFake` repository. Add semantics labels, checks at 1.3x text scale, and a maximum content width so the phone layout stays centered on wide browser windows.
+- Golden tests for each page at a phone size (390x844), using bundled fonts.
+- `integration_test/app_flow_test.dart` runs in Chrome with `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_flow_test.dart -d chrome`. The flow: Welcome, Home, Research (ask a question and save a source), Case brief, Team (assign the closing attorney), team chat, Me (check off a task), then Schedule.
+- At least 80% coverage on `lib/state` and `lib/data`. Update [README.md](README.md) with web setup steps, test commands, and the version history.
 
 ## Test suite structure (cumulative)
 
@@ -221,12 +225,26 @@ assets/           fonts/, images/
 - `test/state/`: controllers and `TeammateMatcher`
 - `test/features/<feature>/<page>_test.dart`: one test file per page
 - `test/golden/`: visual regression tests (v1.0)
-- `integration_test/`: full flows, run on iPhone, Android, and web
+- `integration_test/`: full flows, run in Chrome for the alpha (iPhone and Android are added in Beta)
 - `test/helpers/pump_app.dart`: `pumpGavelApp(tester, {overrides, initialLocation, clock})` builds the real router and providers with fake repositories.
 
 ---
 
 ## Future plans
+
+### Beta: iPhone device testing (and Android)
+The student builds on his Mac with Xcode and a connected iPhone. This comes before Firebase because Firebase's iOS setup needs the final bundle ID.
+- **One-time Mac setup**: install Xcode and CocoaPods, open `ios/Runner.xcworkspace`, sign in with an Apple ID under Signing & Capabilities, and choose a Team.
+- **Bundle ID**: change the placeholder `com.example.gavel` (deployment target iOS 15.0) to something unique, such as `com.<team>.gavel`, and set the display name to "Gavel". Use the same ID for the Android `applicationId`.
+- **iPhone setup**: turn on Developer Mode and trust the developer certificate on the phone.
+- **Running**: `flutter devices`, then `flutter run -d <iphone-id>`. Run integration tests on the device with `flutter test integration_test -d <iphone-id>`.
+- **iOS-specific checks for every page**:
+  - Safe areas (notch and home indicator) around the bottom nav
+  - Swipe-back gesture on pushed pages (`CupertinoPageTransitionsBuilder` in the theme)
+  - Input bars on the Research and team chat pages stay above the on-screen keyboard
+  - Dynamic Type at larger text sizes
+- **Android**: the same smoke test on an emulator or a physical device.
+- **Done checklist** grows to include a manual smoke test on iPhone (Mac) as well as Edge (Windows).
 
 ### v2: Firebase and Firestore (accounts, shared team data, real-time sync)
 - **Setup**: create a Firebase project, run `flutterfire configure` for iOS, Android, and web, and add `firebase_core`, `firebase_auth`, `cloud_firestore`, and `firebase_storage`. iOS 15 already meets the Firebase minimum. On iOS, add `GoogleService-Info.plist` through FlutterFire.

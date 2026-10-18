@@ -1,0 +1,19 @@
+---
+description: Agents verify with automated checks only; developers do UI checks manually
+alwaysApply: true
+---
+
+# No agent-driven UI testing
+
+UI and browser checks are done manually by the developers. Agents must not:
+
+- Start local servers (`python -m http.server`, `flutter run`, `flutter run -d web-server`, etc.)
+- Open, drive, or screenshot the app in a browser (browser tools, CDP, device emulation)
+
+Verify work only with:
+
+- `flutter analyze`
+- `flutter test`
+- `flutter build web` (when a build check is needed)
+
+When an iteration is done, give the developers 3-5 short manual test steps instead.
