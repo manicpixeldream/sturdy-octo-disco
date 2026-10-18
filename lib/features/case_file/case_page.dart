@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/keys.dart';
+import '../../core/widgets/load_failure.dart';
+import '../../state/session_controller.dart';
 import '../../core/router/routes.dart';
 import '../../core/widgets/workspace_page.dart';
 import '../../core/widgets/workspace_scroll_view.dart';
@@ -20,7 +22,9 @@ import 'widgets/section_chips.dart';
 import 'widgets/stipulations_section.dart';
 
 class CasePage extends StatefulWidget {
-  const CasePage({super.key});
+  const CasePage({super.key, this.section, this.factId});
+  final String? section;
+  final String? factId;
 
   @override
   State<CasePage> createState() => _CasePageState();
@@ -28,6 +32,30 @@ class CasePage extends StatefulWidget {
 
 class _CasePageState extends State<CasePage> {
   CaseSection _section = CaseSection.overview;
+  final Map<String, GlobalKey> _factKeys = {};
+  String? _focusedFact;
+
+  @override
+  void initState() {
+    super.initState();
+    _section =
+        CaseSection.values.where((s) => s.name == widget.section).firstOrNull ??
+        CaseSection.overview;
+  }
+
+  @override
+  void didUpdateWidget(CasePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.section != oldWidget.section ||
+        widget.factId != oldWidget.factId) {
+      _section =
+          CaseSection.values
+              .where((s) => s.name == widget.section)
+              .firstOrNull ??
+          _section;
+      _focusedFact = null;
+    }
+  }
 
   String? _sourceLabel(CaseController controller, EvidenceLink link) =>
       switch (link.kind) {
@@ -63,11 +91,36 @@ class _CasePageState extends State<CasePage> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<SessionController>();
     final controller = context.watch<CaseController>();
     final caseFile = controller.activeCase;
+    for (final fact in controller.brief?.facts ?? []) {
+      _factKeys.putIfAbsent(fact.id, () => GlobalKey());
+    }
+    final target = widget.factId;
+    if (_section == CaseSection.brief &&
+        target != null &&
+        _focusedFact != target &&
+        !controller.isBriefLoading &&
+        (controller.brief?.facts.any((fact) => fact.id == target) ?? false)) {
+      _focusedFact = target;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final targetContext = _factKeys[target]?.currentContext;
+        if (mounted && targetContext != null) {
+          Scrollable.ensureVisible(targetContext, alignment: 0.1);
+        }
+      });
+    }
     return WorkspacePage(
       title: 'Case file',
-      child: caseFile == null
+      child: controller.loadFailed
+          ? Center(
+              child: LoadFailure(
+                title: 'Could not load the case',
+                onRetry: controller.load,
+              ),
+            )
+          : caseFile == null
           ? const Center(
               child: CircularProgressIndicator(key: ValueKey('case_loading')),
             )
@@ -89,7 +142,7 @@ class _CasePageState extends State<CasePage> {
                 ),
                 const SizedBox(height: Spacing.sm),
                 Text(
-                  'Demo case materials · Fictional sample packet',
+                  'Demo case materials · schedule resets each launch',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: Spacing.lg),
@@ -102,6 +155,7 @@ class _CasePageState extends State<CasePage> {
                     ),
                     CaseSection.brief => CaseBriefSection(
                       brief: controller.brief,
+                      factKeys: _factKeys,
                       isLoading: controller.isBriefLoading,
                       failed: controller.briefFailed,
                       onRetry: controller.loadBrief,

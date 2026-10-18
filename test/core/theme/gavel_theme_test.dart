@@ -78,6 +78,17 @@ void main() {
     }
   });
 
+  test('input cursors stay visible against light and dark surfaces', () {
+    for (final theme in all) {
+      final cursor = theme.textSelectionTheme.cursorColor!.computeLuminance();
+      final surface = theme.colorScheme.surface.computeLuminance();
+      final ratio = cursor > surface
+          ? (cursor + 0.05) / (surface + 0.05)
+          : (surface + 0.05) / (cursor + 0.05);
+      expect(ratio, greaterThanOrEqualTo(3));
+    }
+  });
+
   test('every platform uses the same slide-in page transition', () {
     for (final theme in all) {
       for (final platform in TargetPlatform.values) {

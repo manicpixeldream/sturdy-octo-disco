@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/dates.dart';
 import '../../core/keys.dart';
+import '../../core/widgets/load_failure.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/widgets/section_header.dart';
@@ -35,7 +36,20 @@ class HomePage extends StatelessWidget {
 
     return WorkspacePage(
       title: me == null ? 'Home' : '$greeting, ${me.firstName}',
-      child: loaded
+      child: caseCtrl.loadFailed || team.loadFailed || tasks.loadFailed
+          ? Center(
+              child: LoadFailure(
+                title: 'Could not load your workspace',
+                onRetry: () async {
+                  await Future.wait([
+                    if (caseCtrl.loadFailed) caseCtrl.load(),
+                    if (team.loadFailed) team.load(),
+                    if (tasks.loadFailed) tasks.load(),
+                  ]);
+                },
+              ),
+            )
+          : loaded
           ? WorkspaceScrollView(
               storageKey: const PageStorageKey('home_scroll'),
               children: [
@@ -44,6 +58,11 @@ class HomePage extends StatelessWidget {
                   caseFile: caseCtrl.activeCase!,
                   daysUntilTrial: caseCtrl.daysUntilTrial,
                   readiness: tasks.teamReadiness,
+                ),
+                const SizedBox(height: Spacing.sm),
+                Text(
+                  'Demo schedule · dates reset on each launch',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: Spacing.xxl),
                 Row(
@@ -109,7 +128,7 @@ class HomePage extends StatelessWidget {
                 ),
               ],
             )
-          : const SizedBox.shrink(),
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }

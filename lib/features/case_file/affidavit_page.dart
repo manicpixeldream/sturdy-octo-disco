@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/router/routes.dart';
+import '../../core/widgets/load_failure.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/workspace_page.dart';
@@ -38,7 +39,14 @@ class AffidavitPage extends StatelessWidget {
         icon: const Icon(Icons.arrow_back, size: 20),
         onPressed: () => _back(context),
       ),
-      child: !controller.isLoaded
+      child: controller.loadFailed
+          ? Center(
+              child: LoadFailure(
+                title: 'Could not load the case',
+                onRetry: controller.load,
+              ),
+            )
+          : !controller.isLoaded
           ? const Center(child: CircularProgressIndicator())
           : affidavit == null
           ? Center(

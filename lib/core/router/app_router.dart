@@ -7,6 +7,7 @@ import '../../features/gallery/gallery_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/me/me_page.dart';
 import '../../features/research/research_page.dart';
+import '../../features/research/source_detail_page.dart';
 import '../../features/team/team_page.dart';
 import '../widgets/app_shell.dart';
 import 'routes.dart';
@@ -24,7 +25,10 @@ GoRouter createAppRouter({String initialLocation = Routes.home}) {
             routes: [
               GoRoute(
                 path: Routes.caseFile,
-                builder: (context, state) => const CasePage(),
+                builder: (context, state) => CasePage(
+                  section: state.uri.queryParameters['section'],
+                  factId: state.uri.queryParameters['fact'],
+                ),
                 routes: [
                   GoRoute(
                     path: 'affidavit/:id',
@@ -35,7 +39,23 @@ GoRouter createAppRouter({String initialLocation = Routes.home}) {
               ),
             ],
           ),
-          _branch(Routes.research, const ResearchPage()),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.research,
+                builder: (context, state) => ResearchPage(
+                  messageId: state.uri.queryParameters['message'],
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'source/:id',
+                    builder: (context, state) =>
+                        SourceDetailPage(sourceId: state.pathParameters['id']!),
+                  ),
+                ],
+              ),
+            ],
+          ),
           _branch(Routes.team, const TeamPage()),
           _branch(Routes.me, const MePage()),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gavel/app.dart';
+import 'package:gavel/data/services/research_service.dart';
 import 'package:gavel/core/clock.dart';
 import 'package:gavel/core/router/routes.dart';
 import 'package:gavel/core/theme/gavel_theme.dart';
@@ -34,6 +35,7 @@ Future<void> pumpGavelApp(
   TeamRepository? teamRepository,
   TaskRepository? taskRepository,
   CaseBriefService? caseBriefService,
+  ResearchService? researchService,
 }) async {
   await tester.pumpWidget(
     GavelApp(
@@ -44,6 +46,7 @@ Future<void> pumpGavelApp(
       teamRepository: teamRepository,
       taskRepository: taskRepository,
       caseBriefService: caseBriefService,
+      researchService: researchService,
     ),
   );
   await tester.pumpAndSettle();

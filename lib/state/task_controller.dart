@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
+import 'load_controller.dart';
 
 import '../data/models/task_item.dart';
 import '../data/repositories/task_repository.dart';
 
-class TaskController extends ChangeNotifier {
+class TaskController extends LoadController {
   TaskController(this._repository);
 
   final TaskRepository _repository;
@@ -31,8 +31,10 @@ class TaskController extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    _tasks = await _repository.fetchTasks();
-    notifyListeners();
+    await loadWith(
+      _repository.fetchTasks,
+      (records) => _tasks = List.unmodifiable(records),
+    );
   }
 
   static double _readiness(Iterable<TaskItem> tasks) {

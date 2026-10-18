@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'load_controller.dart';
 
 import '../core/clock.dart';
 import '../core/dates.dart';
@@ -12,13 +12,12 @@ import '../data/models/witness.dart';
 import '../data/repositories/case_repository.dart';
 import '../data/services/case_brief_service.dart';
 
-class CaseController extends ChangeNotifier {
+class CaseController extends LoadController {
   CaseController(this._repository, this._clock, {this.briefService});
 
   final CaseRepository _repository;
   final Clock _clock;
   final CaseBriefService? briefService;
-  bool _disposed = false;
   int _loadGeneration = 0;
   int _briefRequest = 0;
 
@@ -60,31 +59,44 @@ class CaseController extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    final generation = ++_loadGeneration;
-    final activeCase = await _repository.fetchActiveCase();
-    final (exhibits, witnesses, affidavits, stipulations, timingRules) = await (
-      _repository.fetchExhibits(activeCase.id),
-      _repository.fetchWitnesses(activeCase.id),
-      _repository.fetchAffidavits(activeCase.id),
-      _repository.fetchStipulations(activeCase.id),
-      _repository.fetchTimingRules(activeCase.id),
-    ).wait;
-    if (_disposed || generation != _loadGeneration) return;
-    _activeCase = activeCase;
-    _exhibits = List.unmodifiable(exhibits);
-    _witnesses = List.unmodifiable(witnesses);
-    _affidavits = List.unmodifiable(affidavits);
-    _stipulations = List.unmodifiable(stipulations);
-    _timingRules = List.unmodifiable(timingRules);
-    _brief = null;
-    notifyListeners();
-    await loadBrief();
+    if (isDisposed) return;
+    ++_loadGeneration;
+    ++_briefRequest;
+    _isBriefLoading = false;
+    final loaded = await loadWith(
+      () async {
+        final activeCase = await _repository.fetchActiveCase();
+        final materials = await (
+          _repository.fetchExhibits(activeCase.id),
+          _repository.fetchWitnesses(activeCase.id),
+          _repository.fetchAffidavits(activeCase.id),
+          _repository.fetchStipulations(activeCase.id),
+          _repository.fetchTimingRules(activeCase.id),
+        ).wait;
+        return (activeCase, materials);
+      },
+      (result) {
+        final (
+          activeCase,
+          (exhibits, witnesses, affidavits, stipulations, timingRules),
+        ) = result;
+        _activeCase = activeCase;
+        _exhibits = List.unmodifiable(exhibits);
+        _witnesses = List.unmodifiable(witnesses);
+        _affidavits = List.unmodifiable(affidavits);
+        _stipulations = List.unmodifiable(stipulations);
+        _timingRules = List.unmodifiable(timingRules);
+        _brief = null;
+        _briefFailed = false;
+      },
+    );
+    if (loaded) await loadBrief();
   }
 
   Future<void> loadBrief() async {
     final caseId = _activeCase?.id;
     final service = briefService;
-    if (_disposed || caseId == null || service == null) {
+    if (isDisposed || caseId == null || service == null) {
       return;
     }
     final generation = _loadGeneration;
@@ -97,30 +109,24 @@ class CaseController extends ChangeNotifier {
       if (brief.caseId != caseId) {
         throw StateError('Brief belongs to another case.');
       }
-      if (!_disposed &&
+      if (!isDisposed &&
           generation == _loadGeneration &&
           request == _briefRequest) {
         _brief = brief;
       }
     } catch (_) {
-      if (!_disposed &&
+      if (!isDisposed &&
           generation == _loadGeneration &&
           request == _briefRequest) {
         _briefFailed = true;
       }
     } finally {
-      if (!_disposed &&
+      if (!isDisposed &&
           generation == _loadGeneration &&
           request == _briefRequest) {
         _isBriefLoading = false;
         notifyListeners();
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _disposed = true;
-    super.dispose();
   }
 }

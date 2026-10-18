@@ -18,7 +18,7 @@ Every iteration below delivers part of this description. In v1, the "AI" feature
 
 ## Starting point
 
-The repo is the default Flutter template. [lib/main.dart](lib/main.dart) is the counter demo, [test/widget_test.dart](test/widget_test.dart) is the counter test, and [pubspec.yaml](pubspec.yaml) only has `cupertino_icons`. The SDK is Flutter 3.47.6 / Dart 3.13.5. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
+The project began as the default Flutter template. It now implements v0.1–v0.6, including the editorial redesign, Case workspace, and Research hub. The pinned development/CI SDK is Flutter 3.47.2 / Dart 3.13.2; dependency versions are committed in `pubspec.lock`. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
 
 ## Alpha target: web only
 
@@ -192,7 +192,7 @@ assets/           fonts/, images/
 ### v0.7: Team tab and Assign Role page (roles and task queues)
 - `team_page.dart`: roster readiness card, Prosecution / Defense / Witnesses segmented control, attorneys and witness roles, open-slot tiles, and an entry point to team chat.
 - `assign_role_page.dart` (`/team/assign/:roleId`): role hero, a responsibilities checklist, and AI-match teammate suggestions from a pure `TeammateMatcher`. The "Assign {name} & notify team" button assigns the role and adds its responsibilities to that teammate's task queue.
-- Tests: the matcher ranking rules, the segmented filter, the button label updating, assignment filling the slot, creating tasks in that teammate's queue, and raising readiness on Team and Home.
+- Tests: the matcher ranking rules, the segmented filter, the button label updating, assignment filling the slot, creating tasks in that teammate's queue, and recomputing task completion consistently on Team and Home. Assigning unfinished responsibilities can lower the completion percentage; role coverage must be shown as a separate metric and must not be presented as completed preparation.
 
 ### v0.8: Me tab and Practice Schedule page (prep checklists and schedule)
 - `me_page.dart`: profile hero, stats row, "My tasks" (your personal prep checklist from the task queue), and a quick access grid.
@@ -201,8 +201,8 @@ assets/           fonts/, images/
 
 ### v0.9: Examination Builder page (examination scripts)
 - `examination_page.dart` (`/case/witness/:id/exam`): witness hero, stats (Drafted, Evidence-linked, Flagged), the examination goal, and the question line with exhibit tags.
-- Add, edit, reorder, and delete questions. "Suggest with AI" uses mock suggestions. An estimated time is shown against the matching timing rule from v0.5.
-- Tests: create, edit, reorder, and delete; stats recompute; linking an exhibit adds a tag and a "Cited in" entry; a warning appears when the estimate is over the limit.
+- Add, edit, reorder, and delete questions. "Suggest with AI" uses mock suggestions. An estimated time is shown against the matching timing rule from v0.5. Direct and cross budgets are shared per side across all witnesses: compare the combined script estimates against that shared budget (or an explicitly allocated per-witness portion), not each script independently against the full limit.
+- Tests: create, edit, reorder, and delete; stats recompute; linking an exhibit adds a tag and a "Cited in" entry; a warning appears when the combined per-side estimate is over the shared limit, including when every individual script would fit by itself.
 
 ### v0.10: Team chat page (coordination)
 - `team_chat_page.dart` (`/team/chat`): a single team channel with message tiles and an input bar. Messages can mention a task or an exhibit. Uses `MockChatRepository` (local only in v1; real-time comes with Firestore).

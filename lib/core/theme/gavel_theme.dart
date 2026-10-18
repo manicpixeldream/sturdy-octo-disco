@@ -129,8 +129,14 @@ abstract final class GavelTheme {
         ),
       ),
       textSelectionTheme: TextSelectionThemeData(
-        cursorColor: scheme.primary,
-        selectionColor: scheme.primary.withValues(alpha: 0.16),
+        cursorColor: scheme.brightness == Brightness.dark
+            ? scheme.secondary
+            : scheme.primary,
+        selectionColor:
+            (scheme.brightness == Brightness.dark
+                    ? scheme.secondary
+                    : scheme.primary)
+                .withValues(alpha: 0.16),
       ),
       popupMenuTheme: PopupMenuThemeData(
         color: scheme.surface,

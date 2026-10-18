@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
+import 'load_controller.dart';
 
 import '../data/models/teammate.dart';
 import '../data/repositories/team_repository.dart';
 
-class TeamController extends ChangeNotifier {
+class TeamController extends LoadController {
   TeamController(this._repository);
 
   final TeamRepository _repository;
@@ -21,7 +21,9 @@ class TeamController extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    _teammates = await _repository.fetchTeammates();
-    notifyListeners();
+    await loadWith(
+      _repository.fetchTeammates,
+      (records) => _teammates = List.unmodifiable(records),
+    );
   }
 }

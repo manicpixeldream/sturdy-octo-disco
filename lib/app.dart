@@ -3,6 +3,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 import 'core/clock.dart';
+import 'data/services/research_service.dart';
+import 'data/mock/mock_research_service.dart';
+import 'state/research_controller.dart';
 import 'core/router/app_router.dart';
 import 'core/router/routes.dart';
 import 'data/mock/mock_case_repository.dart';
@@ -30,6 +33,7 @@ class GavelApp extends StatefulWidget {
     this.teamRepository,
     this.taskRepository,
     this.caseBriefService,
+    this.researchService,
   });
 
   final String initialLocation;
@@ -39,6 +43,7 @@ class GavelApp extends StatefulWidget {
   final TeamRepository? teamRepository;
   final TaskRepository? taskRepository;
   final CaseBriefService? caseBriefService;
+  final ResearchService? researchService;
 
   @override
   State<GavelApp> createState() => _GavelAppState();
@@ -53,6 +58,7 @@ class _GavelAppState extends State<GavelApp> {
   late final CaseController _case;
   late final TeamController _team;
   late final TaskController _tasks;
+  late final ResearchController _research;
 
   @override
   void initState() {
@@ -63,20 +69,27 @@ class _GavelAppState extends State<GavelApp> {
       currentTeammateId: seed.currentTeammateId,
       clock: clock,
     );
+    final caseRepository =
+        widget.caseRepository ??
+        MockCaseRepository(
+          activeCase: seed.caseFile,
+          exhibits: seed.exhibits,
+          witnesses: seed.witnesses,
+          affidavits: seed.affidavits,
+          stipulations: seed.stipulations,
+          timingRules: seed.timingRules,
+        );
     _case = CaseController(
-      widget.caseRepository ??
-          MockCaseRepository(
-            activeCase: seed.caseFile,
-            exhibits: seed.exhibits,
-            witnesses: seed.witnesses,
-            affidavits: seed.affidavits,
-            stipulations: seed.stipulations,
-            timingRules: seed.timingRules,
-          ),
+      caseRepository,
       clock,
       briefService:
           widget.caseBriefService ?? MockCaseBriefService(seed.caseBrief),
     )..load();
+    _research = ResearchController(
+      widget.researchService ??
+          MockResearchService(caseRepository: caseRepository),
+      _case,
+    );
     _team = TeamController(
       widget.teamRepository ?? MockTeamRepository(seed.teammates),
     )..load();
@@ -90,6 +103,7 @@ class _GavelAppState extends State<GavelApp> {
     _router.dispose();
     _theme.dispose();
     _session.dispose();
+    _research.dispose();
     _case.dispose();
     _team.dispose();
     _tasks.dispose();
@@ -105,6 +119,7 @@ class _GavelAppState extends State<GavelApp> {
         ChangeNotifierProvider.value(value: _case),
         ChangeNotifierProvider.value(value: _team),
         ChangeNotifierProvider.value(value: _tasks),
+        ChangeNotifierProvider.value(value: _research),
       ],
       child: Consumer<ThemeController>(
         builder: (context, themeController, _) => MaterialApp.router(

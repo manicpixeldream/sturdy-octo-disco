@@ -12,6 +12,7 @@ import '../../../data/models/case_brief.dart';
 class CaseBriefSection extends StatelessWidget {
   const CaseBriefSection({
     super.key,
+    this.factKeys,
     required this.brief,
     required this.isLoading,
     required this.failed,
@@ -20,6 +21,7 @@ class CaseBriefSection extends StatelessWidget {
     required this.onOpenEvidence,
   });
 
+  final Map<String, GlobalKey>? factKeys;
   final CaseBrief? brief;
   final bool isLoading;
   final bool failed;
@@ -75,11 +77,14 @@ class CaseBriefSection extends StatelessWidget {
             children: [
               const SectionHeader(title: 'Key facts & evidence'),
               for (final fact in data.facts)
-                BriefFactCard(
-                  key: GavelKeys.caseRecord(fact.id),
-                  fact: fact,
-                  sourceLabel: sourceLabel,
-                  onOpenEvidence: onOpenEvidence,
+                KeyedSubtree(
+                  key: factKeys?[fact.id],
+                  child: BriefFactCard(
+                    key: GavelKeys.caseRecord(fact.id),
+                    fact: fact,
+                    sourceLabel: sourceLabel,
+                    onOpenEvidence: onOpenEvidence,
+                  ),
                 ),
             ],
           ),
