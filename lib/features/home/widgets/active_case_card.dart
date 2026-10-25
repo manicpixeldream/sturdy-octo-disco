@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../../../core/dates.dart';
+import '../../../core/widgets/trial_countdown.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/progress_bar.dart';
 import '../../../core/widgets/status_pill.dart';
@@ -31,7 +31,7 @@ class ActiveCaseCard extends StatelessWidget {
           child: Text(caseFile.title, style: text.displayMedium),
         ),
         const SizedBox(height: Spacing.sm),
-        Text(trialCountdownLabel(daysUntilTrial), style: text.bodySmall),
+        TrialCountdown(days: daysUntilTrial),
         const SizedBox(height: Spacing.xl),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),

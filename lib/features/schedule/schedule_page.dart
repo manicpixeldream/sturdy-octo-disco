@@ -1,3 +1,5 @@
+import '../../core/widgets/trial_countdown.dart';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -46,12 +48,10 @@ class SchedulePage extends StatelessWidget {
               onRetry: caseState.load,
             )
           else if (caseState.activeCase != null)
-            Text(
-              trialCountdownLabel(
-                daysBetween(
-                  session.clock.now(),
-                  caseState.activeCase!.trialDate,
-                ),
+            TrialCountdown(
+              days: daysBetween(
+                session.clock.now(),
+                caseState.activeCase!.trialDate,
               ),
             ),
           const SizedBox(height: Spacing.md),

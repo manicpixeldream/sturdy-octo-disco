@@ -237,6 +237,8 @@ void main() {
     await select(tester, 'brief');
     final retry = find.byKey(GavelKeys.caseBriefRetry);
     await tester.ensureVisible(retry);
+    await tester.pumpAndSettle();
+    expect(retry.hitTestable(), findsOneWidget);
     await tester.tap(retry);
     await tester.pumpAndSettle();
     expect(find.text('Key facts & evidence'), findsOneWidget);

@@ -1,7 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../../core/dates.dart';
+import '../../../core/widgets/trial_countdown.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../data/models/case_file.dart';
 
@@ -42,19 +42,11 @@ class CaseHeaderCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Spacing.md),
-          Wrap(
-            spacing: Spacing.lg,
-            runSpacing: Spacing.xs,
-            children: [
-              Text(
-                DateFormat.yMMMd().format(caseFile.trialDate),
-                style: theme.textTheme.bodySmall,
-              ),
-              Text(
-                trialCountdownLabel(daysUntilTrial),
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
+          TrialCountdown(days: daysUntilTrial),
+          const SizedBox(height: Spacing.sm),
+          Text(
+            DateFormat.yMMMd().format(caseFile.trialDate),
+            style: theme.textTheme.bodySmall,
           ),
         ],
       );
