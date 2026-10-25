@@ -18,7 +18,7 @@ Every iteration below delivers part of this description. In v1, the "AI" feature
 
 ## Starting point
 
-The project began as the default Flutter template. It now implements v0.1–v0.6, including the editorial redesign, Case workspace, and Research hub. The pinned development/CI SDK is Flutter 3.47.2 / Dart 3.13.2; dependency versions are committed in `pubspec.lock`. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
+The project began as the default Flutter template. It now implements v0.1–v0.8, including the editorial redesign, Case workspace, Research hub, Team role assignments, Profile checklists, and Practice Schedule. The pinned development/CI SDK is Flutter 3.47.2 / Dart 3.13.2; dependency versions are committed in `pubspec.lock`. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
 
 ## Alpha target: web only
 
@@ -190,13 +190,13 @@ assets/           fonts/, images/
 - Tests: sending a message adds the user message, then a loading state, then the reply. Suggestion chips send their text. Saving a source adds it to the Library. "Cited in" updates when a citation is added.
 
 ### v0.7: Team tab and Assign Role page (roles and task queues)
-- `team_page.dart`: roster readiness card, Prosecution / Defense / Witnesses segmented control, attorneys and witness roles, open-slot tiles, and an entry point to team chat.
-- `assign_role_page.dart` (`/team/assign/:roleId`): role hero, a responsibilities checklist, and AI-match teammate suggestions from a pure `TeammateMatcher`. The "Assign {name} & notify team" button assigns the role and adds its responsibilities to that teammate's task queue.
+- `team_page.dart`: roster readiness card, Prosecution / Defense segmented control with attorneys and witnesses grouped under each side, attorneys and witness roles, open-slot tiles, and an entry point to team chat.
+- `assign_role_page.dart` (`/team/assign/:roleId`): role hero, a responsibilities checklist, and AI-match teammate suggestions from a pure `TeammateMatcher`. The "Assign {name}" button assigns the role and adds its responsibilities to that teammate's task queue. The local alpha explicitly states that no notification is sent. Suggestions rank unfinished task workload, then name and ID; they are demo suggestions, not live AI. Assignments last for the session; filled slots are read-only in this slice.
 - Tests: the matcher ranking rules, the segmented filter, the button label updating, assignment filling the slot, creating tasks in that teammate's queue, and recomputing task completion consistently on Team and Home. Assigning unfinished responsibilities can lower the completion percentage; role coverage must be shown as a separate metric and must not be presented as completed preparation.
 
 ### v0.8: Me tab and Practice Schedule page (prep checklists and schedule)
 - `me_page.dart`: profile hero, stats row, "My tasks" (your personal prep checklist from the task queue), and a quick access grid.
-- `schedule_page.dart` (`/me/schedule`): countdown hero, week strip, upcoming sessions, and a weekly goal card.
+- `schedule_page.dart` (`/me/schedule`): countdown hero, week strip, upcoming sessions, and a weekly goal card. The goal counts the current teammate’s scheduled minutes in the entire selected calendar week (Monday–Sunday), independent of the day filter; it measures planning, not attendance. Task changes and schedules remain session-only mocks.
 - Tests: checking off a task updates the stats and Home, each quick-access tile opens the right route, the week strip filters sessions, and the weekly goal math is correct.
 
 ### v0.9: Examination Builder page (examination scripts)

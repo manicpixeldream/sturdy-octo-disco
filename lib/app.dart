@@ -1,3 +1,10 @@
+import 'data/mock/mock_schedule_repository.dart';
+import 'data/repositories/schedule_repository.dart';
+import 'state/schedule_controller.dart';
+import 'data/mock/mock_role_repository.dart';
+import 'data/repositories/role_repository.dart';
+import 'state/role_controller.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -34,6 +41,8 @@ class GavelApp extends StatefulWidget {
     this.taskRepository,
     this.caseBriefService,
     this.researchService,
+    this.roleRepository,
+    this.scheduleRepository,
   });
 
   final String initialLocation;
@@ -44,6 +53,8 @@ class GavelApp extends StatefulWidget {
   final TaskRepository? taskRepository;
   final CaseBriefService? caseBriefService;
   final ResearchService? researchService;
+  final RoleRepository? roleRepository;
+  final ScheduleRepository? scheduleRepository;
 
   @override
   State<GavelApp> createState() => _GavelAppState();
@@ -59,6 +70,8 @@ class _GavelAppState extends State<GavelApp> {
   late final TeamController _team;
   late final TaskController _tasks;
   late final ResearchController _research;
+  late final RoleController _roles;
+  late final ScheduleController _schedule;
 
   @override
   void initState() {
@@ -96,6 +109,23 @@ class _GavelAppState extends State<GavelApp> {
     _tasks = TaskController(
       widget.taskRepository ?? MockTaskRepository(seed.tasks),
     )..load();
+    _schedule = ScheduleController(
+      widget.scheduleRepository ??
+          MockScheduleRepository.demo(
+            clock.now(),
+            seed.teammates.map((m) => m.id).toList(),
+          ),
+      clock,
+      seed.currentTeammateId,
+    )..load();
+    _roles = RoleController(
+      widget.roleRepository ??
+          MockRoleRepository(
+            memberIds: seed.teammates.map((m) => m.id).toSet(),
+            dueDate: seed.caseFile.trialDate,
+          ),
+      _tasks,
+    )..load();
   }
 
   @override
@@ -106,6 +136,8 @@ class _GavelAppState extends State<GavelApp> {
     _research.dispose();
     _case.dispose();
     _team.dispose();
+    _schedule.dispose();
+    _roles.dispose();
     _tasks.dispose();
     super.dispose();
   }
@@ -119,6 +151,8 @@ class _GavelAppState extends State<GavelApp> {
         ChangeNotifierProvider.value(value: _case),
         ChangeNotifierProvider.value(value: _team),
         ChangeNotifierProvider.value(value: _tasks),
+        ChangeNotifierProvider.value(value: _roles),
+        ChangeNotifierProvider.value(value: _schedule),
         ChangeNotifierProvider.value(value: _research),
       ],
       child: Consumer<ThemeController>(

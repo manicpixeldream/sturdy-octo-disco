@@ -1,3 +1,6 @@
+import '../../features/schedule/schedule_page.dart';
+import '../../features/team/assign_role_page.dart';
+
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
@@ -56,8 +59,35 @@ GoRouter createAppRouter({String initialLocation = Routes.home}) {
               ),
             ],
           ),
-          _branch(Routes.team, const TeamPage()),
-          _branch(Routes.me, const MePage()),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.team,
+                builder: (context, state) => const TeamPage(),
+                routes: [
+                  GoRoute(
+                    path: 'assign/:roleId',
+                    builder: (context, state) =>
+                        AssignRolePage(roleId: state.pathParameters['roleId']!),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.me,
+                builder: (context, state) => const MePage(),
+                routes: [
+                  GoRoute(
+                    path: 'schedule',
+                    builder: (context, state) => const SchedulePage(),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
       GoRoute(

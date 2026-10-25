@@ -3,7 +3,11 @@ abstract final class Routes {
   static const String caseFile = '/case';
   static const String research = '/research';
   static const String team = '/team';
+  static String assignRole(String id) =>
+      '/team/assign/${Uri.encodeComponent(id)}';
+
   static const String me = '/me';
+  static const String schedule = '/me/schedule';
 
   static String affidavit(String id) =>
       '/case/affidavit/${Uri.encodeComponent(id)}';

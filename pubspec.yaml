@@ -2,7 +2,7 @@ name: gavel
 description: "Gavel: AI-assisted mock trial preparation for student competitors."
 publish_to: 'none'
 
-version: 0.6.0+6
+version: 0.8.0+8
 
 environment:
   sdk: ^3.13.2

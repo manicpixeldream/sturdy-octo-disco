@@ -1,9 +1,9 @@
-# Gavel · v0.6 alpha
+# Gavel · v0.8 alpha
 
 An editorial workspace for mock trial preparation, built with Flutter. The alpha
 contains Home, the six-section Case workspace, a source-linked Research hub,
-and the shared navigation/design system. Team roles, personal task editing,
-schedules, examinations, and team chat remain future milestones in [plan.md](plan.md).
+the Team roster and role assignment workflow, Profile checklists, Practice Schedule,
+and the shared navigation/design system. Examinations and team chat remain future milestones in [plan.md](plan.md).
 
 ## Run locally
 
@@ -18,6 +18,38 @@ flutter run -d chrome
 The UI supports phone, tablet, and desktop widths. Global navigation changes
 from a bottom bar to a sidebar on wider screens. The bundled Fraunces and Inter
 fonts work without a font service.
+
+## Profile and Practice Schedule in v0.8
+
+Profile shows the demo teammate, assigned/complete/remaining task counts, a
+personal completion bar and a checkbox checklist. Completion changes are saved
+through TaskRepository, update Home and Team, and can be reversed. Role
+responsibility task completion survives controller reloads in the same session.
+A failed save keeps the previous checkbox value and offers retry.
+
+Quick access opens Schedule, Case, Research, Team and the existing theme gallery.
+Practice Schedule includes a trial countdown, previous/next week controls, a
+Monday–Sunday day strip, upcoming/ongoing personal sessions and a weekly planning
+goal. The goal counts scheduled minutes for the entire selected week, including
+earlier sessions; selecting a day only filters the list. It does not measure
+attendance. Times use the device's local time. The sample goal is 180 minutes.
+
+Schedules are read-only; task completion and assignments last only for the app
+session. Reloading resets the demo data. No backend or notification service is
+connected.
+
+## Team in v0.7
+
+Team separates role coverage from task completion. Filter prosecution/defense sides, each with attorney and witness groups, open a role, review its responsibilities, select
+a teammate, and assign it. Each responsibility becomes an unfinished task due on
+the demo trial date. Home and Team share the updated completion percentage.
+Expand a roster member to inspect their task queue.
+
+Suggestions use a deterministic workload ranking (fewest unfinished tasks, then
+name and ID), not live AI or inferred skills. Multiple roles per teammate are
+allowed; users must review trial scheduling and conflicts. Filled roles are
+read-only in this slice. Assignments and their tasks are session-only, and no
+team notification is sent. Team chat remains a v0.10 milestone.
 
 ## Research in v0.6
 
@@ -68,7 +100,13 @@ on macOS. Browser smoke tests are performed by developers, per
   repository error recovery, date-label refresh, explicit demo date behavior,
   aligned SDK configuration, and updated release documentation.
 
-See [v0.6 notes](docs/v0.6-review.md), the
+- **v0.7:** Team roster, trial roles, workload suggestions, atomic local role
+  assignments and responsibility task queues.
+
+- **v0.8:** Profile checklists, shared task completion, quick access, and a
+  personal practice schedule with day/week filtering and weekly planning goals.
+
+See [v0.8 notes](docs/v0.8-review.md), [v0.7 notes](docs/v0.7-review.md), [v0.6 notes](docs/v0.6-review.md), the
 [original review](docs/v0.5-review.md), and the
 [design notes](docs/ui-redesign.md). Release tags are created after the manual
 smoke test; the version in `pubspec.yaml` describes the implemented feature slice.
