@@ -1,3 +1,6 @@
+import 'data/repositories/chat_repository.dart';
+import 'data/mock/mock_chat_repository.dart';
+import 'state/chat_controller.dart';
 import 'data/repositories/exam_repository.dart';
 import 'data/services/exam_suggestion_service.dart';
 import 'data/mock/mock_exam_repository.dart';
@@ -50,6 +53,7 @@ class GavelApp extends StatefulWidget {
     this.scheduleRepository,
     this.examRepository,
     this.examSuggestionService,
+    this.chatRepository,
   });
 
   final String initialLocation;
@@ -64,6 +68,7 @@ class GavelApp extends StatefulWidget {
   final ScheduleRepository? scheduleRepository;
   final ExamRepository? examRepository;
   final ExamSuggestionService? examSuggestionService;
+  final ChatRepository? chatRepository;
 
   @override
   State<GavelApp> createState() => _GavelAppState();
@@ -82,6 +87,7 @@ class _GavelAppState extends State<GavelApp> {
   late final RoleController _roles;
   late final ScheduleController _schedule;
   late final ExamController _exams;
+  late final ChatController _chat;
 
   @override
   void initState() {
@@ -134,6 +140,14 @@ class _GavelAppState extends State<GavelApp> {
       clock,
       seed.currentTeammateId,
     )..load();
+    _chat = ChatController(
+      widget.chatRepository ?? MockChatRepository(),
+      _case,
+      _team,
+      _tasks,
+      _session.clock,
+      _session.currentTeammateId,
+    );
     _roles = RoleController(
       widget.roleRepository ??
           MockRoleRepository(
@@ -149,6 +163,7 @@ class _GavelAppState extends State<GavelApp> {
     _router.dispose();
     _theme.dispose();
     _session.dispose();
+    _chat.dispose();
     _exams.dispose();
     _research.dispose();
     _case.dispose();
@@ -171,6 +186,7 @@ class _GavelAppState extends State<GavelApp> {
         ChangeNotifierProvider.value(value: _roles),
         ChangeNotifierProvider.value(value: _schedule),
         ChangeNotifierProvider.value(value: _exams),
+        ChangeNotifierProvider.value(value: _chat),
         ChangeNotifierProvider.value(value: _research),
       ],
       child: Consumer<ThemeController>(

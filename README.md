@@ -1,9 +1,9 @@
-# Gavel · v0.9 alpha
+# Gavel · v0.10 alpha
 
 An editorial workspace for mock trial preparation, built with Flutter. The alpha
 contains Home, the Case workspace, a source-linked Research hub,
 the Team roster and role assignment workflow, Profile checklists, Practice Schedule,
-Examination Builder and the shared navigation/design system.
+Examination Builder, Team Chat, and the shared navigation/design system.
 Onboarding and alpha hardening remain in [plan.md](plan.md).
 
 ## Run locally
@@ -19,6 +19,26 @@ flutter run -d chrome
 The UI supports phone, tablet, and desktop widths. Global navigation changes
 from a bottom bar to a sidebar on wider screens. The bundled Fraunces and Inter
 fonts work without a font service.
+
+## Team Chat in v0.10
+
+Open Team → Open team chat. The single active-case demo channel supports text,
+task/exhibit references, and message timestamps. Use Link item to search and
+select up to five references; links can also be sent without accompanying text.
+Plain typed names are not automatically converted into links.
+
+Task references open a task detail view with the actual assignee, due status and
+completion. Your own tasks offer a route to your Profile checklist; teammates'
+tasks are read-only. Exhibit references open the existing Research source reader.
+Mentioning an exhibit does not create an examination or brief citation.
+
+The composer retains drafts and selected links after a failed send. Retrying an
+unchanged draft reuses its message ID, preventing duplicate sends. Ctrl+Enter or
+Cmd+Enter sends; Enter adds a newline. Loading errors have retry controls.
+
+Messages and drafts are local to the current app session. Reloading resets them.
+No real teammates receive messages, and there is no live sync, notification,
+read-receipt or online-presence service in this alpha.
 
 ## Examination Builder in v0.9
 
@@ -72,7 +92,7 @@ Suggestions use a deterministic workload ranking (fewest unfinished tasks, then
 name and ID), not live AI or inferred skills. Multiple roles per teammate are
 allowed; users must review trial scheduling and conflicts. Filled roles are
 read-only in this slice. Assignments and their tasks are session-only, and no
-team notification is sent.
+team notification is sent. Team chat is available in v0.10.
 
 ## Research in v0.6
 
@@ -138,7 +158,10 @@ on macOS. Browser smoke tests are performed by developers, per
 - **v0.9:** Examination goals, question editing/reordering, exhibit citations,
   prepared suggestions, and shared per-side timing checks.
 
-See [v0.9 notes](docs/v0.9-review.md), [v0.8 notes](docs/v0.8-review.md), [v0.7 notes](docs/v0.7-review.md), [v0.6 notes](docs/v0.6-review.md), the
+- **v0.10:** Local Team Chat, task/exhibit references, linked task details,
+  draft-preserving retry and idempotent message persistence.
+
+See [v0.10 notes](docs/v0.10-review.md), [v0.9 notes](docs/v0.9-review.md), [v0.8 notes](docs/v0.8-review.md), [v0.7 notes](docs/v0.7-review.md), [v0.6 notes](docs/v0.6-review.md), the
 [original review](docs/v0.5-review.md), and the
 [design notes](docs/ui-redesign.md). Release tags are created after the manual
 smoke test; the version in `pubspec.yaml` describes the implemented feature slice.

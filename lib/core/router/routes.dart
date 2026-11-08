@@ -3,6 +3,9 @@ abstract final class Routes {
   static const String caseFile = '/case';
   static const String research = '/research';
   static const String team = '/team';
+  static const String teamChat = '/team/chat';
+  static String teamTask(String id) =>
+      Uri(pathSegments: ['', 'team', 'task', id]).toString();
   static String assignRole(String id) =>
       '/team/assign/${Uri.encodeComponent(id)}';
 

@@ -44,6 +44,13 @@ class _TeamPageState extends State<TeamPage> {
           ),
           const SizedBox(height: Spacing.md),
           const Text('A shared strategy starts with clear responsibilities.'),
+          const SizedBox(height: Spacing.md),
+          OutlinedButton.icon(
+            key: const ValueKey('team_open_chat'),
+            onPressed: () => context.push(Routes.teamChat),
+            icon: const Icon(Icons.chat_bubble_outline, size: 18),
+            label: const Text('Open team chat'),
+          ),
           const SizedBox(height: Spacing.lg),
           if (failed)
             LoadFailure(
@@ -131,7 +138,7 @@ class _TeamPageState extends State<TeamPage> {
             ),
             const SectionHeader(title: 'Team coordination'),
             const Text(
-              'Team chat arrives in v0.10. Assignments and tasks are local to this session; no notifications are sent. Reloading resets them.',
+              'Use Team chat to discuss tasks and exhibits. Chat, assignments and task changes last for this session only. No real messages or notifications are sent. Reloading resets demo data.',
             ),
           ],
         ],

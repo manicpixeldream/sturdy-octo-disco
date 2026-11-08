@@ -1,3 +1,4 @@
+import 'package:gavel/data/repositories/chat_repository.dart';
 import 'package:gavel/data/repositories/exam_repository.dart';
 import 'package:gavel/data/services/exam_suggestion_service.dart';
 import 'package:gavel/data/repositories/schedule_repository.dart';
@@ -44,6 +45,7 @@ Future<void> pumpGavelApp(
   ScheduleRepository? scheduleRepository,
   ExamRepository? examRepository,
   ExamSuggestionService? examSuggestionService,
+  ChatRepository? chatRepository,
 }) async {
   await tester.pumpWidget(
     GavelApp(
@@ -59,6 +61,7 @@ Future<void> pumpGavelApp(
       scheduleRepository: scheduleRepository,
       examRepository: examRepository,
       examSuggestionService: examSuggestionService,
+      chatRepository: chatRepository,
     ),
   );
   await tester.pumpAndSettle();

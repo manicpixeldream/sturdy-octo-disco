@@ -1,3 +1,5 @@
+import '../../features/team/team_chat_page.dart';
+import '../../features/team/task_detail_page.dart';
 import '../../features/examination/examination_page.dart';
 import '../../data/models/timing_rule.dart';
 import '../../features/schedule/schedule_page.dart';
@@ -77,6 +79,15 @@ GoRouter createAppRouter({String initialLocation = Routes.home}) {
                 path: Routes.team,
                 builder: (context, state) => const TeamPage(),
                 routes: [
+                  GoRoute(
+                    path: 'chat',
+                    builder: (context, state) => const TeamChatPage(),
+                  ),
+                  GoRoute(
+                    path: 'task/:id',
+                    builder: (context, state) =>
+                        TaskDetailPage(taskId: state.pathParameters['id']!),
+                  ),
                   GoRoute(
                     path: 'assign/:roleId',
                     builder: (context, state) =>
