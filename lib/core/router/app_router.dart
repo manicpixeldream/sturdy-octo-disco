@@ -12,6 +12,8 @@ import '../../features/case_file/case_page.dart';
 import '../../features/case_file/affidavit_page.dart';
 import '../../features/gallery/gallery_page.dart';
 import '../../features/home/home_page.dart';
+import '../../features/onboarding/onboarding.dart';
+import '../../features/onboarding/welcome_page.dart';
 import '../../features/me/me_page.dart';
 import '../../features/research/research_page.dart';
 import '../../features/research/source_detail_page.dart';
@@ -19,10 +21,29 @@ import '../../features/team/team_page.dart';
 import '../widgets/app_shell.dart';
 import 'routes.dart';
 
-GoRouter createAppRouter({String initialLocation = Routes.home}) {
+GoRouter createAppRouter({
+  String initialLocation = Routes.home,
+  Onboarding? onboarding,
+}) {
   return GoRouter(
     initialLocation: initialLocation,
+    redirect: (context, state) {
+      final onWelcome = state.uri.path == Routes.welcome;
+      if (onboarding?.isComplete == false) {
+        return onWelcome ? null : Routes.welcome;
+      }
+      return onWelcome ? Routes.home : null;
+    },
     routes: [
+      GoRoute(
+        path: Routes.welcome,
+        builder: (context, state) => WelcomePage(
+          onEnter: () {
+            onboarding?.complete();
+            context.go(Routes.home);
+          },
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             AppShell(navigationShell: navigationShell),

@@ -1,10 +1,10 @@
-# Gavel · v0.10 alpha
+# Gavel · v0.11 alpha
 
 An editorial workspace for mock trial preparation, built with Flutter. The alpha
 contains Home, the Case workspace, a source-linked Research hub,
 the Team roster and role assignment workflow, Profile checklists, Practice Schedule,
 Examination Builder, Team Chat, and the shared navigation/design system.
-Onboarding and alpha hardening remain in [plan.md](plan.md).
+Alpha hardening remains in [plan.md](plan.md).
 
 ## Run locally
 
@@ -19,6 +19,12 @@ flutter run -d chrome
 The UI supports phone, tablet, and desktop widths. Global navigation changes
 from a bottom bar to a sidebar on wider screens. The bundled Fraunces and Inter
 fonts work without a font service.
+
+## Welcome in v0.11
+
+The first visit opens Welcome. Select **Enter the war room** to go to Home.
+The browser remembers this choice for the same site and profile. If site
+storage is unavailable, Welcome stays dismissed for the current session.
 
 ## Team Chat in v0.10
 

@@ -33,6 +33,7 @@ import 'data/repositories/case_repository.dart';
 import 'data/repositories/task_repository.dart';
 import 'data/repositories/team_repository.dart';
 import 'state/case_controller.dart';
+import 'features/onboarding/onboarding.dart';
 import 'state/session_controller.dart';
 import 'state/task_controller.dart';
 import 'state/team_controller.dart';
@@ -42,6 +43,7 @@ class GavelApp extends StatefulWidget {
   const GavelApp({
     super.key,
     this.initialLocation = Routes.home,
+    this.onboarding,
     this.clock,
     this.seed,
     this.caseRepository,
@@ -57,6 +59,7 @@ class GavelApp extends StatefulWidget {
   });
 
   final String initialLocation;
+  final Onboarding? onboarding;
   final Clock? clock;
   final SeedData? seed;
   final CaseRepository? caseRepository;
@@ -77,6 +80,7 @@ class GavelApp extends StatefulWidget {
 class _GavelAppState extends State<GavelApp> {
   late final GoRouter _router = createAppRouter(
     initialLocation: widget.initialLocation,
+    onboarding: widget.onboarding,
   );
   late final ThemeController _theme = ThemeController();
   late final SessionController _session;
