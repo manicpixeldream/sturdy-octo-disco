@@ -10,11 +10,13 @@ class QuestionEditorSheet extends StatefulWidget {
     super.key,
     required this.questionId,
     required this.exhibits,
+    required this.sourceLabel,
     required this.onSave,
     this.initial,
   });
   final String questionId;
   final List<Exhibit> exhibits;
+  final String Function(String) sourceLabel;
   final ExamQuestion? initial;
   final Future<bool> Function(ExamQuestion) onSave;
   @override
@@ -28,6 +30,7 @@ class _QuestionEditorSheetState extends State<QuestionEditorSheet> {
     text: '${widget.initial?.estimatedSeconds ?? 45}',
   );
   late final Set<String> _exhibits = {...?widget.initial?.exhibitIds};
+  late final _sources = {...?widget.initial?.sourceIds};
   late bool _flagged = widget.initial?.flagged ?? false;
   bool _saving = false, _failed = false;
   @override
@@ -49,6 +52,7 @@ class _QuestionEditorSheetState extends State<QuestionEditorSheet> {
         text: _text.text,
         estimatedSeconds: int.parse(_seconds.text),
         exhibitIds: _exhibits.toList(),
+        sourceIds: _sources.toList(),
         flagged: _flagged,
       ),
     );
@@ -144,6 +148,26 @@ class _QuestionEditorSheetState extends State<QuestionEditorSheet> {
                       ),
                   ],
                 ),
+                if (_sources.isNotEmpty) ...[
+                  const SizedBox(height: Spacing.lg),
+                  const Text('Attached research sources'),
+                  Wrap(
+                    spacing: Spacing.sm,
+                    runSpacing: Spacing.sm,
+                    children: [
+                      for (final id in _sources)
+                        InputChip(
+                          key: ValueKey('question_source_$id'),
+                          label: Text(widget.sourceLabel(id)),
+                          deleteButtonTooltipMessage:
+                              'Remove ${widget.sourceLabel(id)}',
+                          onDeleted: _saving
+                              ? null
+                              : () => setState(() => _sources.remove(id)),
+                        ),
+                    ],
+                  ),
+                ],
                 CheckboxListTile(
                   key: const ValueKey('question_flagged'),
                   contentPadding: EdgeInsets.zero,

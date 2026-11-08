@@ -12,6 +12,8 @@ abstract final class Routes {
 
   static const String me = '/me';
   static const String schedule = '/me/schedule';
+  static String practiceAgenda(String id) =>
+      Uri(pathSegments: ['', 'me', 'schedule', id]).toString();
 
   static String exam(
     String witnessId, {
@@ -39,6 +41,11 @@ abstract final class Routes {
   static String caseBrief(String id) => Uri(
     path: caseFile,
     queryParameters: {'section': 'brief', 'fact': id},
+  ).toString();
+
+  static String argument(String phase) => Uri(
+    path: caseFile,
+    queryParameters: {'section': 'arguments', 'phase': phase},
   ).toString();
 
   static const String gallery = '/gallery';

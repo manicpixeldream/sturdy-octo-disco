@@ -10,13 +10,15 @@ import '../../core/widgets/workspace_page.dart';
 import '../../core/widgets/workspace_scroll_view.dart';
 import '../../state/case_controller.dart';
 import '../../state/research_controller.dart';
+import 'research_context.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/library_list.dart';
 import 'widgets/research_input_bar.dart';
 import 'widgets/suggestion_chips.dart';
 
 class ResearchPage extends StatefulWidget {
-  const ResearchPage({super.key, this.messageId});
+  const ResearchPage({super.key, this.messageId, this.work});
+  final ResearchContext? work;
   final String? messageId;
   @override
   State<ResearchPage> createState() => _ResearchPageState();
@@ -38,7 +40,8 @@ class _ResearchPageState extends State<ResearchPage> {
     }
   }
 
-  void _openSource(String id) => context.push(Routes.researchSource(id));
+  void _openSource(String id) =>
+      context.push(Routes.researchSource(id), extra: widget.work);
   Future<bool> _send(String question) =>
       context.read<ResearchController>().send(question);
 
@@ -88,6 +91,12 @@ class _ResearchPageState extends State<ResearchPage> {
       child: Builder(
         builder: (context) => WorkspacePage(
           title: 'AI research',
+          leading: widget.work == null
+              ? null
+              : BackButton(
+                  key: const ValueKey('research_back_to_work'),
+                  onPressed: () => context.pop(),
+                ),
           child: cases.loadFailed
               ? Center(
                   child: LoadFailure(
@@ -107,87 +116,109 @@ class _ResearchPageState extends State<ResearchPage> {
               : LayoutBuilder(
                   builder: (context, constraints) {
                     final compact = constraints.maxHeight < 500;
+                    final veryShort = constraints.maxHeight < 220;
+                    final hideModes =
+                        !_library &&
+                        constraints.maxHeight < 120 &&
+                        MediaQuery.viewInsetsOf(context).bottom > 0;
                     return Column(
                       children: [
-                        Align(
-                          alignment: Alignment.topCenter,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 928),
-                            child: Padding(
-                              padding: EdgeInsets.fromLTRB(
-                                Spacing.xl,
-                                compact ? Spacing.xs : Spacing.lg,
-                                Spacing.xl,
-                                Spacing.sm,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (!compact) ...[
-                                    Text(
-                                      'Research with context.',
-                                      style: theme.textTheme.displaySmall,
-                                    ),
-                                    const SizedBox(height: Spacing.sm),
-                                  ],
-                                  Text(
-                                    '${cases.activeCase?.title ?? 'Case workspace'} · Demo researcher',
-                                    style: theme.textTheme.bodySmall,
-                                  ),
-                                  if (!compact) ...[
-                                    const SizedBox(height: Spacing.xs),
-                                    Text(
-                                      'Prepared answers with traceable sources. No live AI or web search.',
-                                      style: theme.textTheme.bodySmall,
-                                    ),
-                                  ],
-                                  const SizedBox(height: Spacing.sm),
-                                  Row(
-                                    children: [
-                                      Semantics(
-                                        selected: !_library,
-                                        child: TextButton(
-                                          key: const ValueKey(
-                                            'research_ask_mode',
-                                          ),
-                                          onPressed: () =>
-                                              setState(() => _library = false),
-                                          child: Text(
-                                            'Ask',
-                                            style: TextStyle(
-                                              fontWeight: !_library
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w400,
-                                            ),
-                                          ),
-                                        ),
+                        if (!hideModes)
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 928),
+                              child: Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                  Spacing.xl,
+                                  compact ? Spacing.xs : Spacing.lg,
+                                  Spacing.xl,
+                                  Spacing.sm,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (!compact) ...[
+                                      Text(
+                                        'Research with context.',
+                                        style: theme.textTheme.displaySmall,
                                       ),
-                                      Semantics(
-                                        selected: _library,
-                                        child: TextButton(
-                                          key: const ValueKey(
-                                            'research_library_mode',
-                                          ),
-                                          onPressed: () =>
-                                              setState(() => _library = true),
-                                          child: Text(
-                                            'Library (${controller.savedSources.length})',
-                                            style: TextStyle(
-                                              fontWeight: _library
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w400,
-                                            ),
-                                          ),
-                                        ),
+                                      const SizedBox(height: Spacing.sm),
+                                    ],
+                                    if (!veryShort)
+                                      Text(
+                                        '${cases.activeCase?.title ?? 'Case workspace'} · Demo researcher',
+                                        style: theme.textTheme.bodySmall,
+                                      ),
+                                    if (!compact) ...[
+                                      const SizedBox(height: Spacing.xs),
+                                      Text(
+                                        'Prepared answers with traceable sources. No live AI or web search.',
+                                        style: theme.textTheme.bodySmall,
                                       ),
                                     ],
-                                  ),
-                                  const Divider(),
-                                ],
+                                    if (widget.work case final work?
+                                        when !veryShort) ...[
+                                      Text(
+                                        'Research for ${work.label}',
+                                        style: theme.textTheme.bodySmall,
+                                      ),
+                                      if (work.excerpt case final excerpt?)
+                                        Text(
+                                          excerpt,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.bodySmall,
+                                        ),
+                                    ],
+                                    const SizedBox(height: Spacing.sm),
+                                    Row(
+                                      children: [
+                                        Semantics(
+                                          selected: !_library,
+                                          child: TextButton(
+                                            key: const ValueKey(
+                                              'research_ask_mode',
+                                            ),
+                                            onPressed: () => setState(
+                                              () => _library = false,
+                                            ),
+                                            child: Text(
+                                              'Ask',
+                                              style: TextStyle(
+                                                fontWeight: !_library
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w400,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Semantics(
+                                          selected: _library,
+                                          child: TextButton(
+                                            key: const ValueKey(
+                                              'research_library_mode',
+                                            ),
+                                            onPressed: () =>
+                                                setState(() => _library = true),
+                                            child: Text(
+                                              'Library (${controller.savedSources.length})',
+                                              style: TextStyle(
+                                                fontWeight: _library
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w400,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
                         Expanded(
                           child: IndexedStack(
                             index: _library ? 1 : 0,
@@ -343,13 +374,28 @@ class _ResearchPageState extends State<ResearchPage> {
                             ],
                           ),
                         ),
-                        if (!_library)
-                          ResearchInputBar(
-                            enabled:
-                                !controller.isSending &&
-                                !controller.replyFailed,
-                            onSend: _send,
+                        Offstage(
+                          offstage: _library,
+                          child: ExcludeFocus(
+                            excluding: _library,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: veryShort
+                                    ? constraints.maxHeight *
+                                          (hideModes ? .85 : .48)
+                                    : double.infinity,
+                              ),
+                              child: SingleChildScrollView(
+                                child: ResearchInputBar(
+                                  enabled:
+                                      !controller.isSending &&
+                                      !controller.replyFailed,
+                                  onSend: _send,
+                                ),
+                              ),
+                            ),
                           ),
+                        ),
                       ],
                     );
                   },

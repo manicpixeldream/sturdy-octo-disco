@@ -26,10 +26,22 @@ The first visit opens Welcome. Select **Enter the war room** to go to Home.
 The browser remembers this choice for the same site and profile. If site
 storage is unavailable, Welcome stays dismissed for the current session.
 
+## Prep workflow
+
+Open an assignment on Home to reach its linked work or task details. In
+Examination Builder, use **Research** on a question to find and attach a source,
+then use the review status menu to mark the script ready for review or rehearsal.
+Case also opens Research from exhibits and argument drafts. Team Chat's **Drafts**
+picker links to a script or argument.
+
+Open a practice agenda from **Profile → Practice Schedule**. Add scripts and
+arguments, arrange the order, check the time limits and flagged questions, and
+assign follow-up tasks. Drafts, review status, agendas, and tasks reset on reload.
+
 ## Team Chat in v0.10
 
 Open Team → Open team chat. The single active-case demo channel supports text,
-task/exhibit references, and message timestamps. Use Link item to search and
+task, exhibit, and draft references, and message timestamps. Use Link item to search and
 select up to five references; links can also be sent without accompanying text.
 Plain typed names are not automatically converted into links.
 
@@ -83,8 +95,8 @@ goal. The goal counts scheduled minutes for the entire selected week, including
 earlier sessions; selecting a day only filters the list. It does not measure
 attendance. Times use the device's local time. The sample goal is 180 minutes.
 
-Schedules are read-only; task completion and assignments last only for the app
-session. Reloading resets the demo data. No backend or notification service is
+Practice dates and participants are fixed in the demo. Agenda edits, task
+completion, and assignments last only for the app session. Reloading resets the demo data. No backend or notification service is
 connected.
 
 ## Team in v0.7

@@ -11,6 +11,7 @@ import '../../core/widgets/workspace_scroll_view.dart';
 import '../../core/theme/spacing.dart';
 import '../../data/models/case_brief.dart';
 import '../../state/case_controller.dart';
+import '../research/research_context.dart';
 import 'widgets/affidavits_section.dart';
 import 'widgets/arguments_section.dart';
 import 'widgets/case_brief_section.dart';
@@ -23,7 +24,8 @@ import 'widgets/section_chips.dart';
 import 'widgets/stipulations_section.dart';
 
 class CasePage extends StatefulWidget {
-  const CasePage({super.key, this.section, this.factId});
+  const CasePage({super.key, this.section, this.factId, this.argumentPhase});
+  final String? argumentPhase;
   final String? section;
   final String? factId;
 
@@ -171,6 +173,13 @@ class _CasePageState extends State<CasePage> {
                     ),
                     CaseSection.exhibits => ExhibitsSection(
                       exhibits: controller.exhibits,
+                      onResearch: (exhibit) => context.push(
+                        Routes.research,
+                        extra: ResearchContext(
+                          label: '${exhibit.label} · ${exhibit.title}',
+                          excerpt: exhibit.description,
+                        ),
+                      ),
                     ),
                     CaseSection.stipulations => StipulationsSection(
                       stipulations: controller.stipulations,
@@ -178,6 +187,7 @@ class _CasePageState extends State<CasePage> {
                     CaseSection.arguments => ArgumentsSection(
                       key: ValueKey(caseFile.id),
                       caseId: caseFile.id,
+                      selectedPhase: widget.argumentPhase,
                     ),
                     CaseSection.rules => RulesSection(
                       rules: controller.timingRules,

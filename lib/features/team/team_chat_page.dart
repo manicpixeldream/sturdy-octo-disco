@@ -140,7 +140,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(Spacing.xl),
                                 child: Text(
-                                  'Start the conversation. Link a task or exhibit to give your message context.',
+                                  'Start the conversation. Link a task, exhibit, or draft to give your message context.',
                                   key: const ValueKey('chat_empty'),
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.bodyLarge,
@@ -181,17 +181,19 @@ class _TeamChatPageState extends State<TeamChatPage> {
                                                 session.currentTeammateId,
                                             mentionAvailable:
                                                 chat.mentionAvailable,
-                                            onMention: (mention) =>
-                                                context.push(
-                                                  mention.kind ==
-                                                          ChatMentionKind.task
-                                                      ? Routes.teamTask(
-                                                          mention.itemId,
-                                                        )
-                                                      : Routes.researchSource(
-                                                          mention.itemId,
-                                                        ),
-                                                ),
+                                            onMention: (mention) => context
+                                                .push(switch (mention.kind) {
+                                                  ChatMentionKind.task =>
+                                                    Routes.teamTask(
+                                                      mention.itemId,
+                                                    ),
+                                                  ChatMentionKind.exhibit =>
+                                                    Routes.researchSource(
+                                                      mention.itemId,
+                                                    ),
+                                                  ChatMentionKind.draft =>
+                                                    mention.itemId,
+                                                }),
                                           ),
                                       ],
                                     ),

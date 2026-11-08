@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show StringCharacters;
 
 import '../data/models/chat_message.dart';
+import '../data/models/timing_rule.dart';
+import '../core/router/routes.dart';
 import '../data/repositories/chat_repository.dart';
 import 'case_controller.dart';
 import 'team_controller.dart';
@@ -75,6 +77,19 @@ class ChatController extends LoadController {
         itemId: task.id,
         label: task.title,
       ),
+    for (final phase in const [TrialPhase.opening, TrialPhase.closing])
+      ChatMention(
+        kind: ChatMentionKind.draft,
+        itemId: Routes.argument(phase.name),
+        label: phase.label,
+      ),
+    for (final witness in cases.witnesses)
+      for (final phase in const [TrialPhase.direct, TrialPhase.cross])
+        ChatMention(
+          kind: ChatMentionKind.draft,
+          itemId: Routes.exam(witness.id, phase: phase.name),
+          label: '${witness.name} · ${phase.label}',
+        ),
     for (final exhibit in cases.exhibits)
       ChatMention(
         kind: ChatMentionKind.exhibit,

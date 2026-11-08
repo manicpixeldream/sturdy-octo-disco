@@ -56,7 +56,7 @@ class SchedulePage extends StatelessWidget {
             ),
           const SizedBox(height: Spacing.md),
           const Text(
-            'Demo schedule · Dates reset each launch. Times use your device’s local time. Sessions are read-only in this alpha.',
+            'Demo schedule · Dates reset each launch. Times use your device’s local time. Agendas and follow-ups reset on reload.',
           ),
           if (schedule.loadFailed)
             LoadFailure(title: 'Schedule unavailable', onRetry: schedule.load)
@@ -116,6 +116,18 @@ class SchedulePage extends StatelessWidget {
                       key: ValueKey('session_${practice.id}'),
                       session: practice,
                       now: session.clock.now(),
+                      onOpen: () =>
+                          context.push(Routes.practiceAgenda(practice.id)),
+                    ),
+                  if (schedule.pastSessions.isNotEmpty)
+                    const SectionHeader(title: 'Past practices'),
+                  for (final practice in schedule.pastSessions)
+                    SessionTile(
+                      key: ValueKey('session_${practice.id}'),
+                      session: practice,
+                      now: session.clock.now(),
+                      onOpen: () =>
+                          context.push(Routes.practiceAgenda(practice.id)),
                     ),
                 ],
               ),

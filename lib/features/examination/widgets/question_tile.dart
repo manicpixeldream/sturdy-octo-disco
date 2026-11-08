@@ -17,6 +17,8 @@ class QuestionTile extends StatelessWidget {
     required this.onUp,
     required this.onDown,
     required this.onExhibit,
+    required this.onResearch,
+    required this.sourceLabel,
     this.highlighted = false,
   });
   final ExamQuestion question;
@@ -24,6 +26,8 @@ class QuestionTile extends StatelessWidget {
   final Exhibit? Function(String) exhibitById;
   final VoidCallback? onEdit, onDelete, onUp, onDown;
   final ValueChanged<String> onExhibit;
+  final VoidCallback onResearch;
+  final String Function(String) sourceLabel;
   final bool highlighted;
   @override
   Widget build(BuildContext context) {
@@ -64,7 +68,8 @@ class QuestionTile extends StatelessWidget {
               ),
               const SizedBox(height: Spacing.md),
               Text(question.text, style: theme.textTheme.bodyLarge),
-              if (question.exhibitIds.isNotEmpty) ...[
+              if (question.exhibitIds.isNotEmpty ||
+                  question.sourceIds.isNotEmpty) ...[
                 const SizedBox(height: Spacing.md),
                 Wrap(
                   spacing: Spacing.sm,
@@ -75,6 +80,12 @@ class QuestionTile extends StatelessWidget {
                         key: ValueKey('exam_link_${question.id}_$id'),
                         label: exhibitById(id)?.label ?? id,
                         onTap: () => onExhibit(id),
+                      ),
+                    for (final id in question.sourceIds)
+                      ActionChip(
+                        key: ValueKey('exam_link_${question.id}_$id'),
+                        label: Text(sourceLabel(id)),
+                        onPressed: () => onExhibit(id),
                       ),
                   ],
                 ),
@@ -87,6 +98,11 @@ class QuestionTile extends StatelessWidget {
                     key: ValueKey('question_edit_${question.id}'),
                     onPressed: onEdit,
                     child: const Text('Edit'),
+                  ),
+                  TextButton(
+                    key: ValueKey('question_research_${question.id}'),
+                    onPressed: onResearch,
+                    child: const Text('Research'),
                   ),
                   IconButton(
                     key: ValueKey('question_up_${question.id}'),

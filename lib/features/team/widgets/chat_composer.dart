@@ -142,7 +142,7 @@ class _ChatComposerState extends State<ChatComposer> {
                   if (constraints.maxWidth < 360)
                     IconButton(
                       key: const ValueKey('chat_link_item'),
-                      tooltip: 'Link a task or exhibit',
+                      tooltip: 'Link a task, exhibit, or draft',
                       onPressed: _enabled ? _pick : null,
                       icon: const Icon(Icons.link, size: 20),
                     )

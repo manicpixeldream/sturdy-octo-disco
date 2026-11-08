@@ -85,7 +85,7 @@ class ChatMessageTile extends StatelessWidget {
                           const SizedBox(width: Spacing.sm),
                           Expanded(
                             child: Text(
-                              '${mention.kind == ChatMentionKind.task ? 'Task' : 'Exhibit'} · ${mention.label}${mentionAvailable(mention) ? '' : ' (unavailable)'}',
+                              '${mention.kind.label} · ${mention.label}${mentionAvailable(mention) ? '' : ' (unavailable)'}',
                             ),
                           ),
                           const SizedBox(width: Spacing.xs),

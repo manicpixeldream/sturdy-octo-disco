@@ -13,9 +13,12 @@ import '../../core/widgets/section_header.dart';
 import '../../core/widgets/stat_tile.dart';
 import '../../core/widgets/load_failure.dart';
 import '../../data/models/exam_question.dart';
+import '../../data/models/exam_script.dart';
 import '../../data/models/timing_rule.dart';
 import '../../state/case_controller.dart';
 import '../../state/exam_controller.dart';
+import '../../state/research_controller.dart';
+import '../research/research_context.dart';
 import 'widgets/question_editor_sheet.dart';
 import 'widgets/goal_editor_sheet.dart';
 import 'widgets/question_tile.dart';
@@ -60,6 +63,8 @@ class _ExaminationPageState extends State<ExaminationPage> {
         questionId: questionId,
         initial: question,
         exhibits: cases.exhibits,
+        sourceLabel: (id) =>
+            context.read<ResearchController>().sourceById(id)?.title ?? id,
         onSave: (q) => exams.upsertQuestion(witness, phase, q),
       ),
     );
@@ -69,6 +74,7 @@ class _ExaminationPageState extends State<ExaminationPage> {
   Widget build(BuildContext context) {
     final cases = context.watch<CaseController>();
     final exams = context.watch<ExamController>();
+    final research = context.watch<ResearchController>();
     final witness = cases.witnessById(widget.witnessId);
     final script = witness == null
         ? null
@@ -124,8 +130,9 @@ class _ExaminationPageState extends State<ExaminationPage> {
                 TrialPhase.cross: 'Cross',
               },
               keyFor: (phase) => ValueKey('exam_phase_${phase.name}'),
-              onChanged: (phase) =>
-                  context.go(Routes.exam(widget.witnessId, phase: phase.name)),
+              onChanged: (phase) => context.replace(
+                Routes.exam(widget.witnessId, phase: phase.name),
+              ),
             ),
             const SizedBox(height: Spacing.md),
             Text(
@@ -150,6 +157,40 @@ class _ExaminationPageState extends State<ExaminationPage> {
                   value: '${script.questions.where((q) => q.flagged).length}',
                   label: 'Flagged',
                 ),
+              ],
+            ),
+            Wrap(
+              spacing: Spacing.md,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (exams.isSaving || script.questions.isEmpty)
+                  Text(script.status.label)
+                else
+                  PopupMenuButton<ExamStatus>(
+                    key: const ValueKey('exam_review_status'),
+                    tooltip: 'Change script review status',
+                    initialValue: script.status,
+                    onSelected: (status) =>
+                        exams.save(script.copyWith(status: status)),
+                    itemBuilder: (_) => [
+                      for (final status in ExamStatus.values)
+                        PopupMenuItem(value: status, child: Text(status.label)),
+                    ],
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+                      child: Text('${script.status.label} ▾'),
+                    ),
+                  ),
+                if (cases.affidavits
+                        .where((item) => item.witnessId == witness.id)
+                        .firstOrNull
+                    case final affidavit?)
+                  TextButton(
+                    key: const ValueKey('exam_open_affidavit'),
+                    onPressed: () =>
+                        context.push(Routes.affidavit(affidavit.id)),
+                    child: const Text('Read affidavit'),
+                  ),
               ],
             ),
             WorkspaceColumns(
@@ -271,8 +312,25 @@ class _ExaminationPageState extends State<ExaminationPage> {
                       number: index + 1,
                       exhibitById: cases.exhibitById,
                       highlighted: question.id == requested,
+                      sourceLabel: (id) => research.sourceById(id)?.title ?? id,
                       onExhibit: (id) =>
                           context.push(Routes.researchSource(id)),
+                      onResearch: () {
+                        final phase = widget.phase;
+                        context.push(
+                          Routes.research,
+                          extra: ResearchContext(
+                            label: 'question ${index + 1}',
+                            excerpt: question.text,
+                            attachSource: (id) => exams.attachSource(
+                              witness.id,
+                              phase,
+                              question.id,
+                              id,
+                            ),
+                          ),
+                        );
+                      },
                       onEdit: exams.isSaving
                           ? null
                           : () => _editor(exams, cases, question),

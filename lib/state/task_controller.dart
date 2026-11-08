@@ -12,9 +12,30 @@ class TaskController extends LoadController {
 
   bool get isLoaded => _tasks != null;
   List<TaskItem> _roleTasks = const [];
+  final _followUps = <TaskItem>[];
+  int _followUpSequence = 0;
+
+  void addFollowUp(String title, String assigneeId, DateTime dueDate) {
+    if (isDisposed || title.trim().isEmpty) return;
+    String id;
+    do {
+      id = 'practice_follow_up_${++_followUpSequence}';
+    } while (tasks.any((task) => task.id == id));
+    _followUps.add(
+      TaskItem(
+        id: id,
+        title: title.trim(),
+        assigneeId: assigneeId,
+        dueDate: dueDate,
+      ),
+    );
+    notifyListeners();
+  }
+
   List<TaskItem> get tasks => List.unmodifiable(
     {
       ...{for (final t in _roleTasks) t.id: t},
+      ...{for (final t in _followUps) t.id: t},
       ...{for (final t in _tasks ?? <TaskItem>[]) t.id: t},
     }.values,
   );

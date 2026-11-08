@@ -104,6 +104,9 @@ class HomePage extends StatelessWidget {
                         AssignmentTile(
                           key: GavelKeys.homeAssignment(task.id),
                           task: task,
+                          onOpen: () => context.push(
+                            task.workRoute ?? Routes.teamTask(task.id),
+                          ),
                           dueLabel: dueLabel(task.dueDate, session.clock.now()),
                         ),
                     ],

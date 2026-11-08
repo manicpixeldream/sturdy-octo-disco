@@ -8,6 +8,7 @@ class TaskItem {
     required this.assigneeId,
     required this.dueDate,
     this.isDone = false,
+    this.workRoute,
   });
 
   factory TaskItem.fromMap(Map<String, Object?> map) => TaskItem(
@@ -16,6 +17,7 @@ class TaskItem {
     assigneeId: map['assigneeId']! as String,
     dueDate: DateTime.parse(map['dueDate']! as String),
     isDone: map['isDone']! as bool,
+    workRoute: map['workRoute'] as String?,
   );
 
   final String id;
@@ -23,6 +25,7 @@ class TaskItem {
   final String assigneeId;
   final DateTime dueDate;
   final bool isDone;
+  final String? workRoute;
 
   TaskItem copyWith({
     String? id,
@@ -36,6 +39,7 @@ class TaskItem {
     assigneeId: assigneeId ?? this.assigneeId,
     dueDate: dueDate ?? this.dueDate,
     isDone: isDone ?? this.isDone,
+    workRoute: workRoute,
   );
 
   Map<String, Object?> toMap() => {
@@ -44,6 +48,7 @@ class TaskItem {
     'assigneeId': assigneeId,
     'dueDate': dueDate.toIso8601String(),
     'isDone': isDone,
+    if (workRoute != null) 'workRoute': workRoute,
   };
 
   @override
@@ -53,8 +58,10 @@ class TaskItem {
       other.title == title &&
       other.assigneeId == assigneeId &&
       other.dueDate == dueDate &&
-      other.isDone == isDone;
+      other.isDone == isDone &&
+      other.workRoute == workRoute;
 
   @override
-  int get hashCode => Object.hash(id, title, assigneeId, dueDate, isDone);
+  int get hashCode =>
+      Object.hash(id, title, assigneeId, dueDate, isDone, workRoute);
 }

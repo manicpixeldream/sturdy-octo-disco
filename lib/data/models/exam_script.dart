@@ -4,6 +4,15 @@ import 'package:flutter/widgets.dart' show StringCharacters;
 import 'exam_question.dart';
 import 'timing_rule.dart';
 
+enum ExamStatus {
+  drafting('Drafting'),
+  review('Ready for review'),
+  rehearsal('Ready to rehearse');
+
+  const ExamStatus(this.label);
+  final String label;
+}
+
 @immutable
 class ExamScript {
   ExamScript({
@@ -11,6 +20,7 @@ class ExamScript {
     required this.witnessId,
     required this.phase,
     String goal = '',
+    this.status = ExamStatus.drafting,
     List<ExamQuestion> questions = const [],
   }) : goal = goal.trim(),
        questions = List.unmodifiable(questions) {
@@ -24,6 +34,7 @@ class ExamScript {
   }
   final String caseId, witnessId, goal;
   final TrialPhase phase;
+  final ExamStatus status;
   final List<ExamQuestion> questions;
   String get id => '$witnessId:${phase.name}';
   int get estimatedSeconds =>
@@ -33,6 +44,7 @@ class ExamScript {
     witnessId: map['witnessId']! as String,
     phase: TrialPhase.values.byName(map['phase']! as String),
     goal: map['goal']! as String,
+    status: ExamStatus.values.byName(map['status'] as String? ?? 'drafting'),
     questions: (map['questions']! as List)
         .map((q) => ExamQuestion.fromMap(Map<String, Object?>.from(q as Map)))
         .toList(),
@@ -42,16 +54,26 @@ class ExamScript {
     'witnessId': witnessId,
     'phase': phase.name,
     'goal': goal,
+    'status': status.name,
     'questions': questions.map((q) => q.toMap()).toList(),
   };
-  ExamScript copyWith({String? goal, List<ExamQuestion>? questions}) =>
-      ExamScript(
-        caseId: caseId,
-        witnessId: witnessId,
-        phase: phase,
-        goal: goal ?? this.goal,
-        questions: questions ?? this.questions,
-      );
+  ExamScript copyWith({
+    String? goal,
+    List<ExamQuestion>? questions,
+    ExamStatus? status,
+  }) => ExamScript(
+    caseId: caseId,
+    witnessId: witnessId,
+    phase: phase,
+    goal: goal ?? this.goal,
+    status:
+        status ??
+        ((goal != null && goal.trim() != this.goal) ||
+                (questions != null && !listEquals(questions, this.questions))
+            ? ExamStatus.drafting
+            : this.status),
+    questions: questions ?? this.questions,
+  );
   @override
   bool operator ==(Object other) =>
       other is ExamScript &&
@@ -59,8 +81,15 @@ class ExamScript {
       witnessId == other.witnessId &&
       phase == other.phase &&
       goal == other.goal &&
+      status == other.status &&
       listEquals(questions, other.questions);
   @override
-  int get hashCode =>
-      Object.hash(caseId, witnessId, phase, goal, Object.hashAll(questions));
+  int get hashCode => Object.hash(
+    caseId,
+    witnessId,
+    phase,
+    goal,
+    status,
+    Object.hashAll(questions),
+  );
 }

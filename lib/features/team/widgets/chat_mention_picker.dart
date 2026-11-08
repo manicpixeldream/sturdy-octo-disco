@@ -46,7 +46,7 @@ class _ChatMentionPickerState extends State<ChatMentionPicker> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Link a task or exhibit',
+                  'Link a task, exhibit, or draft',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: Spacing.sm),
@@ -54,9 +54,9 @@ class _ChatMentionPickerState extends State<ChatMentionPicker> {
                 const SizedBox(height: Spacing.md),
                 GavelSegmentedControl<ChatMentionKind>(
                   selected: _kind,
-                  options: const {
-                    ChatMentionKind.task: 'Tasks',
-                    ChatMentionKind.exhibit: 'Exhibits',
+                  options: {
+                    for (final kind in ChatMentionKind.values)
+                      kind: kind.plural,
                   },
                   keyFor: (kind) => ValueKey('mention_kind_${kind.name}'),
                   onChanged: (kind) => setState(() => _kind = kind),
@@ -67,8 +67,7 @@ class _ChatMentionPickerState extends State<ChatMentionPicker> {
                   controller: _search,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    labelText:
-                        'Search ${_kind == ChatMentionKind.task ? 'tasks' : 'exhibits'}',
+                    labelText: 'Search ${_kind.plural.toLowerCase()}',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: query.isEmpty
                         ? null

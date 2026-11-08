@@ -12,7 +12,7 @@ class AppShell extends StatelessWidget {
 
   void _navigate(int index) => navigationShell.goBranch(
     index,
-    initialLocation: index == navigationShell.currentIndex,
+    initialLocation: index == 0 || index == navigationShell.currentIndex,
   );
 
   @override

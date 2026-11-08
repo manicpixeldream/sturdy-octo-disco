@@ -8,9 +8,11 @@ class ExamQuestion {
     required String text,
     this.estimatedSeconds = 45,
     List<String> exhibitIds = const [],
+    List<String> sourceIds = const [],
     this.flagged = false,
   }) : text = text.trim(),
-       exhibitIds = List.unmodifiable(exhibitIds) {
+       exhibitIds = List.unmodifiable(exhibitIds),
+       sourceIds = List.unmodifiable(sourceIds) {
     if (id.isEmpty ||
         this.text.isEmpty ||
         this.text.characters.length > 2000 ||
@@ -22,7 +24,7 @@ class ExamQuestion {
   }
   final String id, text;
   final int estimatedSeconds;
-  final List<String> exhibitIds;
+  final List<String> exhibitIds, sourceIds;
   final bool flagged;
   factory ExamQuestion.fromMap(Map<String, Object?> map) => ExamQuestion(
     id: map['id']! as String,
@@ -30,6 +32,7 @@ class ExamQuestion {
     estimatedSeconds: map['estimatedSeconds']! as int,
     exhibitIds: (map['exhibitIds']! as List).cast<String>(),
     flagged: map['flagged']! as bool,
+    sourceIds: (map['sourceIds'] as List?)?.cast<String>() ?? const [],
   );
   Map<String, Object?> toMap() => {
     'id': id,
@@ -37,17 +40,20 @@ class ExamQuestion {
     'estimatedSeconds': estimatedSeconds,
     'exhibitIds': exhibitIds,
     'flagged': flagged,
+    if (sourceIds.isNotEmpty) 'sourceIds': sourceIds,
   };
   ExamQuestion copyWith({
     String? text,
     int? estimatedSeconds,
     List<String>? exhibitIds,
+    List<String>? sourceIds,
     bool? flagged,
   }) => ExamQuestion(
     id: id,
     text: text ?? this.text,
     estimatedSeconds: estimatedSeconds ?? this.estimatedSeconds,
     exhibitIds: exhibitIds ?? this.exhibitIds,
+    sourceIds: sourceIds ?? this.sourceIds,
     flagged: flagged ?? this.flagged,
   );
   @override
@@ -57,7 +63,8 @@ class ExamQuestion {
       text == other.text &&
       estimatedSeconds == other.estimatedSeconds &&
       flagged == other.flagged &&
-      listEquals(exhibitIds, other.exhibitIds);
+      listEquals(exhibitIds, other.exhibitIds) &&
+      listEquals(sourceIds, other.sourceIds);
   @override
   int get hashCode => Object.hash(
     id,
@@ -65,5 +72,6 @@ class ExamQuestion {
     estimatedSeconds,
     flagged,
     Object.hashAll(exhibitIds),
+    Object.hashAll(sourceIds),
   );
 }

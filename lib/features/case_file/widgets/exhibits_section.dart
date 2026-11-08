@@ -7,7 +7,12 @@ import '../../../core/widgets/section_header.dart';
 import '../../../data/models/exhibit.dart';
 
 class ExhibitsSection extends StatelessWidget {
-  const ExhibitsSection({super.key, required this.exhibits});
+  const ExhibitsSection({
+    super.key,
+    required this.exhibits,
+    required this.onResearch,
+  });
+  final ValueChanged<Exhibit> onResearch;
   final List<Exhibit> exhibits;
 
   @override
@@ -41,6 +46,11 @@ class ExhibitsSection extends StatelessWidget {
                     Text(
                       exhibit.description,
                       style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    TextButton(
+                      key: ValueKey('research_exhibit_${exhibit.id}'),
+                      onPressed: () => onResearch(exhibit),
+                      child: const Text('Research this exhibit'),
                     ),
                   ],
                 ),

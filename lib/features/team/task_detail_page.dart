@@ -69,6 +69,12 @@ class TaskDetailPage extends StatelessWidget {
                   : dueLabel(task.dueDate, session.clock.now()),
             ),
             const SizedBox(height: Spacing.xl),
+            if (task.workRoute case final route?)
+              OutlinedButton(
+                key: const ValueKey('task_open_work'),
+                onPressed: () => context.push(route),
+                child: const Text('Open work'),
+              ),
             if (task.assigneeId == session.currentTeammateId)
               OutlinedButton(
                 key: const ValueKey('task_open_checklist'),

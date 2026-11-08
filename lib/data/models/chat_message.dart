@@ -1,7 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show StringCharacters;
 
-enum ChatMentionKind { task, exhibit }
+enum ChatMentionKind {
+  task('Task', 'Tasks'),
+  exhibit('Exhibit', 'Exhibits'),
+  draft('Draft', 'Drafts');
+
+  const ChatMentionKind(this.label, this.plural);
+  final String label, plural;
+}
 
 @immutable
 class ChatMention {

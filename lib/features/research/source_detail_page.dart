@@ -13,9 +13,11 @@ import '../../core/widgets/workspace_scroll_view.dart';
 import '../../data/models/citation.dart';
 import '../../state/case_controller.dart';
 import '../../state/research_controller.dart';
+import 'research_context.dart';
 
 class SourceDetailPage extends StatelessWidget {
-  const SourceDetailPage({super.key, required this.sourceId});
+  const SourceDetailPage({super.key, required this.sourceId, this.work});
+  final ResearchContext? work;
   final String sourceId;
 
   void _back(BuildContext context) =>
@@ -83,6 +85,25 @@ class SourceDetailPage extends StatelessWidget {
                         : 'Save to Library',
                   ),
                 ),
+                if (work case final target? when target.attachSource != null)
+                  OutlinedButton.icon(
+                    key: const ValueKey('research_attach_to_work'),
+                    icon: const Icon(Icons.link),
+                    label: Text('Attach to ${target.label}'),
+                    onPressed: () async {
+                      final saved = await target.attachSource!(sourceId);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            saved
+                                ? 'Source attached.'
+                                : 'Could not attach the source. Try again.',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 const SizedBox(height: Spacing.xl),
                 Text(source.context, style: text.bodySmall),
                 const SizedBox(height: Spacing.xxl),

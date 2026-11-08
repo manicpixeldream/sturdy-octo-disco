@@ -112,7 +112,7 @@ class ResearchController extends LoadController {
       for (final c in citations.where(
         (c) =>
             c.location == CitationLocation.examQuestion &&
-            sourceById(c.sourceId)?.caseId == caseId,
+            sourceById(c.sourceId) != null,
       ))
         c.id: c,
     };

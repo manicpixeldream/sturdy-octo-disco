@@ -7,7 +7,13 @@ import '../../../core/widgets/status_pill.dart';
 import '../../../data/models/practice_session.dart';
 
 class SessionTile extends StatelessWidget {
-  const SessionTile({super.key, required this.session, required this.now});
+  const SessionTile({
+    super.key,
+    required this.session,
+    required this.now,
+    required this.onOpen,
+  });
+  final VoidCallback onOpen;
   final PracticeSession session;
   final DateTime now;
   @override
@@ -23,7 +29,14 @@ class SessionTile extends StatelessWidget {
             '${DateFormat.MMMEd().format(session.startsAt.toLocal())} · ${DateFormat.jm().format(session.startsAt.toLocal())} – ${DateFormat.jm().format(session.endsAt.toLocal())}',
           ),
           Text('${session.durationMinutes} minutes · ${session.location}'),
-          if (!session.startsAt.isAfter(now))
+          TextButton(
+            key: ValueKey('practice_agenda_${session.id}'),
+            onPressed: onOpen,
+            child: const Text('Open agenda'),
+          ),
+          if (!session.endsAt.isAfter(now))
+            const StatusPill(status: GavelStatus.ready, label: 'Ended')
+          else if (!session.startsAt.isAfter(now))
             const StatusPill(
               status: GavelStatus.inProgress,
               label: 'In progress',

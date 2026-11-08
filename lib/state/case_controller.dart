@@ -21,6 +21,7 @@ class CaseController extends LoadController {
   int _loadGeneration = 0;
   int _briefRequest = 0;
 
+  final _argumentSources = <(String, TrialPhase), Set<String>>{};
   final _argumentDrafts = <(String, TrialPhase), String>{};
   CaseFile? _activeCase;
   List<Exhibit> _exhibits = const [];
@@ -52,6 +53,24 @@ class CaseController extends LoadController {
       _argumentDrafts.remove(key);
     } else {
       _argumentDrafts[key] = text;
+    }
+  }
+
+  Set<String> argumentSources(String caseId, TrialPhase phase) =>
+      Set.unmodifiable(_argumentSources[(caseId, phase)] ?? const {});
+
+  bool attachArgumentSource(String caseId, TrialPhase phase, String sourceId) {
+    if (isDisposed || _activeCase?.id != caseId) return false;
+    if (_argumentSources.putIfAbsent((caseId, phase), () => {}).add(sourceId)) {
+      notifyListeners();
+    }
+    return true;
+  }
+
+  void detachArgumentSource(String caseId, TrialPhase phase, String sourceId) {
+    if (isDisposed || _activeCase?.id != caseId) return;
+    if (_argumentSources[(caseId, phase)]?.remove(sourceId) ?? false) {
+      notifyListeners();
     }
   }
 

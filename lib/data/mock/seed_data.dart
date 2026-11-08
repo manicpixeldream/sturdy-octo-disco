@@ -1,3 +1,5 @@
+import '../../core/router/routes.dart';
+
 import '../models/case_file.dart';
 import '../models/affidavit.dart';
 import '../models/case_brief.dart';
@@ -112,12 +114,14 @@ class SeedData {
       TaskItem(
         id: 'task_1',
         title: 'Draft direct exam of Officer Reyes',
+        workRoute: Routes.exam('wit_reyes'),
         assigneeId: 'tm_sofia',
         dueDate: inDays(2),
       ),
       TaskItem(
         id: 'task_2',
         title: 'Review the fire marshal report (Ex. 5)',
+        workRoute: Routes.researchSource('ex_5'),
         assigneeId: 'tm_sofia',
         dueDate: inDays(-1),
         isDone: true,
@@ -125,6 +129,7 @@ class SeedData {
       TaskItem(
         id: 'task_3',
         title: 'Practice opening statement',
+        workRoute: Routes.argument('opening'),
         assigneeId: 'tm_sofia',
         dueDate: inDays(5),
       ),
@@ -137,12 +142,14 @@ class SeedData {
       TaskItem(
         id: 'task_5',
         title: 'Draft cross of Theo Lindqvist',
+        workRoute: Routes.exam('wit_lindqvist', phase: 'cross'),
         assigneeId: 'tm_marcus',
         dueDate: inDays(4),
       ),
       TaskItem(
         id: 'task_6',
         title: 'Memorize Mara Okafor affidavit',
+        workRoute: Routes.affidavit('aff_okafor'),
         assigneeId: 'tm_jordan',
         dueDate: inDays(-2),
         isDone: true,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/widgets.dart' show StringCharacters;
 
@@ -43,7 +44,7 @@ class ExamController extends LoadController {
   bool get suggestFailed => _suggestFailed;
   bool suggestFailedFor(String witnessId, TrialPhase phase) =>
       _suggestKey == '$witnessId:${phase.name}' && _suggestFailed;
-  int _sequence = 0, _suggestVersion = 0, _caseVersion = 0;
+  int _suggestVersion = 0, _caseVersion = 0;
   String? _failedScriptId;
   bool saveFailedFor(String witnessId, TrialPhase phase) =>
       _saveFailed && _failedScriptId == '$witnessId:${phase.name}';
@@ -105,12 +106,37 @@ class ExamController extends LoadController {
         witnessId: witnessId,
         phase: phase,
       );
-  String newQuestionId() {
-    String id;
-    do {
-      id = 'question_${++_sequence}';
-    } while (_scripts.any((s) => s.questions.any((q) => q.id == id)));
-    return id;
+  final _questionRandom = Random.secure();
+
+  String newQuestionId() =>
+      'question_${List.generate(8, (_) => _questionRandom.nextInt(0x10000).toRadixString(16).padLeft(4, '0')).join()}';
+
+  Future<bool> attachSource(
+    String witnessId,
+    TrialPhase phase,
+    String questionId,
+    String sourceId,
+  ) async {
+    final source = _research.sourceById(sourceId);
+    final question = scriptFor(
+      witnessId,
+      phase,
+    ).questions.where((question) => question.id == questionId).firstOrNull;
+    if (source == null || question == null) return false;
+    if (cases.exhibitById(sourceId) != null) {
+      return question.exhibitIds.contains(sourceId) ||
+          await upsertQuestion(
+            witnessId,
+            phase,
+            question.copyWith(exhibitIds: [...question.exhibitIds, sourceId]),
+          );
+    }
+    return question.sourceIds.contains(sourceId) ||
+        await upsertQuestion(
+          witnessId,
+          phase,
+          question.copyWith(sourceIds: [...question.sourceIds, sourceId]),
+        );
   }
 
   TrialSide sideFor(String witnessId, TrialPhase phase) {
@@ -261,7 +287,7 @@ class ExamController extends LoadController {
     _research.replaceExamCitations(_caseId!, [
       for (final script in _scripts.where(_valid))
         for (final q in script.questions)
-          for (final sourceId in q.exhibitIds)
+          for (final sourceId in {...q.exhibitIds, ...q.sourceIds})
             Citation(
               sourceId: sourceId,
               location: CitationLocation.examQuestion,

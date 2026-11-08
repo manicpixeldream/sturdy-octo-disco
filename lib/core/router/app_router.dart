@@ -3,6 +3,7 @@ import '../../features/team/task_detail_page.dart';
 import '../../features/examination/examination_page.dart';
 import '../../data/models/timing_rule.dart';
 import '../../features/schedule/schedule_page.dart';
+import '../../features/schedule/practice_agenda_page.dart';
 import '../../features/team/assign_role_page.dart';
 
 import 'package:flutter/widgets.dart';
@@ -16,6 +17,7 @@ import '../../features/onboarding/onboarding.dart';
 import '../../features/onboarding/welcome_page.dart';
 import '../../features/me/me_page.dart';
 import '../../features/research/research_page.dart';
+import '../../features/research/research_context.dart';
 import '../../features/research/source_detail_page.dart';
 import '../../features/team/team_page.dart';
 import '../widgets/app_shell.dart';
@@ -56,6 +58,7 @@ GoRouter createAppRouter({
                 builder: (context, state) => CasePage(
                   section: state.uri.queryParameters['section'],
                   factId: state.uri.queryParameters['fact'],
+                  argumentPhase: state.uri.queryParameters['phase'],
                 ),
                 routes: [
                   GoRoute(
@@ -83,12 +86,19 @@ GoRouter createAppRouter({
                 path: Routes.research,
                 builder: (context, state) => ResearchPage(
                   messageId: state.uri.queryParameters['message'],
+                  work: state.extra is ResearchContext
+                      ? state.extra as ResearchContext
+                      : null,
                 ),
                 routes: [
                   GoRoute(
                     path: 'source/:id',
-                    builder: (context, state) =>
-                        SourceDetailPage(sourceId: state.pathParameters['id']!),
+                    builder: (context, state) => SourceDetailPage(
+                      sourceId: state.pathParameters['id']!,
+                      work: state.extra is ResearchContext
+                          ? state.extra as ResearchContext
+                          : null,
+                    ),
                   ),
                 ],
               ),
@@ -127,6 +137,14 @@ GoRouter createAppRouter({
                   GoRoute(
                     path: 'schedule',
                     builder: (context, state) => const SchedulePage(),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        builder: (context, state) => PracticeAgendaPage(
+                          sessionId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
