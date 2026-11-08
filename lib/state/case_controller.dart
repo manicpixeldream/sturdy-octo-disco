@@ -21,6 +21,7 @@ class CaseController extends LoadController {
   int _loadGeneration = 0;
   int _briefRequest = 0;
 
+  final _argumentDrafts = <(String, TrialPhase), String>{};
   CaseFile? _activeCase;
   List<Exhibit> _exhibits = const [];
   List<Witness> _witnesses = const [];
@@ -41,6 +42,18 @@ class CaseController extends LoadController {
   CaseBrief? get brief => _brief;
   bool get isBriefLoading => _isBriefLoading;
   bool get briefFailed => _briefFailed;
+
+  String argumentDraft(String caseId, TrialPhase phase) =>
+      _argumentDrafts[(caseId, phase)] ?? '';
+
+  void updateArgumentDraft(String caseId, TrialPhase phase, String text) {
+    final key = (caseId, phase);
+    if (text.isEmpty) {
+      _argumentDrafts.remove(key);
+    } else {
+      _argumentDrafts[key] = text;
+    }
+  }
 
   Exhibit? exhibitById(String id) =>
       _exhibits.where((e) => e.id == id).firstOrNull;

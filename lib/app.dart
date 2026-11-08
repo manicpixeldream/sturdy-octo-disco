@@ -1,3 +1,8 @@
+import 'data/repositories/exam_repository.dart';
+import 'data/services/exam_suggestion_service.dart';
+import 'data/mock/mock_exam_repository.dart';
+import 'data/mock/mock_exam_suggestion_service.dart';
+import 'state/exam_controller.dart';
 import 'data/mock/mock_schedule_repository.dart';
 import 'data/repositories/schedule_repository.dart';
 import 'state/schedule_controller.dart';
@@ -43,6 +48,8 @@ class GavelApp extends StatefulWidget {
     this.researchService,
     this.roleRepository,
     this.scheduleRepository,
+    this.examRepository,
+    this.examSuggestionService,
   });
 
   final String initialLocation;
@@ -55,6 +62,8 @@ class GavelApp extends StatefulWidget {
   final ResearchService? researchService;
   final RoleRepository? roleRepository;
   final ScheduleRepository? scheduleRepository;
+  final ExamRepository? examRepository;
+  final ExamSuggestionService? examSuggestionService;
 
   @override
   State<GavelApp> createState() => _GavelAppState();
@@ -72,6 +81,7 @@ class _GavelAppState extends State<GavelApp> {
   late final ResearchController _research;
   late final RoleController _roles;
   late final ScheduleController _schedule;
+  late final ExamController _exams;
 
   @override
   void initState() {
@@ -103,6 +113,12 @@ class _GavelAppState extends State<GavelApp> {
           MockResearchService(caseRepository: caseRepository),
       _case,
     );
+    _exams = ExamController(
+      widget.examRepository ?? MockExamRepository(),
+      widget.examSuggestionService ?? MockExamSuggestionService(),
+      _case,
+      _research,
+    );
     _team = TeamController(
       widget.teamRepository ?? MockTeamRepository(seed.teammates),
     )..load();
@@ -133,6 +149,7 @@ class _GavelAppState extends State<GavelApp> {
     _router.dispose();
     _theme.dispose();
     _session.dispose();
+    _exams.dispose();
     _research.dispose();
     _case.dispose();
     _team.dispose();
@@ -153,6 +170,7 @@ class _GavelAppState extends State<GavelApp> {
         ChangeNotifierProvider.value(value: _tasks),
         ChangeNotifierProvider.value(value: _roles),
         ChangeNotifierProvider.value(value: _schedule),
+        ChangeNotifierProvider.value(value: _exams),
         ChangeNotifierProvider.value(value: _research),
       ],
       child: Consumer<ThemeController>(

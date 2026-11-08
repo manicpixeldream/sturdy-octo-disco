@@ -9,6 +9,22 @@ abstract final class Routes {
   static const String me = '/me';
   static const String schedule = '/me/schedule';
 
+  static String exam(
+    String witnessId, {
+    String phase = 'direct',
+    String? questionId,
+  }) => Uri(
+    pathSegments: ['', 'case', 'witness', witnessId, 'exam'],
+    queryParameters: {'phase': phase, 'question': ?questionId},
+  ).toString();
+  static String examCitation(String reference) {
+    final parts = reference.split('|');
+    if (parts.length != 3 || !['direct', 'cross'].contains(parts[1])) {
+      return caseFile;
+    }
+    return exam(parts[0], phase: parts[1], questionId: parts[2]);
+  }
+
   static String affidavit(String id) =>
       '/case/affidavit/${Uri.encodeComponent(id)}';
 

@@ -8,7 +8,7 @@ Every iteration below delivers part of this description. In v1, the "AI" feature
 
 ## Where each part of the description lives
 
-- **One consolidated workspace** (witness statements, evidence packets, opening and closing arguments, examination scripts): Case tab (v0.5) and Examination Builder (v0.9)
+- **One consolidated workspace** (witness statements, evidence packets, opening and closing arguments, examination scripts): Case tab (v0.5), plus Arguments and Examination Builder (v0.9)
 - **AI-parsed case briefs** (key facts, evidence linkages, likely opposing-counsel arguments): the "Case brief" section in the Case tab (v0.5), using mock AI output in v1 and ChatGPT later
 - **Timing rules**: the "Rules" section in the Case tab (v0.5), plus time estimate versus limit in the Examination Builder (v0.9)
 - **Role assignments with task queues**: Team tab and Assign Role page (v0.7), plus "My tasks" in the Me tab (v0.8)
@@ -18,7 +18,7 @@ Every iteration below delivers part of this description. In v1, the "AI" feature
 
 ## Starting point
 
-The project began as the default Flutter template. It now implements v0.1–v0.8, including the editorial redesign, Case workspace, Research hub, Team role assignments, Profile checklists, and Practice Schedule. The pinned development/CI SDK is Flutter 3.47.2 / Dart 3.13.2; dependency versions are committed in `pubspec.lock`. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
+The project began as the default Flutter template. It now implements v0.1–v0.9, including the editorial redesign, Case workspace, Research hub, Team role assignments, Profile checklists, Practice Schedule, and Examination Builder. The pinned development/CI SDK is Flutter 3.47.2 / Dart 3.13.2; dependency versions are committed in `pubspec.lock`. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
 
 ## Alpha target: web only
 
@@ -200,12 +200,13 @@ assets/           fonts/, images/
 - Tests: checking off a task updates the stats and Home, each quick-access tile opens the right route, the week strip filters sessions, and the weekly goal math is correct.
 
 ### v0.9: Examination Builder page (examination scripts)
+- Case → More → Arguments stores separate session-only drafts for the opening statement and closing argument.
 - `examination_page.dart` (`/case/witness/:id/exam`): witness hero, stats (Drafted, Evidence-linked, Flagged), the examination goal, and the question line with exhibit tags.
-- Add, edit, reorder, and delete questions. "Suggest with AI" uses mock suggestions. An estimated time is shown against the matching timing rule from v0.5. Direct and cross budgets are shared per side across all witnesses: compare the combined script estimates against that shared budget (or an explicitly allocated per-witness portion), not each script independently against the full limit.
+- Add, edit, reorder, and delete questions. Questions store editable question-and-answer timing estimates (45 seconds by default), review flags, and exhibit links. "Suggest with AI" uses prepared mock prompts; users explicitly add them for review. Scripts and goals are session-only. An estimated time is shown against the matching timing rule from v0.5. Direct and cross budgets are shared per side across all witnesses: compare the combined script estimates against that shared budget (or an explicitly allocated per-witness portion), not each script independently against the full limit.
 - Tests: create, edit, reorder, and delete; stats recompute; linking an exhibit adds a tag and a "Cited in" entry; a warning appears when the combined per-side estimate is over the shared limit, including when every individual script would fit by itself.
 
 ### v0.10: Team chat page (coordination)
-- `team_chat_page.dart` (`/team/chat`): a single team channel with message tiles and an input bar. Messages can mention a task or an exhibit. Uses `MockChatRepository` (local only in v1; real-time comes with Firestore).
+- `team_chat_page.dart` (`/team/chat`): a single team channel with message tiles and an input bar. Messages can explicitly link up to five tasks/exhibits from a searchable picker. Task links open a task detail view; exhibit links open Research sources. Typed names are not auto-linked. Failed sends retain the composer draft and retry unchanged content with the same message ID. Uses `MockChatRepository` (local only in v1; real-time comes with Firestore).
 - Tests: sending a message appends it, and tapping a mention opens the linked item.
 
 ### v0.11: Welcome / onboarding page

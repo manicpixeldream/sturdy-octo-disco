@@ -74,6 +74,18 @@ void main() {
     researchService: service,
   );
 
+  testWidgets('accepts Unicode within the visible character limit', (
+    tester,
+  ) async {
+    await launch(tester);
+    final question = '🙂' * 1100;
+    await send(tester, question);
+    expect(state(tester).messages.first.text, question);
+    expect(state(tester).messages, hasLength(2));
+    final field = find.byKey(const ValueKey('research_input'));
+    expect(tester.widget<TextField>(field).controller!.text, isEmpty);
+  });
+
   testWidgets(
     'question, pending state, sourced reply, and suggestion controls work',
     (tester) async {

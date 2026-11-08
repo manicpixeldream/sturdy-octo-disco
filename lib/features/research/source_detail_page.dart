@@ -143,10 +143,7 @@ class SourceDetailPage extends StatelessWidget {
                         CitationLocation.examQuestion => 'Examination question',
                       }, style: text.titleSmall),
                       subtitle: Text(citation.label),
-                      trailing:
-                          citation.location == CitationLocation.examQuestion
-                          ? null
-                          : const Icon(Icons.arrow_outward, size: 18),
+                      trailing: const Icon(Icons.arrow_outward, size: 18),
                       onTap: switch (citation.location) {
                         CitationLocation.answer => () => context.go(
                           Routes.researchAnswer(citation.referenceId),
@@ -154,7 +151,9 @@ class SourceDetailPage extends StatelessWidget {
                         CitationLocation.caseBrief => () => context.go(
                           Routes.caseBrief(citation.referenceId),
                         ),
-                        CitationLocation.examQuestion => null,
+                        CitationLocation.examQuestion => () => context.go(
+                          Routes.examCitation(citation.referenceId),
+                        ),
                       },
                     ),
                   ),

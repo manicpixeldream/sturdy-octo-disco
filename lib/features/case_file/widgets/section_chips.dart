@@ -10,7 +10,8 @@ enum CaseSection {
   affidavits('Affidavits'),
   exhibits('Exhibits'),
   stipulations('Stipulations'),
-  rules('Rules');
+  rules('Rules'),
+  arguments('Arguments');
 
   const CaseSection(this.label);
   final String label;

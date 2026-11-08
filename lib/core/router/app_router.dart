@@ -1,3 +1,5 @@
+import '../../features/examination/examination_page.dart';
+import '../../data/models/timing_rule.dart';
 import '../../features/schedule/schedule_page.dart';
 import '../../features/team/assign_role_page.dart';
 
@@ -33,6 +35,16 @@ GoRouter createAppRouter({String initialLocation = Routes.home}) {
                   factId: state.uri.queryParameters['fact'],
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'witness/:id/exam',
+                    builder: (context, state) => ExaminationPage(
+                      witnessId: state.pathParameters['id']!,
+                      phase: state.uri.queryParameters['phase'] == 'cross'
+                          ? TrialPhase.cross
+                          : TrialPhase.direct,
+                      questionId: state.uri.queryParameters['question'],
+                    ),
+                  ),
                   GoRoute(
                     path: 'affidavit/:id',
                     builder: (context, state) =>

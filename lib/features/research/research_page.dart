@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -41,8 +39,8 @@ class _ResearchPageState extends State<ResearchPage> {
   }
 
   void _openSource(String id) => context.push(Routes.researchSource(id));
-  void _send(String question) =>
-      unawaited(context.read<ResearchController>().send(question));
+  Future<bool> _send(String question) =>
+      context.read<ResearchController>().send(question);
 
   void _syncScroll(ResearchController controller) {
     final target = widget.messageId;

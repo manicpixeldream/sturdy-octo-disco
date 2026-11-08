@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show StringCharacters;
 
 import '../data/models/citation.dart';
 import '../data/models/research_message.dart';
@@ -105,6 +106,29 @@ class ResearchController extends LoadController {
     notifyListeners();
   }
 
+  void replaceExamCitations(String caseId, List<Citation> citations) {
+    if (isDisposed || !_loaded || _caseId != caseId) return;
+    final next = {
+      for (final c in citations.where(
+        (c) =>
+            c.location == CitationLocation.examQuestion &&
+            sourceById(c.sourceId)?.caseId == caseId,
+      ))
+        c.id: c,
+    };
+    final old = Map.fromEntries(
+      _citations.entries.where(
+        (e) => e.value.location == CitationLocation.examQuestion,
+      ),
+    );
+    if (mapEquals(old, next)) return;
+    _citations.removeWhere(
+      (_, c) => c.location == CitationLocation.examQuestion,
+    );
+    _citations.addAll(next);
+    notifyListeners();
+  }
+
   void _syncBriefCitations() {
     if (!_loaded || isDisposed) return;
     final next = <String, Citation>{};
@@ -145,7 +169,7 @@ class ResearchController extends LoadController {
         _sending ||
         replyFailed ||
         text.isEmpty ||
-        text.length > 2000) {
+        text.characters.length > 2000) {
       return false;
     }
     final user = ResearchMessage(

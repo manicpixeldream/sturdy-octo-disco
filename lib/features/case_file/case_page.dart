@@ -12,6 +12,7 @@ import '../../core/theme/spacing.dart';
 import '../../data/models/case_brief.dart';
 import '../../state/case_controller.dart';
 import 'widgets/affidavits_section.dart';
+import 'widgets/arguments_section.dart';
 import 'widgets/case_brief_section.dart';
 import 'widgets/case_header_card.dart';
 import 'widgets/evidence_dialog.dart';
@@ -173,6 +174,10 @@ class _CasePageState extends State<CasePage> {
                     ),
                     CaseSection.stipulations => StipulationsSection(
                       stipulations: controller.stipulations,
+                    ),
+                    CaseSection.arguments => ArgumentsSection(
+                      key: ValueKey(caseFile.id),
+                      caseId: caseFile.id,
                     ),
                     CaseSection.rules => RulesSection(
                       rules: controller.timingRules,

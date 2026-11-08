@@ -1,9 +1,10 @@
-# Gavel · v0.8 alpha
+# Gavel · v0.9 alpha
 
 An editorial workspace for mock trial preparation, built with Flutter. The alpha
-contains Home, the six-section Case workspace, a source-linked Research hub,
+contains Home, the Case workspace, a source-linked Research hub,
 the Team roster and role assignment workflow, Profile checklists, Practice Schedule,
-and the shared navigation/design system. Examinations and team chat remain future milestones in [plan.md](plan.md).
+Examination Builder and the shared navigation/design system.
+Onboarding and alpha hardening remain in [plan.md](plan.md).
 
 ## Run locally
 
@@ -18,6 +19,28 @@ flutter run -d chrome
 The UI supports phone, tablet, and desktop widths. Global navigation changes
 from a bottom bar to a sidebar on wider screens. The bundled Fraunces and Inter
 fonts work without a font service.
+
+## Examination Builder in v0.9
+
+Open a witness affidavit from Case, then choose Build direct examination or Build
+cross examination. Each witness has separate scripts and goals for Direct/Cross.
+Add/edit questions, set estimated question-and-answer seconds, mark review flags,
+link exhibits, move questions up/down, or delete them with confirmation.
+
+The timing panel uses the packet's actual rule. Shared allowances aggregate
+across every witness script for the examining side: cross-examination uses the
+opposite side from the witness's side. A warning appears when the combined
+estimate exceeds that side's budget, even if each script fits individually.
+Missing rules are shown as unavailable rather than replaced by guessed limits.
+
+Exhibit chips open Research sources. Their “Cited in” entries link back to the
+exact question and update when links/questions change. Linking an exhibit
+records preparation usage; it does not establish admissibility.
+
+“Suggest with AI” supplies prepared demo prompts, not a live AI response. Adding
+a suggestion is explicit and flags it for review. All scripts and goals last for
+the app session; reloads reset them. Failed saves preserve the saved script and
+keep an editor draft available for retry.
 
 ## Profile and Practice Schedule in v0.8
 
@@ -49,7 +72,7 @@ Suggestions use a deterministic workload ranking (fewest unfinished tasks, then
 name and ID), not live AI or inferred skills. Multiple roles per teammate are
 allowed; users must review trial scheduling and conflicts. Filled roles are
 read-only in this slice. Assignments and their tasks are session-only, and no
-team notification is sent. Team chat remains a v0.10 milestone.
+team notification is sent.
 
 ## Research in v0.6
 
@@ -64,6 +87,12 @@ team notification is sent. Team chat remains a v0.10 milestone.
   answer or Case brief fact. Saving a reference does not claim it was cited.
 - Reference summaries identify their federal/historical scope. They are not
   assumed to govern the fictional state case or a competition's rulebook.
+
+## Opening and closing drafts
+
+Open Case → More → Arguments. The opening statement and closing argument save
+separately as you type and are available when you return to the section during
+the same app session. Reloading clears the drafts.
 
 ## Demo data and dates
 
@@ -106,7 +135,10 @@ on macOS. Browser smoke tests are performed by developers, per
 - **v0.8:** Profile checklists, shared task completion, quick access, and a
   personal practice schedule with day/week filtering and weekly planning goals.
 
-See [v0.8 notes](docs/v0.8-review.md), [v0.7 notes](docs/v0.7-review.md), [v0.6 notes](docs/v0.6-review.md), the
+- **v0.9:** Examination goals, question editing/reordering, exhibit citations,
+  prepared suggestions, and shared per-side timing checks.
+
+See [v0.9 notes](docs/v0.9-review.md), [v0.8 notes](docs/v0.8-review.md), [v0.7 notes](docs/v0.7-review.md), [v0.6 notes](docs/v0.6-review.md), the
 [original review](docs/v0.5-review.md), and the
 [design notes](docs/ui-redesign.md). Release tags are created after the manual
 smoke test; the version in `pubspec.yaml` describes the implemented feature slice.

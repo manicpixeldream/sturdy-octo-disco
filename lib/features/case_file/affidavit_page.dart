@@ -82,6 +82,27 @@ class AffidavitPage extends StatelessWidget {
                   controller.activeCase!.title,
                   style: theme.textTheme.bodySmall,
                 ),
+                if (witness != null) ...[
+                  const SizedBox(height: Spacing.lg),
+                  Wrap(
+                    spacing: Spacing.md,
+                    runSpacing: Spacing.sm,
+                    children: [
+                      OutlinedButton(
+                        key: const ValueKey('affidavit_exam_direct'),
+                        onPressed: () => context.push(Routes.exam(witness.id)),
+                        child: const Text('Build direct examination'),
+                      ),
+                      OutlinedButton(
+                        key: const ValueKey('affidavit_exam_cross'),
+                        onPressed: () => context.push(
+                          Routes.exam(witness.id, phase: 'cross'),
+                        ),
+                        child: const Text('Build cross examination'),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: Spacing.xxl),
                 const Divider(),
                 const SizedBox(height: Spacing.xxl),

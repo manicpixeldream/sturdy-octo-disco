@@ -1,3 +1,5 @@
+import 'package:gavel/data/repositories/exam_repository.dart';
+import 'package:gavel/data/services/exam_suggestion_service.dart';
 import 'package:gavel/data/repositories/schedule_repository.dart';
 import 'package:gavel/data/repositories/role_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,6 +42,8 @@ Future<void> pumpGavelApp(
   ResearchService? researchService,
   RoleRepository? roleRepository,
   ScheduleRepository? scheduleRepository,
+  ExamRepository? examRepository,
+  ExamSuggestionService? examSuggestionService,
 }) async {
   await tester.pumpWidget(
     GavelApp(
@@ -53,6 +57,8 @@ Future<void> pumpGavelApp(
       researchService: researchService,
       roleRepository: roleRepository,
       scheduleRepository: scheduleRepository,
+      examRepository: examRepository,
+      examSuggestionService: examSuggestionService,
     ),
   );
   await tester.pumpAndSettle();

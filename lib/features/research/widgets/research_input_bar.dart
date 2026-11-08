@@ -10,17 +10,18 @@ class ResearchInputBar extends StatefulWidget {
     required this.onSend,
   });
   final bool enabled;
-  final ValueChanged<String> onSend;
+  final Future<bool> Function(String) onSend;
   @override
   State<ResearchInputBar> createState() => _ResearchInputBarState();
 }
 
 class _ResearchInputBarState extends State<ResearchInputBar> {
   final _text = TextEditingController();
-  void _submit() {
-    final value = _text.text.trim();
-    if (!widget.enabled || value.isEmpty) return;
-    widget.onSend(value);
+  Future<void> _submit() async {
+    final draft = _text.text;
+    if (!widget.enabled || draft.trim().isEmpty) return;
+    final accepted = await widget.onSend(draft);
+    if (!mounted || !accepted || _text.text != draft) return;
     _text.clear();
     setState(() {});
   }

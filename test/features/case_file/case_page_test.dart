@@ -50,6 +50,21 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('opening and closing drafts survive switching sections', (
+    tester,
+  ) async {
+    await pumpGavelApp(tester, initialLocation: Routes.caseFile, seed: seed);
+    await select(tester, 'arguments');
+    final opening = find.byKey(const ValueKey('argument_opening'));
+    final closing = find.byKey(const ValueKey('argument_closing'));
+    await tester.enterText(opening, 'Opening draft');
+    await tester.enterText(closing, 'Closing draft');
+    await select(tester, 'overview');
+    await select(tester, 'arguments');
+    expect(find.text('Opening draft'), findsOneWidget);
+    expect(find.text('Closing draft'), findsOneWidget);
+  });
+
   testWidgets('primary tabs and More preserve all six sections and selection', (
     tester,
   ) async {
