@@ -13,7 +13,7 @@ env:
 
 jobs:
   web:
-    name: Analyze, test, build web (Ubuntu)
+    name: Analyze, test, build web, and run Chrome (Ubuntu)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -26,7 +26,11 @@ jobs:
       - run: flutter pub get --enforce-lockfile
       - run: flutter analyze
       - run: flutter test
-      - run: flutter build web
+      - run: flutter build web --no-web-resources-cdn
+      - run: npm ci
+        working-directory: integration_test
+      - run: npm test
+        working-directory: integration_test
 
   ios:
     name: Compare golden snapshots and build iOS (macOS)

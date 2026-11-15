@@ -163,6 +163,19 @@ changes in `test/golden/baselines`.
 Browser smoke tests are performed by developers, per
 `.cursor/rules/no-agent-ui-testing.mdc`.
 
+The automated prep workflow runs against the release build in headless Google
+Chrome. With Chrome, Node.js 20 or newer, and Python 3 installed, run from the
+repository root:
+
+```sh
+flutter build web --no-web-resources-cdn
+npm --prefix integration_test ci
+npm --prefix integration_test test
+```
+
+The test launches its own local server on port 7351 and uses a fresh browser
+context. Failure traces go to `integration_test/test-results`.
+
 ## Versions and notes
 
 - **v0.1–v0.4:** themes, global navigation, immutable models/mock repositories,
