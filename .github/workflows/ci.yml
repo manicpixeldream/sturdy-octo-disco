@@ -29,7 +29,7 @@ jobs:
       - run: flutter build web
 
   ios:
-    name: Build iOS, no codesign (macOS)
+    name: Compare golden snapshots and build iOS (macOS)
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -40,4 +40,5 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get --enforce-lockfile
+      - run: flutter test test/golden
       - run: flutter build ios --no-codesign

@@ -57,7 +57,7 @@ CI also runs a web build and checks an unsigned iOS build. Developers run the br
 ## Next steps
 
 1. Run the developer smoke checks before creating release tags and syncing to main.
-2. Continue v1.0 hardening. Audit loading, empty, and error states and add visual regression tests and the Chrome workflow.
+2. Continue v1.0 hardening. The macOS CI job compares 15 phone-sized golden snapshots. Complete the loading, empty, and error-state audit and add the Chrome workflow.
 3. Beta will validate iPhone and Android layouts, safe areas, gestures, keyboards, and enlarged text.
 4. v2 adds Firebase accounts, team permissions, persistent case data, file storage, live sync, and notifications.
 5. v3 adds server-side AI grounded in uploaded case packets, structured citations, and protected API credentials.

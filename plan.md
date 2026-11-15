@@ -215,7 +215,7 @@ assets/           fonts/, images/
 
 ### v1.0: Alpha release (polish, hardening, and full test pass on web)
 - Empty, loading, and error states on every list, tested with a `FailingFake` repository. Add semantics labels, checks at 1.3x text scale, and a maximum content width so the phone layout stays centered on wide browser windows.
-- Golden tests for each page at a phone size (390x844), using bundled fonts.
+- Golden tests compare 15 route snapshots at 390 × 844 using bundled fonts. The macOS CI job runs the pixel comparisons.
 - `integration_test/app_flow_test.dart` runs in Chrome with `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_flow_test.dart -d chrome`. The flow: Welcome, Home, Research (ask a question and save a source), Case brief, Team (assign the closing attorney), team chat, Me (check off a task), then Schedule.
 - At least 80% coverage on `lib/state` and `lib/data`. Update [README.md](README.md) with web setup steps, test commands, and the version history.
 

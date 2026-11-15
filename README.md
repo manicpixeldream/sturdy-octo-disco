@@ -154,8 +154,13 @@ flutter test
 flutter build web
 ```
 
-CI analyzes/tests/builds the web app on Ubuntu and checks an unsigned iOS build
-on macOS. Browser smoke tests are performed by developers, per
+CI analyzes/tests/builds the web app on Ubuntu. On macOS, it compares phone-sized
+golden snapshots and checks an unsigned iOS build. Run the pixel comparisons
+locally on macOS with `flutter test test/golden`. For intentional visual
+changes, run `flutter test --update-goldens test/golden` and review the PNG
+changes in `test/golden/baselines`.
+
+Browser smoke tests are performed by developers, per
 `.cursor/rules/no-agent-ui-testing.mdc`.
 
 ## Versions and notes
