@@ -117,7 +117,7 @@ class MePage extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.xl),
             const Text(
-              'Demo profile · Changes last for this app session. Reloading resets task completion and assignments.',
+              'Demo profile · Task completion and assignments are saved in this browser.',
             ),
           ],
         ],

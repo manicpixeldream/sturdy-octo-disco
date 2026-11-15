@@ -8,7 +8,7 @@ Alpha hardening remains in [plan.md](plan.md).
 
 ## Run locally
 
-Use **Flutter 3.47.2 / Dart 3.13.2**, matching `.github/workflows/ci.yml`.
+Use **Flutter 3.50.0 / Dart 3.14.0**, matching `.github/workflows/ci.yml`.
 Dependencies are pinned in the committed `pubspec.lock`.
 
 ```sh
@@ -26,6 +26,11 @@ The first visit opens Welcome. Select **Enter the war room** to go to Home.
 The browser remembers this choice for the same site and profile. If site
 storage is unavailable, Welcome stays dismissed for the current session.
 
+Gavel saves workspace changes locally in the same browser profile and site.
+Drafts, saved sources, research history, chat, tasks, role assignments, and
+agendas survive reloads when browser storage is available. Clearing the site’s
+data removes the workspace. Each device has its own copy.
+
 ## Prep workflow
 
 Open an assignment on Home to reach its linked work or task details. In
@@ -36,7 +41,7 @@ picker links to a script or argument.
 
 Open a practice agenda from **Profile → Practice Schedule**. Add scripts and
 arguments, arrange the order, check the time limits and flagged questions, and
-assign follow-up tasks. Drafts, review status, agendas, and tasks reset on reload.
+assign follow-up tasks with a due date and a link back to their agenda.
 
 ## Team Chat in v0.10
 
@@ -54,7 +59,7 @@ The composer retains drafts and selected links after a failed send. Retrying an
 unchanged draft reuses its message ID, preventing duplicate sends. Ctrl+Enter or
 Cmd+Enter sends; Enter adds a newline. Loading errors have retry controls.
 
-Messages and drafts are local to the current app session. Reloading resets them.
+Messages and drafts are saved in this browser.
 No real teammates receive messages, and there is no live sync, notification,
 read-receipt or online-presence service in this alpha.
 
@@ -76,8 +81,7 @@ exact question and update when links/questions change. Linking an exhibit
 records preparation usage; it does not establish admissibility.
 
 “Suggest with AI” supplies prepared demo prompts, not a live AI response. Adding
-a suggestion is explicit and flags it for review. All scripts and goals last for
-the app session; reloads reset them. Failed saves preserve the saved script and
+a suggestion is explicit and flags it for review. Scripts, goals, and review status are saved in this browser. Failed saves preserve the saved script and
 keep an editor draft available for retry.
 
 ## Profile and Practice Schedule in v0.8
@@ -96,8 +100,7 @@ earlier sessions; selecting a day only filters the list. It does not measure
 attendance. Times use the device's local time. The sample goal is 180 minutes.
 
 Practice dates and participants are fixed in the demo. Agenda edits, task
-completion, and assignments last only for the app session. Reloading resets the demo data. No backend or notification service is
-connected.
+completion, and assignments are saved in this browser.
 
 ## Team in v0.7
 
@@ -109,8 +112,8 @@ Expand a roster member to inspect their task queue.
 Suggestions use a deterministic workload ranking (fewest unfinished tasks, then
 name and ID), not live AI or inferred skills. Multiple roles per teammate are
 allowed; users must review trial scheduling and conflicts. Filled roles are
-read-only in this slice. Assignments and their tasks are session-only, and no
-team notification is sent. Team chat is available in v0.10.
+read-only in this slice. Assignments and their tasks are saved in this browser,
+and teammates are not notified. Team chat is available in v0.10.
 
 ## Research in v0.6
 
@@ -118,8 +121,7 @@ team notification is sent. Team chat is available in v0.10.
   keyword-matched demonstrations with numbered points and citations. They are
   not live AI or live web research.
 - **Library:** browse the source catalogue, save references, and search saved
-  sources by title/citation. Saves and chat history last for the app session;
-  reloading clears them.
+  sources by title/citation. Saves and research history are stored in this browser.
 - **Sources:** read the source summary or original sample packet text, copy an
   official reference URL, and follow actual “Cited in” entries back to a Research
   answer or Case brief fact. Saving a reference does not claim it was cited.
@@ -130,7 +132,7 @@ team notification is sent. Team chat is available in v0.10.
 
 Open Case → More → Arguments. The opening statement and closing argument save
 separately as you type and are available when you return to the section during
-the same app session. Reloading clears the drafts.
+the same browser, including after a reload.
 
 ## Demo data and dates
 
@@ -139,9 +141,8 @@ witnesses, six sample affidavits, stipulations, a mock brief, and timing rules.
 There are no original exhibit PDFs or images attached. Research references are
 separate from case facts; the case materials have not been rewritten.
 
-The demo schedule intentionally resets on each launch: the trial is 23 days from
-launch and task deadlines are relative to that day. Home and Case label this
-behavior. While the app stays open, calendar labels refresh as time advances
+The demo trial is 23 days from the first visit. Task deadlines and practice
+dates use that same starting date so they stay tied to your saved workspace. While the app stays open, calendar labels refresh as time advances
 and when the app resumes. Real, persistent dates and shared accounts are future
 backend work.
 

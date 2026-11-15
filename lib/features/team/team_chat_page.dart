@@ -97,7 +97,9 @@ class _TeamChatPageState extends State<TeamChatPage> {
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(
               builder: (context, constraints) {
-                final compact = constraints.maxHeight < 500;
+                final compact =
+                    constraints.maxHeight < 500 ||
+                    (constraints.maxWidth < 360 && constraints.maxHeight < 700);
                 return Column(
                   children: [
                     Align(
@@ -125,8 +127,8 @@ class _TeamChatPageState extends State<TeamChatPage> {
                               ],
                               Text(
                                 compact
-                                    ? 'Local demo · Resets on reload'
-                                    : '${cases.activeCase!.title} · Session-only demo channel. No real messages or notifications are sent.',
+                                    ? 'Local demo · Saved in this browser'
+                                    : '${cases.activeCase!.title} · Local demo channel. No messages or notifications are sent to teammates.',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
@@ -221,6 +223,9 @@ class _TeamChatPageState extends State<TeamChatPage> {
                               failed: chat.sendFailed,
                               items: chat.availableMentions,
                               onSend: chat.send,
+                              initialText: chat.draftText,
+                              initialMentions: chat.draftMentions,
+                              onDraftChanged: chat.saveDraft,
                             ),
                           ),
                         ),

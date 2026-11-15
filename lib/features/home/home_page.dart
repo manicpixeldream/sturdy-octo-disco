@@ -13,6 +13,9 @@ import '../../core/widgets/workspace_columns.dart';
 import '../../core/widgets/workspace_page.dart';
 import '../../core/widgets/workspace_scroll_view.dart';
 import '../../state/case_controller.dart';
+import '../../state/exam_controller.dart';
+import '../../data/models/exam_script.dart';
+import '../../data/models/timing_rule.dart';
 import '../../state/session_controller.dart';
 import '../../state/task_controller.dart';
 import '../../state/team_controller.dart';
@@ -29,6 +32,26 @@ class HomePage extends StatelessWidget {
     final session = context.watch<SessionController>();
     final caseCtrl = context.watch<CaseController>();
     final team = context.watch<TeamController>();
+    final exams = context.watch<ExamController>();
+    ExamScript? assignedScript(String? route) {
+      if (route == null) return null;
+      final uri = Uri.tryParse(route);
+      final path = uri?.pathSegments;
+      if (path == null ||
+          path.length != 4 ||
+          path[0] != 'case' ||
+          path[1] != 'witness' ||
+          path[3] != 'exam') {
+        return null;
+      }
+      return exams.scriptFor(
+        path[2],
+        uri!.queryParameters['phase'] == 'cross'
+            ? TrialPhase.cross
+            : TrialPhase.direct,
+      );
+    }
+
     final tasks = context.watch<TaskController>();
     final loaded = caseCtrl.isLoaded && team.isLoaded && tasks.isLoaded;
     final me = team.byId(session.currentTeammateId);
@@ -61,7 +84,7 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: Spacing.sm),
                 Text(
-                  'Demo schedule · dates reset on each launch',
+                  'Demo workspace · Work is saved in this browser',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: Spacing.xxl),
@@ -98,12 +121,20 @@ class HomePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SectionHeader(title: 'Your assignments'),
-                      for (final task in tasks.tasksFor(
-                        session.currentTeammateId,
-                      ))
+                      for (final (task, script)
+                          in tasks
+                              .tasksFor(session.currentTeammateId)
+                              .map(
+                                (task) =>
+                                    (task, assignedScript(task.workRoute)),
+                              ))
                         AssignmentTile(
                           key: GavelKeys.homeAssignment(task.id),
                           task: task,
+                          script: script,
+                          reviewerName: team
+                              .byId(script?.reviewerId ?? '')
+                              ?.name,
                           onOpen: () => context.push(
                             task.workRoute ?? Routes.teamTask(task.id),
                           ),

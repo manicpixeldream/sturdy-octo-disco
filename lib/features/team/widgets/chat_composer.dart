@@ -13,17 +13,29 @@ class ChatComposer extends StatefulWidget {
     required this.failed,
     required this.items,
     required this.onSend,
+    required this.initialText,
+    required this.initialMentions,
+    required this.onDraftChanged,
   });
   final bool enabled, sending, failed;
   final List<ChatMention> items;
+  final String initialText;
+  final List<ChatMention> initialMentions;
+  final void Function(String, List<ChatMention>) onDraftChanged;
   final Future<bool> Function(String, List<ChatMention>) onSend;
   @override
   State<ChatComposer> createState() => _ChatComposerState();
 }
 
 class _ChatComposerState extends State<ChatComposer> {
-  final _text = TextEditingController();
-  List<ChatMention> _mentions = const [];
+  late final _text = TextEditingController(text: widget.initialText);
+  late List<ChatMention> _mentions = widget.initialMentions;
+
+  void _setMentions(List<ChatMention> mentions) {
+    setState(() => _mentions = List.unmodifiable(mentions));
+    widget.onDraftChanged(_text.text, _mentions);
+  }
+
   bool _submitting = false;
   bool get _enabled => widget.enabled && !widget.sending && !_submitting;
   Future<void> _submit() async {
@@ -48,7 +60,7 @@ class _ChatComposerState extends State<ChatComposer> {
           ChatMentionPicker(items: widget.items, initial: _mentions),
     );
     if (mounted && picked != null) {
-      setState(() => _mentions = List.unmodifiable(picked));
+      _setMentions(picked);
     }
   }
 
@@ -97,8 +109,8 @@ class _ChatComposerState extends State<ChatComposer> {
                               ),
                             ),
                             onDeleted: _enabled
-                                ? () => setState(
-                                    () => _mentions = _mentions
+                                ? () => _setMentions(
+                                    _mentions
                                         .where((m) => m.id != mention.id)
                                         .toList(),
                                   )
@@ -119,7 +131,10 @@ class _ChatComposerState extends State<ChatComposer> {
               maxLines: 3,
               maxLength: 2000,
               textInputAction: TextInputAction.newline,
-              onChanged: (_) => setState(() {}),
+              onChanged: (text) {
+                widget.onDraftChanged(text, _mentions);
+                setState(() {});
+              },
               decoration: const InputDecoration(
                 labelText: 'Message your team',
                 hintText: 'Coordinate your preparation…',

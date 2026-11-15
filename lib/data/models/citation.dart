@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-enum CitationLocation { answer, caseBrief, examQuestion }
+enum CitationLocation { answer, caseBrief, examQuestion, argument }
 
 @immutable
 class Citation {

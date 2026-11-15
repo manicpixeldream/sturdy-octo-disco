@@ -18,7 +18,7 @@ Every iteration below delivers part of this description. In v1, the "AI" feature
 
 ## Starting point
 
-The project began as the default Flutter template. It now implements v0.1–v0.10, including the editorial redesign, Case workspace, Research hub, Team role assignments, Profile checklists, Practice Schedule, Examination Builder, and Team Chat. The pinned development/CI SDK is Flutter 3.47.2 / Dart 3.13.2; dependency versions are committed in `pubspec.lock`. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
+The project began as the default Flutter template. It now implements v0.1–v0.10, including the editorial redesign, Case workspace, Research hub, Team role assignments, Profile checklists, Practice Schedule, Examination Builder, and Team Chat. The pinned development/CI SDK is Flutter 3.50.0 / Dart 3.14.0; dependency versions are committed in `pubspec.lock`. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
 
 ## Alpha target: web only
 

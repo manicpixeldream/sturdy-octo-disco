@@ -1,6 +1,7 @@
 import 'load_controller.dart';
 
 import '../core/clock.dart';
+import '../core/storage/workspace_storage.dart';
 import '../core/dates.dart';
 import '../data/models/case_file.dart';
 import '../data/models/affidavit.dart';
@@ -13,7 +14,14 @@ import '../data/repositories/case_repository.dart';
 import '../data/services/case_brief_service.dart';
 
 class CaseController extends LoadController {
-  CaseController(this._repository, this._clock, {this.briefService});
+  CaseController(
+    this._repository,
+    this._clock, {
+    this.briefService,
+    this.storage,
+  });
+
+  final WorkspaceStorage? storage;
 
   final CaseRepository _repository;
   final Clock _clock;
@@ -54,6 +62,7 @@ class CaseController extends LoadController {
     } else {
       _argumentDrafts[key] = text;
     }
+    storage?.write('argument.$caseId.${phase.name}', text);
   }
 
   Set<String> argumentSources(String caseId, TrialPhase phase) =>
@@ -61,7 +70,9 @@ class CaseController extends LoadController {
 
   bool attachArgumentSource(String caseId, TrialPhase phase, String sourceId) {
     if (isDisposed || _activeCase?.id != caseId) return false;
-    if (_argumentSources.putIfAbsent((caseId, phase), () => {}).add(sourceId)) {
+    final sources = _argumentSources.putIfAbsent((caseId, phase), () => {});
+    if (sources.add(sourceId)) {
+      storage?.write('argumentSources.$caseId.${phase.name}', sources.toList());
       notifyListeners();
     }
     return true;
@@ -69,7 +80,9 @@ class CaseController extends LoadController {
 
   void detachArgumentSource(String caseId, TrialPhase phase, String sourceId) {
     if (isDisposed || _activeCase?.id != caseId) return;
-    if (_argumentSources[(caseId, phase)]?.remove(sourceId) ?? false) {
+    final sources = _argumentSources[(caseId, phase)];
+    if (sources != null && sources.remove(sourceId)) {
+      storage?.write('argumentSources.$caseId.${phase.name}', sources.toList());
       notifyListeners();
     }
   }
@@ -112,6 +125,21 @@ class CaseController extends LoadController {
           activeCase,
           (exhibits, witnesses, affidavits, stipulations, timingRules),
         ) = result;
+        if (_activeCase?.id != activeCase.id) {
+          final caseId = activeCase.id;
+          for (final phase in const [TrialPhase.opening, TrialPhase.closing]) {
+            final draft = storage?.read(
+              'argument.$caseId.${phase.name}',
+              (value) => value as String,
+            );
+            if (draft != null) _argumentDrafts[(caseId, phase)] = draft;
+            final sources = storage?.read(
+              'argumentSources.$caseId.${phase.name}',
+              (value) => Set<String>.from(value as List),
+            );
+            if (sources != null) _argumentSources[(caseId, phase)] = sources;
+          }
+        }
         _activeCase = activeCase;
         _exhibits = List.unmodifiable(exhibits);
         _witnesses = List.unmodifiable(witnesses);

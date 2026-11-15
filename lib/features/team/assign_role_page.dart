@@ -154,7 +154,7 @@ class _AssignRolePageState extends State<AssignRolePage> {
             ],
             const SizedBox(height: Spacing.lg),
             const Text(
-              'Assignments are saved for this session only. Reloading resets them. Team notifications arrive with the shared backend.',
+              'Assignments are saved in this browser. Teammates are not notified.',
             ),
           ],
         ],

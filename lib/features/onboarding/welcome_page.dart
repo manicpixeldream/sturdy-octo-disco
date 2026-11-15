@@ -69,7 +69,12 @@ class WelcomePage extends StatelessWidget {
                         title: 'Prepare as a team',
                         description: 'Assign roles, track prep tasks, and plan practice.',
                       ),
-                      const SizedBox(height: Spacing.xxl),
+                      const SizedBox(height: Spacing.lg),
+                      Text(
+                        'This demo saves your work in this browser. Teammates on other devices have separate copies.',
+                        style: text.bodySmall,
+                      ),
+                      const SizedBox(height: Spacing.xl),
                       FilledButton(
                         key: const ValueKey('welcome_enter'),
                         style: FilledButton.styleFrom(

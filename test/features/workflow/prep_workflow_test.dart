@@ -8,6 +8,7 @@ import 'package:gavel/data/models/timing_rule.dart';
 import 'package:gavel/features/case_file/affidavit_page.dart';
 import 'package:gavel/features/examination/examination_page.dart';
 import 'package:gavel/state/exam_controller.dart';
+import 'package:gavel/state/research_controller.dart';
 import 'package:gavel/state/task_controller.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -45,7 +46,10 @@ void main() {
       await tap(tester, keyed('question_research_$id'));
       expect(find.text('Research for question 1'), findsOneWidget);
       await tap(tester, keyed('research_suggestion_0'));
-      await tap(tester, keyed('citation_message_2_0_ex_4'));
+      final research = tester
+          .element(keyed('research_back_to_work'))
+          .read<ResearchController>();
+      await tap(tester, keyed('citation_${research.messages.last.id}_0_ex_4'));
       await tap(tester, keyed('research_attach_to_work'));
       await tap(tester, keyed('source_back'));
       await tap(tester, keyed('research_back_to_work'));

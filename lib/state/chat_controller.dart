@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show StringCharacters;
@@ -6,6 +7,7 @@ import 'package:flutter/widgets.dart' show StringCharacters;
 import '../data/models/chat_message.dart';
 import '../data/models/timing_rule.dart';
 import '../core/router/routes.dart';
+import '../core/storage/workspace_storage.dart';
 import '../data/repositories/chat_repository.dart';
 import 'case_controller.dart';
 import 'team_controller.dart';
@@ -22,6 +24,7 @@ class ChatController extends LoadController {
     this.clock,
     this.currentTeammateId, {
     this.requestTimeout = const Duration(seconds: 20),
+    this.storage,
   }) {
     cases.addListener(_caseChanged);
     _caseChanged();
@@ -33,6 +36,22 @@ class ChatController extends LoadController {
   final Clock clock;
   final String currentTeammateId;
   final Duration requestTimeout;
+  final WorkspaceStorage? storage;
+  String draftText = '';
+  List<ChatMention> draftMentions = const [];
+
+  void saveDraft(String text, List<ChatMention> mentions) {
+    draftText = text;
+    draftMentions = List.unmodifiable(mentions);
+    if (_caseId case final id?) {
+      storage?.write('chatDraft.$id', {
+        'text': text,
+        'mentions': mentions.map((mention) => mention.toMap()).toList(),
+        'pending': _failedDraft?.toMap(),
+      });
+    }
+  }
+
   String? _caseId;
   String? get caseId => _caseId;
   List<ChatMessage> _messages = const [];
@@ -43,6 +62,9 @@ class ChatController extends LoadController {
   bool get sendFailed => _sendFailed;
   ChatMessage? _failedDraft;
   int _version = 0, _sequence = 0;
+  final _messageNamespace = Random.secure()
+      .nextInt(0x1000000)
+      .toRadixString(16);
   void _caseChanged() {
     final id = cases.activeCase?.id;
     if (!isDisposed && id != null && id != _caseId) unawaited(load());
@@ -59,6 +81,25 @@ class ChatController extends LoadController {
       _sending = false;
       _sendFailed = false;
       _failedDraft = null;
+      draftText = '';
+      draftMentions = const [];
+      storage?.read('chatDraft.$id', (value) {
+        final record = value as Map<String, dynamic>;
+        final text = record['text'] as String;
+        final mentions = (record['mentions'] as List)
+            .map(
+              (item) =>
+                  ChatMention.fromMap(Map<String, Object?>.from(item as Map)),
+            )
+            .toList();
+        final pending = record['pending'] as Map?;
+        _failedDraft = pending == null
+            ? null
+            : ChatMessage.fromMap(Map<String, Object?>.from(pending));
+        draftText = text;
+        draftMentions = List.unmodifiable(mentions);
+        return true;
+      });
     }
     await loadWith(() => _repository.fetchMessages(id), (messages) {
       final ids = <String>{};
@@ -139,7 +180,8 @@ class ChatController extends LoadController {
     } else {
       String id;
       do {
-        id = 'chat_${(++_sequence).toString().padLeft(8, '0')}';
+        id =
+            'chat_${(++_sequence).toString().padLeft(8, '0')}_$_messageNamespace';
       } while (_messages.any((m) => m.id == id));
       draft = ChatMessage(
         id: id,
@@ -151,6 +193,8 @@ class ChatController extends LoadController {
       );
     }
     final version = _version;
+    _failedDraft = draft;
+    saveDraft(text, mentions);
     _sending = true;
     _sendFailed = false;
     notifyListeners();
@@ -171,6 +215,7 @@ class ChatController extends LoadController {
         saved,
       ]);
       _failedDraft = null;
+      saveDraft('', const []);
       return true;
     } catch (_) {
       if (!isDisposed && version == _version) {

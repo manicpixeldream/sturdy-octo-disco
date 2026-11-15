@@ -110,7 +110,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Build the timeline from the packet'), findsOneWidget);
       expect(
-        find.byKey(const ValueKey('citation_message_2_0_ex_4')),
+        find.byKey(
+          ValueKey('citation_${state(tester).messages.last.id}_0_ex_4'),
+        ),
         findsOneWidget,
       );
     },
@@ -121,8 +123,9 @@ void main() {
     (tester) async {
       await launch(tester);
       await send(tester, 'Explain relevance and motive');
+      final answerId = state(tester).messages.last.id;
       final chip = find.byKey(
-        const ValueKey('citation_message_2_1_source_relevance'),
+        ValueKey('citation_${answerId}_1_source_relevance'),
       );
       await tester.ensureVisible(chip);
       await tester.pumpAndSettle();
@@ -137,7 +140,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Saved to Library'), findsOneWidget);
       final usage = find.byKey(
-        const ValueKey('source_usage_answer:message_2:source_relevance'),
+        ValueKey('source_usage_answer:$answerId:source_relevance'),
       );
       await tester.ensureVisible(usage);
       await tester.pumpAndSettle();

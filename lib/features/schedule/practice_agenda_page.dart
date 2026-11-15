@@ -66,7 +66,7 @@ class PracticeAgendaPage extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.md),
             const Text(
-              'Plan the order of rehearsal. Agenda items and follow-up tasks are saved for this session.',
+              'Plan the order of rehearsal. Agenda items and follow-up tasks are saved in this browser.',
             ),
             const SizedBox(height: Spacing.lg),
             ..._agenda(context, schedule, cases, exams, caseId),
@@ -79,23 +79,32 @@ class PracticeAgendaPage extends StatelessWidget {
                   ? null
                   : () async {
                       final tasks = context.read<TaskController>();
+                      final today = session.clock.now();
+                      final dueDate = practice.endsAt.isAfter(today)
+                          ? practice.endsAt
+                          : today;
                       final result =
-                          await showDialog<({String title, String assigneeId})>(
+                          await showDialog<
+                            ({
+                              String title,
+                              String assigneeId,
+                              DateTime dueDate,
+                            })
+                          >(
                             context: context,
                             builder: (_) => PracticeFollowUpDialog(
                               teammates: team.teammates,
                               currentTeammateId: session.currentTeammateId,
+                              today: today,
+                              initialDueDate: dueDate,
                             ),
                           );
                       if (context.mounted && result != null) {
-                        final dueDate =
-                            practice.endsAt.isAfter(session.clock.now())
-                            ? practice.endsAt
-                            : session.clock.now();
                         tasks.addFollowUp(
                           result.title,
                           result.assigneeId,
-                          dueDate,
+                          result.dueDate,
+                          workRoute: Routes.practiceAgenda(sessionId),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

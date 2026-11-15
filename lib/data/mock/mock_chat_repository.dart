@@ -1,9 +1,18 @@
+import '../../core/storage/workspace_storage.dart';
+
 import '../models/chat_message.dart';
 import '../repositories/chat_repository.dart';
 
 class MockChatRepository implements ChatRepository {
-  MockChatRepository([List<ChatMessage> messages = const []])
-    : _messages = {for (final m in messages) '${m.caseId}:${m.id}': m};
+  MockChatRepository([List<ChatMessage> messages = const [], this.storage])
+    : _messages = {
+        for (final m in [
+          ...messages,
+          ...?storage?.records('messages', ChatMessage.fromMap),
+        ])
+          '${m.caseId}:${m.id}': m,
+      };
+  final WorkspaceStorage? storage;
   final Map<String, ChatMessage> _messages;
   @override
   Future<List<ChatMessage>> fetchMessages(String caseId) async {
@@ -23,6 +32,7 @@ class MockChatRepository implements ChatRepository {
       throw StateError('Conflicting message ID');
     }
     _messages[key] = message;
+    storage?.putRecord('messages', key, message.toMap());
     return message;
   }
 }

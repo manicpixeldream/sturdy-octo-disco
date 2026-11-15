@@ -162,6 +162,7 @@ class SourceDetailPage extends StatelessWidget {
                         CitationLocation.answer => 'Research answer',
                         CitationLocation.caseBrief => 'Case brief',
                         CitationLocation.examQuestion => 'Examination question',
+                        CitationLocation.argument => 'Argument draft',
                       }, style: text.titleSmall),
                       subtitle: Text(citation.label),
                       trailing: const Icon(Icons.arrow_outward, size: 18),
@@ -171,6 +172,9 @@ class SourceDetailPage extends StatelessWidget {
                         ),
                         CitationLocation.caseBrief => () => context.go(
                           Routes.caseBrief(citation.referenceId),
+                        ),
+                        CitationLocation.argument => () => context.go(
+                          Routes.argument(citation.referenceId),
                         ),
                         CitationLocation.examQuestion => () => context.go(
                           Routes.examCitation(citation.referenceId),

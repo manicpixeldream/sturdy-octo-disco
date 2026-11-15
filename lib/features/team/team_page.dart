@@ -138,7 +138,7 @@ class _TeamPageState extends State<TeamPage> {
             ),
             const SectionHeader(title: 'Team coordination'),
             const Text(
-              'Use Team chat to discuss tasks and exhibits. Chat, assignments and task changes last for this session only. No real messages or notifications are sent. Reloading resets demo data.',
+              'Use Team Chat to link tasks, exhibits, and drafts. Chat and assignments are saved in this browser. No messages or notifications are sent to teammates.',
             ),
           ],
         ],

@@ -35,6 +35,7 @@ import 'data/repositories/team_repository.dart';
 import 'state/case_controller.dart';
 import 'features/onboarding/onboarding.dart';
 import 'state/session_controller.dart';
+import 'core/storage/workspace_storage.dart';
 import 'state/task_controller.dart';
 import 'state/team_controller.dart';
 import 'state/theme_controller.dart';
@@ -44,6 +45,7 @@ class GavelApp extends StatefulWidget {
     super.key,
     this.initialLocation = Routes.home,
     this.onboarding,
+    this.storage,
     this.clock,
     this.seed,
     this.caseRepository,
@@ -60,6 +62,7 @@ class GavelApp extends StatefulWidget {
 
   final String initialLocation;
   final Onboarding? onboarding;
+  final WorkspaceStorage? storage;
   final Clock? clock;
   final SeedData? seed;
   final CaseRepository? caseRepository;
@@ -97,7 +100,16 @@ class _GavelAppState extends State<GavelApp> {
   void initState() {
     super.initState();
     final clock = widget.clock ?? Clock();
-    final seed = widget.seed ?? SeedData.harmon(today: clock.now());
+    final storage = widget.storage;
+    final savedStart = storage?.read(
+      'start',
+      (value) => DateTime.parse(value as String),
+    );
+    final workspaceStart = savedStart ?? clock.now();
+    if (savedStart == null) {
+      storage?.write('start', workspaceStart.toIso8601String());
+    }
+    final seed = widget.seed ?? SeedData.harmon(today: workspaceStart);
     _session = SessionController(
       currentTeammateId: seed.currentTeammateId,
       clock: clock,
@@ -115,6 +127,7 @@ class _GavelAppState extends State<GavelApp> {
     _case = CaseController(
       caseRepository,
       clock,
+      storage: storage,
       briefService:
           widget.caseBriefService ?? MockCaseBriefService(seed.caseBrief),
     )..load();
@@ -122,9 +135,10 @@ class _GavelAppState extends State<GavelApp> {
       widget.researchService ??
           MockResearchService(caseRepository: caseRepository),
       _case,
+      storage: storage,
     );
     _exams = ExamController(
-      widget.examRepository ?? MockExamRepository(),
+      widget.examRepository ?? MockExamRepository(const [], storage),
       widget.examSuggestionService ?? MockExamSuggestionService(),
       _case,
       _research,
@@ -133,30 +147,34 @@ class _GavelAppState extends State<GavelApp> {
       widget.teamRepository ?? MockTeamRepository(seed.teammates),
     )..load();
     _tasks = TaskController(
-      widget.taskRepository ?? MockTaskRepository(seed.tasks),
+      widget.taskRepository ?? MockTaskRepository(seed.tasks, storage),
+      storage: storage,
     )..load();
     _schedule = ScheduleController(
       widget.scheduleRepository ??
           MockScheduleRepository.demo(
-            clock.now(),
+            workspaceStart,
             seed.teammates.map((m) => m.id).toList(),
           ),
       clock,
       seed.currentTeammateId,
+      storage: storage,
     )..load();
     _chat = ChatController(
-      widget.chatRepository ?? MockChatRepository(),
+      widget.chatRepository ?? MockChatRepository(const [], storage),
       _case,
       _team,
       _tasks,
       _session.clock,
       _session.currentTeammateId,
+      storage: storage,
     );
     _roles = RoleController(
       widget.roleRepository ??
           MockRoleRepository(
             memberIds: seed.teammates.map((m) => m.id).toSet(),
             dueDate: seed.caseFile.trialDate,
+            storage: storage,
           ),
       _tasks,
     )..load();
@@ -201,6 +219,35 @@ class _GavelAppState extends State<GavelApp> {
           // OS dark mode setting.
           theme: themeController.variant.data,
           routerConfig: _router,
+          builder: (context, child) {
+            final storage = widget.storage;
+            if (storage == null) return child!;
+            return ValueListenableBuilder<bool>(
+              valueListenable: storage.saveFailed,
+              child: child,
+              builder: (context, failed, child) => Column(
+                children: [
+                  if (failed)
+                    Material(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      child: SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Semantics(
+                            liveRegion: true,
+                            child: const Text(
+                              'Browser storage is unavailable. Changes may be lost on reload.',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  Expanded(child: child!),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

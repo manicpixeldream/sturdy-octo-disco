@@ -72,7 +72,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Good morning, Sofia'), findsOneWidget);
       expect(find.text('Trial in 22 days'), findsOneWidget);
-      expect(find.textContaining('dates reset on each launch'), findsOneWidget);
+      expect(
+        find.textContaining('Work is saved in this browser'),
+        findsOneWidget,
+      );
     },
   );
 }
