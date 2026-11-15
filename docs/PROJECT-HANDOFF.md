@@ -54,9 +54,10 @@ CI also runs a web build and checks an unsigned iOS build. Manual browser checks
 
 ## Next steps
 
-1. Run the developer smoke checks before creating release tags and syncing to main.
-2. Implement v0.11 onboarding: first-launch Welcome, a primary action into Home, and skipping Welcome once onboarding is complete.
-3. Harden the v1.0 alpha: accessibility, consistent loading/empty/error states, visual regression tests, an end-to-end workflow, and at least 80% coverage for state and data.
-4. Beta: validate iPhone and Android layouts, safe areas, gestures, keyboards, and enlarged text.
-5. v2: add Firebase accounts, team permissions, persistent case data, file storage, live sync, and notifications.
-6. v3: add server-side AI grounded in uploaded case packets, structured citations, and protected API credentials.
+Use the root [plan.md](../plan.md) agent routing table. Detailed plans live under [docs/plans/](plans/).
+
+1. Finish v1.0 alpha polish: [plans/v1-alpha.md](plans/v1-alpha.md).
+2. v2 Firebase / Firestore: [plans/v2-firebase-firestore.md](plans/v2-firebase-firestore.md) (finalize bundle ID early).
+3. v3 iPhone + Android device testing (former Beta): [plans/v3-mobile-device-testing.md](plans/v3-mobile-device-testing.md).
+4. v4 ChatGPT LLM (former plan “v3”): [plans/v4-chatgpt-llm.md](plans/v4-chatgpt-llm.md).
+5. v5 pre-launch / later ideas: [plans/v5-prelaunch-and-future.md](plans/v5-prelaunch-and-future.md).

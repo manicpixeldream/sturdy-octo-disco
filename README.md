@@ -4,7 +4,7 @@ An editorial workspace for mock trial preparation, built with Flutter. The alpha
 contains Home, the Case workspace, a source-linked Research hub,
 the Team roster and role assignment workflow, Profile checklists, Practice Schedule,
 Examination Builder, Team Chat, and the shared navigation/design system.
-Alpha hardening remains in [plan.md](plan.md).
+Roadmap: [plan.md](plan.md). Alpha hardening detail: [docs/plans/v1-alpha.md](docs/plans/v1-alpha.md).
 
 ## Run locally
 
