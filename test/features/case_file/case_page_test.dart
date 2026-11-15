@@ -197,6 +197,7 @@ void main() {
     );
     expect(find.text('2 exhibits'), findsOneWidget);
     expect(find.text('0 witnesses'), findsOneWidget);
+    expect(find.text('No witnesses in this case yet.'), findsOneWidget);
     expect(find.text('0 affidavits'), findsOneWidget);
     for (final (section, message) in [
       ('affidavits', 'No affidavits yet'),

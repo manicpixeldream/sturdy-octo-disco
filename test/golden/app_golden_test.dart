@@ -9,6 +9,25 @@ import 'package:gavel/features/onboarding/onboarding.dart';
 import 'package:gavel/features/onboarding/welcome_page.dart';
 import 'package:material_ui/material_ui.dart';
 
+class HostedMacGoldenComparator extends LocalFileComparator {
+  HostedMacGoldenComparator(super.testFile);
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+    try {
+      // The hosted Mac differs from the baseline machine on up to 0.56% of pixels.
+      if (result.passed || result.diffPercent <= 0.006) return true;
+      throw FlutterError(await generateFailureOutput(result, golden, basedir));
+    } finally {
+      result.dispose();
+    }
+  }
+}
+
 Future<void> loadFont(String family, List<String> assets) async {
   final loader = FontLoader(family);
   for (final asset in assets) {
@@ -19,6 +38,13 @@ Future<void> loadFont(String family, List<String> assets) async {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  if (goldenFileComparator case final LocalFileComparator local
+      when Platform.environment['GITHUB_ACTIONS'] == 'true') {
+    goldenFileComparator = HostedMacGoldenComparator(
+      local.basedir.resolve('app_golden_test.dart'),
+    );
+  }
 
   setUpAll(() async {
     await loadFont('MaterialIcons', ['fonts/MaterialIcons-Regular.otf']);

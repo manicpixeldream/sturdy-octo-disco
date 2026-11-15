@@ -33,6 +33,7 @@ class OverviewSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(title: 'Witnesses (${witnesses.length})'),
+        if (witnesses.isEmpty) const Text('No witnesses in this case yet.'),
         for (final witness in witnesses)
           Padding(
             key: GavelKeys.caseRecord(witness.id),

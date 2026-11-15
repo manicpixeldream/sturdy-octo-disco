@@ -18,7 +18,7 @@ Verify with flutter analyze and flutter test only. Give 3–5 manual smoke steps
 
 | File | Version |
 |---|---|
-| [v1-alpha.md](v1-alpha.md) | v0.1–v0.11 complete history + finishing v1.0 alpha |
+| [v1-alpha.md](v1-alpha.md) | v0.1–v1.0 alpha completion record |
 | [v2-firebase-firestore.md](v2-firebase-firestore.md) | Firebase Auth, Firestore, Storage, FCM |
 | [v3-mobile-device-testing.md](v3-mobile-device-testing.md) | iPhone + Android device validation |
 | [v4-chatgpt-llm.md](v4-chatgpt-llm.md) | ChatGPT researcher / case brief via Cloud Functions |

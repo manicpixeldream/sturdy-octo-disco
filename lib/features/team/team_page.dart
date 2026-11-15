@@ -34,6 +34,7 @@ class _TeamPageState extends State<TeamPage> {
     final tasks = context.watch<TaskController>();
     final roles = context.watch<RoleController>();
     final failed = team.loadFailed || tasks.loadFailed || roles.loadFailed;
+    final sideRoles = roles.roles.where((role) => role.side == filter);
     return WorkspacePage(
       title: 'Team',
       child: WorkspaceScrollView(
@@ -97,26 +98,27 @@ class _TeamPageState extends State<TeamPage> {
                     onChanged: (value) => setState(() => filter = value),
                   ),
                   const SizedBox(height: Spacing.md),
-                  for (final witnessGroup in [false, true]) ...[
-                    SectionHeader(
-                      title: witnessGroup ? 'Witnesses' : 'Attorneys',
-                    ),
-                    RoleGrid(
-                      children: [
-                        for (final role in roles.roles.where(
-                          (r) =>
-                              r.side == filter && r.isWitness == witnessGroup,
-                        ))
-                          RoleTile(
-                            role: role,
-                            assignee: team.byId(
-                              roles.assignmentFor(role.id)?.teammateId ?? '',
+                  for (final (title, group) in [
+                    ('Attorneys', sideRoles.where((role) => !role.isWitness)),
+                    ('Witnesses', sideRoles.where((role) => role.isWitness)),
+                  ]) ...[
+                    SectionHeader(title: title),
+                    if (group.isEmpty)
+                      Text('No ${title.toLowerCase()} listed for $filter.')
+                    else
+                      RoleGrid(
+                        children: [
+                          for (final role in group)
+                            RoleTile(
+                              role: role,
+                              assignee: team.byId(
+                                roles.assignmentFor(role.id)?.teammateId ?? '',
+                              ),
+                              onAssign: () =>
+                                  context.push(Routes.assignRole(role.id)),
                             ),
-                            onAssign: () =>
-                                context.push(Routes.assignRole(role.id)),
-                          ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ],
               ),

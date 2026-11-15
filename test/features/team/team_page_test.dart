@@ -1,5 +1,8 @@
 import 'package:gavel/core/keys.dart';
+import 'package:gavel/core/router/routes.dart';
 import 'package:gavel/core/theme/gavel_theme.dart';
+import 'package:gavel/data/mock/mock_role_repository.dart';
+import 'package:gavel/data/models/trial_role.dart';
 import 'package:gavel/state/theme_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -8,6 +11,18 @@ import 'package:gavel/state/task_controller.dart';
 import 'package:gavel/state/role_controller.dart';
 
 import '../../helpers/pump_app.dart';
+
+class EmptyRolesAfterRetry extends MockRoleRepository {
+  EmptyRolesAfterRetry() : super(memberIds: {}, dueDate: DateTime(2026));
+
+  bool offline = true;
+
+  @override
+  Future<List<TrialRole>> fetchRoles() async {
+    if (offline) throw StateError('offline');
+    return [];
+  }
+}
 
 Future<void> reveal(WidgetTester tester, Finder target) async {
   for (var i = 0; i < 50 && target.hitTestable().evaluate().isEmpty; i++) {
@@ -18,6 +33,24 @@ Future<void> reveal(WidgetTester tester, Finder target) async {
 }
 
 void main() {
+  testWidgets('Team retries a failed role load and explains empty groups', (
+    tester,
+  ) async {
+    final roles = EmptyRolesAfterRetry();
+    await pumpGavelApp(
+      tester,
+      initialLocation: Routes.team,
+      roleRepository: roles,
+    );
+    expect(find.text('Team unavailable'), findsOneWidget);
+
+    roles.offline = false;
+    await tester.tap(find.byKey(const ValueKey('load_retry')));
+    await tester.pumpAndSettle();
+    expect(find.text('No attorneys listed for Prosecution.'), findsOneWidget);
+    expect(find.text('No witnesses listed for Prosecution.'), findsOneWidget);
+  });
+
   testWidgets(
     'filters roles, assigns selected teammate, shares tasks with Home',
     (tester) async {

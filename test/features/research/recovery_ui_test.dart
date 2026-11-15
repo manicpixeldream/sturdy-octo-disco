@@ -92,10 +92,15 @@ void main() {
     expect(find.text('State v. Harmon'), findsOneWidget);
   });
 
-  for (final route in [
-    Routes.caseFile,
-    Routes.affidavit('aff_okafor'),
-    Routes.research,
+  for (final (route, message) in [
+    (Routes.caseFile, 'Could not load the case'),
+    (Routes.affidavit('aff_okafor'), 'Could not load the case'),
+    (Routes.research, 'Could not load the case'),
+    (Routes.researchSource('source_daubert'), 'Could not load this source'),
+    (Routes.exam('wit_reyes'), 'Examination unavailable'),
+    (Routes.teamChat, 'Team chat unavailable'),
+    (Routes.schedule, 'Trial countdown unavailable'),
+    (Routes.practiceAgenda('practice_0'), 'Practice agenda unavailable'),
   ]) {
     testWidgets('$route recovers from an initial case failure', (tester) async {
       final cases = FailingCaseRepository(seed);
@@ -105,9 +110,11 @@ void main() {
         seed: seed,
         caseRepository: cases,
       );
-      expect(find.text('Could not load the case'), findsOneWidget);
+      expect(find.text(message), findsOneWidget);
       cases.fail = false;
-      await tester.tap(find.byKey(const ValueKey('load_retry')));
+      final retry = find.byKey(const ValueKey('load_retry'));
+      await tester.ensureVisible(retry);
+      await tester.tap(retry);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('load_error')), findsNothing);
       expect(tester.takeException(), isNull);

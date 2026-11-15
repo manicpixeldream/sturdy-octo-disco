@@ -23,8 +23,8 @@ Pinned SDK: Flutter **3.50.0** / Dart **3.14.0** (`pubspec.lock`, CI). Workspace
 | Version | Status | Purpose |
 |---|---|---|
 | v0.1–v0.11 | **Complete** | Foundation through Welcome; see [v1-alpha.md](docs/plans/v1-alpha.md) and review notes below |
-| v1.0 alpha | **In progress / finishing** | Polish remaining loading/empty/error audit; goldens, Playwright flow, a11y, and coverage largely landed |
-| v2 | **Planned** | Firebase Auth, Firestore sync, Storage, FCM |
+| v1.0 alpha | **Complete locally** | Alpha features, screen-state audit, goldens, Chrome flow, and coverage |
+| v2 | **In progress** | Firebase tooling and FlutterFire bootstrap |
 | v3 | **Planned** | iPhone + Android device validation (former Beta) |
 | v4 | **Planned** | ChatGPT researcher / case brief via Cloud Functions (former “v3”) |
 | v5 | **Planned** | Pre-launch extras; coach/judge, timer, iPad, later ideas |
@@ -35,8 +35,8 @@ To work on a version, open **`@plan.md`** and the matching file under **`docs/pl
 
 | Version | Purpose | Path | Status |
 |---|---|---|---|
-| v0.1–v0.11 + v1.0 | Alpha history + finishing polish | [`docs/plans/v1-alpha.md`](docs/plans/v1-alpha.md) | Complete / finishing |
-| v2 | Firebase + Firestore | [`docs/plans/v2-firebase-firestore.md`](docs/plans/v2-firebase-firestore.md) | Planned |
+| v0.1–v0.11 + v1.0 | Alpha completion record | [`docs/plans/v1-alpha.md`](docs/plans/v1-alpha.md) | Complete locally |
+| v2 | Firebase + Firestore | [`docs/plans/v2-firebase-firestore.md`](docs/plans/v2-firebase-firestore.md) | In progress |
 | v3 | iPhone + Android device testing | [`docs/plans/v3-mobile-device-testing.md`](docs/plans/v3-mobile-device-testing.md) | Planned |
 | v4 | ChatGPT LLM researcher / case brief | [`docs/plans/v4-chatgpt-llm.md`](docs/plans/v4-chatgpt-llm.md) | Planned |
 | v5 | Pre-launch + future ideas | [`docs/plans/v5-prelaunch-and-future.md`](docs/plans/v5-prelaunch-and-future.md) | Planned |
