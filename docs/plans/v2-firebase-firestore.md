@@ -1,6 +1,6 @@
 # v2 — Firebase and Firestore
 
-**Status:** Precursor complete and bootstrap in progress
+**Status:** Firebase bootstrap implemented. Auth and team invites are next.
 
 **Purpose:** Accounts, shared team data, real-time sync, storage, and notifications.
 
@@ -19,7 +19,7 @@ Replace browser-local mock data with Firebase so teammates share cases, tasks, c
 ## Prerequisites
 
 - v1.0 alpha finishing or complete: stable repository/service interfaces and `toMap`/`fromMap` shapes.
-- **Finalize bundle ID / `applicationId` early in this version** (or immediately before `flutterfire configure`). Placeholder `com.example.gavel` must become something unique (for example `com.<team>.gavel`) on iOS and Android together. Changing it after Firebase config is painful for v2↔v3.
+- The iOS bundle ID and Android application ID are both `com.manicpixeldream.gavel`.
 - Firebase project access; FlutterFire CLI available.
 - iOS deployment target remains 15.0+ (meets Firebase minimum).
 
@@ -28,16 +28,18 @@ Replace browser-local mock data with Firebase so teammates share cases, tasks, c
 - [x] Installed and verified Firebase CLI 15.36.0 and FlutterFire CLI 1.5.0.
 - [x] Added and locked the Core, Auth, Cloud Firestore, and Storage Flutter plugins.
 - [x] Set the iOS and Android app display name to Gavel.
-- [ ] Sign in with `firebase login` and select the Firebase project.
-- [ ] Confirm the permanent app ID and apply it to the iOS Runner and Android app before registering either platform.
-- [ ] Run FlutterFire configure for iOS, Android, and web, then initialize Firebase with the generated options.
+- [x] Sign in with `firebase login` and select `gavel-21e6a`.
+- [x] Apply `com.manicpixeldream.gavel` to the iOS Runner and Android app.
+- [x] Register iOS, Android, and web with FlutterFire and initialize Firebase from the generated options at startup.
 
-FlutterFire is installed in the Dart pub cache. With Flutter 3.50.0 on PATH,
-use the following command after confirming the project and mobile app ID.
+FlutterFire is installed in the Dart pub cache. To refresh generated settings
+with Flutter 3.50.0 on PATH, run this command from the app repository.
 
 ```sh
 dart pub global run flutterfire_cli:flutterfire configure \
-  --project=PROJECT_ID --platforms=ios,android,web
+  --project=gavel-21e6a --platforms=ios,android,web \
+  --ios-bundle-id=com.manicpixeldream.gavel \
+  --android-package-name=com.manicpixeldream.gavel
 ```
 
 ## Architecture / swap-in strategy
@@ -64,8 +66,7 @@ v1 already routes UI → controllers → **interfaces** → mocks. v2 adds imple
 
 Suggested tags: `v2.1`, `v2.2`, … (or keep working on a `v2` branch until a release tag).
 
-1. **Bundle ID + FlutterFire bootstrap**  
-   Set iOS bundle ID and Android `applicationId` to the final value; display name "Gavel". Run `flutterfire configure` for iOS, Android, and web. Add `firebase_core`, `firebase_auth`, `cloud_firestore`, `firebase_storage`. Add `GoogleService-Info.plist` via FlutterFire on iOS.
+1. **Bundle ID and FlutterFire bootstrap** — implemented. The app initializes Firebase on web, iOS, and Android. Existing prep screens continue to use the demo repositories until the later repository slices.
 
 2. **Auth + team invite**  
    Sign-in flows; invite code joins a team; session controller uses Firebase Auth instead of local onboarded-only state.

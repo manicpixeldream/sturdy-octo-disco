@@ -1,4 +1,4 @@
-package com.example.gavel
+package com.manicpixeldream.gavel
 
 import io.flutter.embedding.android.FlutterActivity
 

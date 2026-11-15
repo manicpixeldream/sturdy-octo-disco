@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "400939083630",
+    "project_id": "gavel-21e6a",
+    "storage_bucket": "gavel-21e6a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:400939083630:android:8644d5826d4221ac18837f",
+        "android_client_info": {
+          "package_name": "com.manicpixeldream.gavel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKU8V4zOVHKv-4ruglEQ-O558Zg3opEvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

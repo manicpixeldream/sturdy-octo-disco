@@ -1,6 +1,6 @@
 # v1 alpha — completion record
 
-**Status:** v0.1–v1.0 implementation and local verification **Complete**.
+**Status:** v0.1–v1.0 implementation and verification **Complete**.
 
 This file is the detailed record for the web alpha. Root [`plan.md`](../../plan.md) stays the short roadmap. Do not treat completed v0.x sections below as open todos.
 
@@ -208,7 +208,8 @@ Polish, hardening, and full test pass on web.
 - [x] `flutter test` passes
 - [x] Developer confirmed the Chrome smoke flow after the practice follow-up wording and recovery checks
 - [x] Loading, empty, and error-state audit complete
-- [ ] Confirm hosted CI and tag the alpha for release
+- [x] [Hosted Ubuntu and macOS CI passed](https://github.com/manicpixeldream/sturdy-octo-disco/actions/runs/43676012294)
+- [ ] Publish the v1.0 release tag
 
 ### Testing notes
 
