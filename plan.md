@@ -18,7 +18,7 @@ Every iteration below delivers part of this description. In v1, the "AI" feature
 
 ## Starting point
 
-The project began as the default Flutter template. It now implements v0.1–v0.10, including the editorial redesign, Case workspace, Research hub, Team role assignments, Profile checklists, Practice Schedule, Examination Builder, and Team Chat. The pinned development/CI SDK is Flutter 3.50.0 / Dart 3.14.0; dependency versions are committed in `pubspec.lock`. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
+The project began as the default Flutter template. It now implements v0.1–v0.11, including the editorial redesign, Case workspace, Research hub, Team role assignments, Profile checklists, Practice Schedule, Examination Builder, Team Chat, and first-visit onboarding. The pinned development/CI SDK is Flutter 3.50.0 / Dart 3.14.0; dependency versions are committed in `pubspec.lock`. The [ios/](ios/) and [android/](android/) folders stay as generated until the Beta phase (see **Future plans**).
 
 ## Alpha target: web only
 
@@ -191,22 +191,22 @@ assets/           fonts/, images/
 
 ### v0.7: Team tab and Assign Role page (roles and task queues)
 - `team_page.dart`: roster readiness card, Prosecution / Defense segmented control with attorneys and witnesses grouped under each side, attorneys and witness roles, open-slot tiles, and an entry point to team chat.
-- `assign_role_page.dart` (`/team/assign/:roleId`): role hero, a responsibilities checklist, and AI-match teammate suggestions from a pure `TeammateMatcher`. The "Assign {name}" button assigns the role and adds its responsibilities to that teammate's task queue. The local alpha explicitly states that no notification is sent. Suggestions rank unfinished task workload, then name and ID; they are demo suggestions, not live AI. Assignments last for the session; filled slots are read-only in this slice.
+- `assign_role_page.dart` (`/team/assign/:roleId`): role hero, a responsibilities checklist, and AI-match teammate suggestions from a pure `TeammateMatcher`. The "Assign {name}" button assigns the role and adds its responsibilities to that teammate's task queue. The local alpha explicitly states that no notification is sent. Suggestions rank unfinished task workload, then name and ID; they are demo suggestions, not live AI. Assignments are saved in the current browser profile. Filled slots are read-only.
 - Tests: the matcher ranking rules, the segmented filter, the button label updating, assignment filling the slot, creating tasks in that teammate's queue, and recomputing task completion consistently on Team and Home. Assigning unfinished responsibilities can lower the completion percentage; role coverage must be shown as a separate metric and must not be presented as completed preparation.
 
 ### v0.8: Me tab and Practice Schedule page (prep checklists and schedule)
 - `me_page.dart`: profile hero, stats row, "My tasks" (your personal prep checklist from the task queue), and a quick access grid.
-- `schedule_page.dart` (`/me/schedule`): countdown hero, week strip, upcoming sessions, and a weekly goal card. The goal counts the current teammate’s scheduled minutes in the entire selected calendar week (Monday–Sunday), independent of the day filter; it measures planning, not attendance. Task changes and schedules remain session-only mocks.
+- `schedule_page.dart` (`/me/schedule`): countdown hero, week strip, upcoming sessions, and a weekly goal card. The goal counts the current teammate’s scheduled minutes in the entire selected calendar week (Monday–Sunday), independent of the day filter; it measures planning, not attendance. Task changes and agenda edits are saved in the current browser profile. Practice sessions use demo data.
 - Tests: checking off a task updates the stats and Home, each quick-access tile opens the right route, the week strip filters sessions, and the weekly goal math is correct.
 
 ### v0.9: Examination Builder page (examination scripts)
-- Case → More → Arguments stores separate session-only drafts for the opening statement and closing argument.
+- Case → More → Arguments saves separate browser-local drafts for the opening statement and closing argument.
 - `examination_page.dart` (`/case/witness/:id/exam`): witness hero, stats (Drafted, Evidence-linked, Flagged), the examination goal, and the question line with exhibit tags.
-- Add, edit, reorder, and delete questions. Questions store editable question-and-answer timing estimates (45 seconds by default), review flags, and exhibit links. "Suggest with AI" uses prepared mock prompts; users explicitly add them for review. Scripts and goals are session-only. An estimated time is shown against the matching timing rule from v0.5. Direct and cross budgets are shared per side across all witnesses: compare the combined script estimates against that shared budget (or an explicitly allocated per-witness portion), not each script independently against the full limit.
+- Add, edit, reorder, and delete questions. Questions store editable question-and-answer timing estimates (45 seconds by default), review flags, and exhibit links. "Suggest with AI" uses prepared mock prompts; users explicitly add them for review. Scripts and goals are saved in the current browser profile. An estimated time is shown against the matching timing rule from v0.5. Direct and cross budgets are shared per side across all witnesses: compare the combined script estimates against that shared budget (or an explicitly allocated per-witness portion), not each script independently against the full limit.
 - Tests: create, edit, reorder, and delete; stats recompute; linking an exhibit adds a tag and a "Cited in" entry; a warning appears when the combined per-side estimate is over the shared limit, including when every individual script would fit by itself.
 
 ### v0.10: Team chat page (coordination)
-- `team_chat_page.dart` (`/team/chat`): a single team channel with message tiles and an input bar. Messages can explicitly link up to five tasks/exhibits from a searchable picker. Task links open a task detail view; exhibit links open Research sources. Typed names are not auto-linked. Failed sends retain the composer draft and retry unchanged content with the same message ID. Uses `MockChatRepository` (local only in v1; real-time comes with Firestore).
+- `team_chat_page.dart` (`/team/chat`): a single team channel with message tiles and an input bar. Messages can explicitly link up to five tasks, exhibits, or drafts from a searchable picker. Task links open a task detail view; exhibit links open Research sources, and draft links open the corresponding script or argument. Typed names are not auto-linked. Failed sends retain the composer draft and retry unchanged content with the same message ID. Uses `MockChatRepository` (local only in v1; real-time comes with Firestore).
 - Tests: sending a message appends it, and tapping a mention opens the linked item.
 
 ### v0.11: Welcome / onboarding page

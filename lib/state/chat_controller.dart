@@ -107,6 +107,24 @@ class ChatController extends LoadController {
         throw StateError('Invalid channel data');
       }
       _messages = List.unmodifiable(messages);
+      if (_failedDraft case final pending?) {
+        final matchesDraft =
+            draftText.trim() == pending.text &&
+            listEquals(
+              draftMentions.map((mention) => mention.id).toList(),
+              pending.mentions.map((mention) => mention.id).toList(),
+            );
+        if (ids.contains(pending.id)) {
+          _failedDraft = null;
+          _sendFailed = false;
+          saveDraft(
+            matchesDraft ? '' : draftText,
+            matchesDraft ? const [] : draftMentions,
+          );
+        } else {
+          _sendFailed = matchesDraft;
+        }
+      }
       _loaded = true;
     });
   }

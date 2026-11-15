@@ -1,4 +1,5 @@
 import 'package:gavel/core/clock.dart';
+import 'package:gavel/core/storage/workspace_storage.dart';
 import 'package:gavel/data/mock/seed_data.dart';
 import 'package:gavel/data/mock/mock_case_repository.dart';
 import 'package:gavel/data/mock/mock_team_repository.dart';
@@ -21,6 +22,7 @@ class ChatFixture {
     ChatRepository? repository,
     CaseRepository? caseRepository,
     Duration timeout = const Duration(seconds: 20),
+    WorkspaceStorage? storage,
   }) async {
     final seed = SeedData.harmon(today: DateTime(2026, 10, 26));
     final clock = Clock.fixed(DateTime(2026, 10, 26, 10));
@@ -37,13 +39,14 @@ class ChatFixture {
     final tasks = TaskController(MockTaskRepository(seed.tasks));
     await Future.wait([cases.load(), team.load(), tasks.load()]);
     final chat = ChatController(
-      repository ?? MockChatRepository(),
+      repository ?? MockChatRepository(const [], storage),
       cases,
       team,
       tasks,
       clock,
       seed.currentTeammateId,
       requestTimeout: timeout,
+      storage: storage,
     );
     await chat.load();
     return ChatFixture._(cases, team, tasks, chat);

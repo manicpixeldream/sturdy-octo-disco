@@ -41,8 +41,7 @@ class WorkspaceStorage {
   List<T> records<T>(String key, T Function(Map<String, Object?>) decode) {
     final values = read(key, (value) => (value as Map<String, dynamic>).values);
     return [
-      for (final value in values ?? const [])
-        ?_decodeRecord(value, decode),
+      for (final value in values ?? const []) ?_decodeRecord(value, decode),
     ];
   }
 
@@ -59,9 +58,16 @@ class WorkspaceStorage {
     final storageKey = 'gavel.workspace.v1.$key';
     try {
       final raw = _read(storageKey);
-      final records = raw == null
-          ? <String, Object?>{}
-          : jsonDecode(raw) as Map<String, dynamic>;
+      final records = <String, Object?>{};
+      if (raw != null) {
+        try {
+          records.addAll(jsonDecode(raw) as Map<String, dynamic>);
+        } on FormatException {
+          scheduleMicrotask(() => saveFailed.value = true);
+        } on TypeError {
+          scheduleMicrotask(() => saveFailed.value = true);
+        }
+      }
       records[id] = record;
       _write(storageKey, jsonEncode(records));
     } catch (_) {
