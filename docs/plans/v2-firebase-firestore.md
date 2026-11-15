@@ -1,13 +1,14 @@
 # v2 — Firebase and Firestore
 
-**Status:** Planned  
+**Status:** Precursor complete and bootstrap in progress
+
 **Purpose:** Accounts, shared team data, real-time sync, storage, and notifications.
 
 Root roadmap: [`plan.md`](../../plan.md).
 
 ## Goal
 
-Replace session-only mocks with Firebase so teammates share cases, tasks, chat, and readiness in real time, with Auth, Storage, security rules, and FCM.
+Replace browser-local mock data with Firebase so teammates share cases, tasks, chat, and readiness in real time, with Auth, Storage, security rules, and FCM.
 
 ## Non-goals
 
@@ -21,6 +22,23 @@ Replace session-only mocks with Firebase so teammates share cases, tasks, chat, 
 - **Finalize bundle ID / `applicationId` early in this version** (or immediately before `flutterfire configure`). Placeholder `com.example.gavel` must become something unique (for example `com.<team>.gavel`) on iOS and Android together. Changing it after Firebase config is painful for v2↔v3.
 - Firebase project access; FlutterFire CLI available.
 - iOS deployment target remains 15.0+ (meets Firebase minimum).
+
+## Bootstrap progress
+
+- [x] Installed and verified Firebase CLI 15.36.0 and FlutterFire CLI 1.5.0.
+- [x] Added and locked the Core, Auth, Cloud Firestore, and Storage Flutter plugins.
+- [x] Set the iOS and Android app display name to Gavel.
+- [ ] Sign in with `firebase login` and select the Firebase project.
+- [ ] Confirm the permanent app ID and apply it to the iOS Runner and Android app before registering either platform.
+- [ ] Run FlutterFire configure for iOS, Android, and web, then initialize Firebase with the generated options.
+
+FlutterFire is installed in the Dart pub cache. With Flutter 3.50.0 on PATH,
+use the following command after confirming the project and mobile app ID.
+
+```sh
+dart pub global run flutterfire_cli:flutterfire configure \
+  --project=PROJECT_ID --platforms=ios,android,web
+```
 
 ## Architecture / swap-in strategy
 
