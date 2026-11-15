@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show StringCharacters;
 
+import '../core/storage/workspace_storage.dart';
+import '../data/models/timing_rule.dart';
 import '../data/models/citation.dart';
 import '../data/models/research_message.dart';
 import '../data/models/research_source.dart';
@@ -15,6 +18,7 @@ class ResearchController extends LoadController {
     this._service,
     this._cases, {
     this.requestTimeout = const Duration(seconds: 20),
+    this.storage,
   }) {
     _cases.addListener(_caseChanged);
     _caseChanged();
@@ -23,6 +27,38 @@ class ResearchController extends LoadController {
   final ResearchService _service;
   final CaseController _cases;
   final Duration requestTimeout;
+  final WorkspaceStorage? storage;
+  final _random = Random.secure();
+  String _newMessageId() =>
+      'message_${List.generate(8, (_) => _random.nextInt(0x10000).toRadixString(16).padLeft(4, '0')).join()}';
+
+  String get draft {
+    final id = _caseId;
+    return id == null
+        ? ''
+        : storage?.read('researchDraft.$id', (value) => value as String) ?? '';
+  }
+
+  void saveDraft(String text) {
+    if (_caseId case final id?) storage?.write('researchDraft.$id', text);
+  }
+
+  void _persistHistory({String? pendingId}) {
+    if (_caseId case final id?) {
+      storage?.write('research.$id', {
+        'messages': _messages.map((message) => message.toMap()).toList(),
+        'saved': _saved.toList(),
+        'citations': _citations.values
+            .where((citation) => citation.location == CitationLocation.answer)
+            .map((citation) => citation.toMap())
+            .toList(),
+        'pending':
+            pendingId ??
+            (_sending ? _messages.lastOrNull?.id : _failedMessageId),
+      });
+    }
+  }
+
   String? _caseId;
   bool _loaded = false;
   List<ResearchSource> _sources = const [];
@@ -31,7 +67,6 @@ class ResearchController extends LoadController {
   final Set<String> _saved = {};
   bool _sending = false;
   String? _failedMessageId;
-  int _sequence = 0;
   int _requestVersion = 0;
 
   bool get isLoaded => _loaded;
@@ -70,6 +105,31 @@ class ResearchController extends LoadController {
       _sending = false;
       _failedMessageId = null;
       _loaded = false;
+      storage?.read('research.$id', (value) {
+        final record = value as Map<String, dynamic>;
+        final messages = (record['messages'] as List)
+            .map(
+              (item) => ResearchMessage.fromMap(
+                Map<String, Object?>.from(item as Map),
+              ),
+            )
+            .toList();
+        final citations = (record['citations'] as List)
+            .map(
+              (item) =>
+                  Citation.fromMap(Map<String, Object?>.from(item as Map)),
+            )
+            .toList();
+        final saved = List<String>.from(record['saved'] as List);
+        final pending = record['pending'] as String?;
+        _messages.addAll(messages);
+        _citations.addEntries(
+          citations.map((citation) => MapEntry(citation.id, citation)),
+        );
+        _saved.addAll(saved);
+        _failedMessageId = pending;
+        return true;
+      });
     }
     _caseId = id;
     await loadWith(() => _service.fetchSources(id), (sources) {
@@ -93,6 +153,7 @@ class ResearchController extends LoadController {
       throw ArgumentError.value(sourceId, 'sourceId');
     }
     if (!_saved.add(sourceId)) _saved.remove(sourceId);
+    _persistHistory();
     notifyListeners();
   }
 
@@ -149,15 +210,26 @@ class ResearchController extends LoadController {
         }
       }
     }
+    for (final phase in const [TrialPhase.opening, TrialPhase.closing]) {
+      for (final sourceId in _cases.argumentSources(_caseId!, phase)) {
+        if (sourceById(sourceId) == null) continue;
+        final citation = Citation(
+          sourceId: sourceId,
+          location: CitationLocation.argument,
+          referenceId: phase.name,
+          label: phase.label,
+        );
+        next[citation.id] = citation;
+      }
+    }
+    bool isCaseCitation(Citation citation) =>
+        citation.location == CitationLocation.caseBrief ||
+        citation.location == CitationLocation.argument;
     final old = Map.fromEntries(
-      _citations.entries.where(
-        (e) => e.value.location == CitationLocation.caseBrief,
-      ),
+      _citations.entries.where((entry) => isCaseCitation(entry.value)),
     );
     if (mapEquals(old, next)) return;
-    _citations.removeWhere(
-      (_, value) => value.location == CitationLocation.caseBrief,
-    );
+    _citations.removeWhere((_, value) => isCaseCitation(value));
     _citations.addAll(next);
     notifyListeners();
   }
@@ -173,11 +245,12 @@ class ResearchController extends LoadController {
       return false;
     }
     final user = ResearchMessage(
-      id: 'message_${++_sequence}',
+      id: _newMessageId(),
       role: ResearchRole.user,
       text: text,
     );
     _messages.add(user);
+    if (draft.trim() == text) saveDraft('');
     await _answer(user);
     return true;
   }
@@ -192,6 +265,7 @@ class ResearchController extends LoadController {
   void dismissFailedReply() {
     if (_sending || _failedMessageId == null) return;
     _failedMessageId = null;
+    _persistHistory();
     notifyListeners();
   }
 
@@ -201,6 +275,7 @@ class ResearchController extends LoadController {
     final request = ++_requestVersion;
     _sending = true;
     _failedMessageId = null;
+    _persistHistory(pendingId: user.id);
     notifyListeners();
     try {
       final reply = await _service
@@ -222,7 +297,7 @@ class ResearchController extends LoadController {
         throw StateError('Answer has missing or invalid citations.');
       }
       final answer = ResearchMessage(
-        id: 'message_${++_sequence}',
+        id: _newMessageId(),
         role: ResearchRole.assistant,
         text: reply.title,
         points: reply.points,
@@ -242,6 +317,7 @@ class ResearchController extends LoadController {
     } finally {
       if (!isDisposed && request == _requestVersion) {
         _sending = false;
+        _persistHistory();
         notifyListeners();
       }
     }

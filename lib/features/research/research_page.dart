@@ -141,7 +141,9 @@ class _ResearchPageState extends State<ResearchPage> {
                                     if (!compact) ...[
                                       Text(
                                         'Research with context.',
-                                        style: theme.textTheme.displaySmall,
+                                        style: constraints.maxWidth < 360
+                                            ? theme.textTheme.headlineSmall
+                                            : theme.textTheme.displaySmall,
                                       ),
                                       const SizedBox(height: Spacing.sm),
                                     ],
@@ -193,20 +195,23 @@ class _ResearchPageState extends State<ResearchPage> {
                                             ),
                                           ),
                                         ),
-                                        Semantics(
-                                          selected: _library,
-                                          child: TextButton(
-                                            key: const ValueKey(
-                                              'research_library_mode',
-                                            ),
-                                            onPressed: () =>
-                                                setState(() => _library = true),
-                                            child: Text(
-                                              'Library (${controller.savedSources.length})',
-                                              style: TextStyle(
-                                                fontWeight: _library
-                                                    ? FontWeight.w700
-                                                    : FontWeight.w400,
+                                        Flexible(
+                                          child: Semantics(
+                                            selected: _library,
+                                            child: TextButton(
+                                              key: const ValueKey(
+                                                'research_library_mode',
+                                              ),
+                                              onPressed: () => setState(
+                                                () => _library = true,
+                                              ),
+                                              child: Text(
+                                                'Library (${controller.savedSources.length})',
+                                                style: TextStyle(
+                                                  fontWeight: _library
+                                                      ? FontWeight.w700
+                                                      : FontWeight.w400,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -250,7 +255,7 @@ class _ResearchPageState extends State<ResearchPage> {
                                                 (m) => m.id == widget.messageId,
                                               ))
                                             const Text(
-                                              'This answer is no longer in this session. Ask a new question below.',
+                                              'This answer is unavailable in this browser. Ask a new question below.',
                                             ),
                                           if (controller.messages.isEmpty) ...[
                                             Text(
@@ -387,6 +392,9 @@ class _ResearchPageState extends State<ResearchPage> {
                               ),
                               child: SingleChildScrollView(
                                 child: ResearchInputBar(
+                                  key: ValueKey(controller.caseId),
+                                  initialText: controller.draft,
+                                  onDraftChanged: controller.saveDraft,
                                   enabled:
                                       !controller.isSending &&
                                       !controller.replyFailed,

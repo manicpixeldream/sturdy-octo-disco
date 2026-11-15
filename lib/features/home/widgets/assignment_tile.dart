@@ -4,6 +4,7 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/gavel_card.dart';
 import '../../../core/widgets/status_pill.dart';
 import '../../../data/models/task_item.dart';
+import '../../../data/models/exam_script.dart';
 
 class AssignmentTile extends StatelessWidget {
   const AssignmentTile({
@@ -11,11 +12,15 @@ class AssignmentTile extends StatelessWidget {
     required this.task,
     required this.dueLabel,
     required this.onOpen,
+    this.script,
+    this.reviewerName,
   });
 
   final TaskItem task;
   final String dueLabel;
   final VoidCallback onOpen;
+  final ExamScript? script;
+  final String? reviewerName;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +40,13 @@ class AssignmentTile extends StatelessWidget {
                   task.isDone ? 'Done' : dueLabel,
                   style: theme.textTheme.bodySmall,
                 ),
+                if (script case final draft?)
+                  Text(
+                    reviewerName == null
+                        ? draft.status.label
+                        : '${draft.status.label} · Reviewer: $reviewerName',
+                    style: theme.textTheme.bodySmall,
+                  ),
               ],
             ),
           ),

@@ -8,15 +8,19 @@ class ResearchInputBar extends StatefulWidget {
     super.key,
     required this.enabled,
     required this.onSend,
+    required this.initialText,
+    required this.onDraftChanged,
   });
   final bool enabled;
+  final String initialText;
+  final ValueChanged<String> onDraftChanged;
   final Future<bool> Function(String) onSend;
   @override
   State<ResearchInputBar> createState() => _ResearchInputBarState();
 }
 
 class _ResearchInputBarState extends State<ResearchInputBar> {
-  final _text = TextEditingController();
+  late final _text = TextEditingController(text: widget.initialText);
   Future<void> _submit() async {
     final draft = _text.text;
     if (!widget.enabled || draft.trim().isEmpty) return;
@@ -72,7 +76,10 @@ class _ResearchInputBarState extends State<ResearchInputBar> {
                         maxLines: 3,
                         maxLength: 2000,
                         textInputAction: TextInputAction.send,
-                        onChanged: (_) => setState(() {}),
+                        onChanged: (text) {
+                          widget.onDraftChanged(text);
+                          setState(() {});
+                        },
                         onSubmitted: (_) => _submit(),
                         decoration: const InputDecoration(
                           labelText: 'Ask about the case',

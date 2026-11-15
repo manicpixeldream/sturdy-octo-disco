@@ -21,6 +21,7 @@ class ExamScript {
     required this.phase,
     String goal = '',
     this.status = ExamStatus.drafting,
+    this.reviewerId,
     List<ExamQuestion> questions = const [],
   }) : goal = goal.trim(),
        questions = List.unmodifiable(questions) {
@@ -35,6 +36,7 @@ class ExamScript {
   final String caseId, witnessId, goal;
   final TrialPhase phase;
   final ExamStatus status;
+  final String? reviewerId;
   final List<ExamQuestion> questions;
   String get id => '$witnessId:${phase.name}';
   int get estimatedSeconds =>
@@ -45,6 +47,7 @@ class ExamScript {
     phase: TrialPhase.values.byName(map['phase']! as String),
     goal: map['goal']! as String,
     status: ExamStatus.values.byName(map['status'] as String? ?? 'drafting'),
+    reviewerId: map['reviewerId'] as String?,
     questions: (map['questions']! as List)
         .map((q) => ExamQuestion.fromMap(Map<String, Object?>.from(q as Map)))
         .toList(),
@@ -55,12 +58,15 @@ class ExamScript {
     'phase': phase.name,
     'goal': goal,
     'status': status.name,
+    if (reviewerId != null) 'reviewerId': reviewerId,
     'questions': questions.map((q) => q.toMap()).toList(),
   };
   ExamScript copyWith({
     String? goal,
     List<ExamQuestion>? questions,
     ExamStatus? status,
+    String? reviewerId,
+    bool clearReviewer = false,
   }) => ExamScript(
     caseId: caseId,
     witnessId: witnessId,
@@ -73,6 +79,7 @@ class ExamScript {
             ? ExamStatus.drafting
             : this.status),
     questions: questions ?? this.questions,
+    reviewerId: clearReviewer ? null : reviewerId ?? this.reviewerId,
   );
   @override
   bool operator ==(Object other) =>
@@ -82,6 +89,7 @@ class ExamScript {
       phase == other.phase &&
       goal == other.goal &&
       status == other.status &&
+      reviewerId == other.reviewerId &&
       listEquals(questions, other.questions);
   @override
   int get hashCode => Object.hash(
@@ -90,6 +98,7 @@ class ExamScript {
     phase,
     goal,
     status,
+    reviewerId,
     Object.hashAll(questions),
   );
 }

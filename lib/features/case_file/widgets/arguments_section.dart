@@ -28,9 +28,7 @@ class ArgumentsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionHeader(title: 'Argument drafts'),
-        const Text(
-          'Drafts save as you type and reset when you reload the app.',
-        ),
+        const Text('Drafts save as you type in this browser.'),
         for (final phase in phases) ...[
           const SizedBox(height: Spacing.lg),
           TextFormField(

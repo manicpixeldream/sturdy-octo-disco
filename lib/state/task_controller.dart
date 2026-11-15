@@ -1,10 +1,15 @@
 import 'load_controller.dart';
+import '../core/storage/workspace_storage.dart';
+
+import 'dart:math';
 
 import '../data/models/task_item.dart';
 import '../data/repositories/task_repository.dart';
 
 class TaskController extends LoadController {
-  TaskController(this._repository);
+  TaskController(this._repository, {this.storage});
+
+  final WorkspaceStorage? storage;
 
   final TaskRepository _repository;
 
@@ -13,22 +18,29 @@ class TaskController extends LoadController {
   bool get isLoaded => _tasks != null;
   List<TaskItem> _roleTasks = const [];
   final _followUps = <TaskItem>[];
-  int _followUpSequence = 0;
+  final _random = Random.secure();
 
-  void addFollowUp(String title, String assigneeId, DateTime dueDate) {
+  void addFollowUp(
+    String title,
+    String assigneeId,
+    DateTime dueDate, {
+    String? workRoute,
+  }) {
     if (isDisposed || title.trim().isEmpty) return;
     String id;
     do {
-      id = 'practice_follow_up_${++_followUpSequence}';
+      id =
+          'practice_follow_up_${DateTime.now().microsecondsSinceEpoch}_${_random.nextInt(0x1000000)}';
     } while (tasks.any((task) => task.id == id));
-    _followUps.add(
-      TaskItem(
-        id: id,
-        title: title.trim(),
-        assigneeId: assigneeId,
-        dueDate: dueDate,
-      ),
+    final task = TaskItem(
+      id: id,
+      title: title.trim(),
+      assigneeId: assigneeId,
+      dueDate: dueDate,
+      workRoute: workRoute,
     );
+    _followUps.add(task);
+    storage?.putRecord('followUps', task.id, task.toMap());
     notifyListeners();
   }
 
@@ -97,10 +109,16 @@ class TaskController extends LoadController {
 
   Future<void> load() async {
     if (_saving.isNotEmpty) return;
-    await loadWith(
-      _repository.fetchTasks,
-      (records) => _tasks = List.unmodifiable(records),
-    );
+    await loadWith(_repository.fetchTasks, (records) {
+      _tasks = List.unmodifiable(records);
+      if (storage case final store?) {
+        final restored = store.records('followUps', TaskItem.fromMap);
+        final existing = _followUps.map((task) => task.id).toSet();
+        _followUps.addAll(
+          restored.where((task) => !existing.contains(task.id)),
+        );
+      }
+    });
   }
 
   static double _readiness(Iterable<TaskItem> tasks) {

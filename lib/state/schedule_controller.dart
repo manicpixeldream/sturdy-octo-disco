@@ -1,5 +1,6 @@
 import '../core/clock.dart';
 import '../core/dates.dart';
+import '../core/storage/workspace_storage.dart';
 import '../data/models/practice_session.dart';
 import '../data/models/timing_rule.dart';
 import '../data/repositories/schedule_repository.dart';
@@ -13,22 +14,40 @@ class ScheduleController extends LoadController {
     this.clock,
     this.teammateId, {
     this.weeklyGoalMinutes = 180,
+    this.storage,
   }) : _weekStart = monday(clock.now());
   final ScheduleRepository _repository;
   final Clock clock;
   final String teammateId;
   final int weeklyGoalMinutes;
+  final WorkspaceStorage? storage;
   List<PracticeSession>? _sessions;
   final _agendas = <(String, String), List<AgendaItem>>{};
   PracticeSession? sessionById(String id) =>
       _sessions?.where((session) => session.id == id).firstOrNull;
 
   List<AgendaItem> agenda(String caseId, String sessionId) =>
-      _agendas[(caseId, sessionId)] ?? const [];
+      _agendas.putIfAbsent(
+        (caseId, sessionId),
+        () => List.unmodifiable(
+          storage?.records(
+                'agenda.$caseId.$sessionId',
+                (item) => (
+                  witnessId: item['witnessId'] as String?,
+                  phase: TrialPhase.values.byName(item['phase']! as String),
+                ),
+              ) ??
+              const <AgendaItem>[],
+        ),
+      );
 
   void setAgenda(String caseId, String sessionId, List<AgendaItem> items) {
     if (isDisposed || sessionById(sessionId) == null) return;
     _agendas[(caseId, sessionId)] = List.unmodifiable(items);
+    storage?.write('agenda.$caseId.$sessionId', {
+      for (final (index, item) in items.indexed)
+        '$index': {'witnessId': item.witnessId, 'phase': item.phase.name},
+    });
     notifyListeners();
   }
 

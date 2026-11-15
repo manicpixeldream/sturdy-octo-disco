@@ -145,7 +145,7 @@ class _CasePageState extends State<CasePage> {
                 ),
                 const SizedBox(height: Spacing.sm),
                 Text(
-                  'Demo case materials · schedule resets each launch',
+                  'Demo case materials',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: Spacing.lg),

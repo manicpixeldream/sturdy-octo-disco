@@ -3,6 +3,7 @@ import 'package:gavel/data/models/task_item.dart';
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gavel/core/storage/workspace_storage.dart';
 import 'package:gavel/data/models/chat_message.dart';
 import 'package:gavel/data/models/case_file.dart';
 import 'package:gavel/data/mock/mock_chat_repository.dart';
@@ -44,6 +45,40 @@ class SwitchingCase extends MockCaseRepository {
 }
 
 void main() {
+  for (final (sent, edited) in [(true, false), (true, true), (false, false)]) {
+    test(
+      'restores interrupted chat send (sent: $sent, edited: $edited)',
+      () async {
+        final storage = WorkspaceStorage.memory();
+        final pending = ChatMessage(
+          id: 'interrupted',
+          caseId: 'case_harmon',
+          senderId: 'tm_sofia',
+          text: 'Review the opening',
+          createdAt: DateTime(2026, 10, 26, 10),
+        );
+        final draft = edited ? 'New draft' : pending.text;
+        storage.write('chatDraft.${pending.caseId}', {
+          'text': draft,
+          'mentions': [],
+          'pending': pending.toMap(),
+        });
+        if (sent) {
+          await MockChatRepository(const [], storage).sendMessage(pending);
+        }
+
+        final fixture = await ChatFixture.create(storage: storage);
+        addTearDown(fixture.dispose);
+        expect(fixture.chat.draftText, sent && !edited ? '' : draft);
+        expect(fixture.chat.sendFailed, !sent);
+        if (!sent) {
+          expect(await fixture.chat.send(draft, []), isTrue);
+        }
+        expect(fixture.chat.messages.single, pending);
+      },
+    );
+  }
+
   test('send appends current author, canonical links and timestamp; reload does not duplicate', () async {
     final f = await ChatFixture.create();
     addTearDown(f.dispose);

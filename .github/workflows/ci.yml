@@ -9,11 +9,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: 3.47.2
+  FLUTTER_VERSION: 3.50.0
 
 jobs:
   web:
-    name: Analyze, test, build web (Ubuntu)
+    name: Analyze, test, build web, and run Chrome (Ubuntu)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -26,10 +26,14 @@ jobs:
       - run: flutter pub get --enforce-lockfile
       - run: flutter analyze
       - run: flutter test
-      - run: flutter build web
+      - run: flutter build web --no-web-resources-cdn
+      - run: npm ci
+        working-directory: integration_test
+      - run: npm test
+        working-directory: integration_test
 
   ios:
-    name: Build iOS, no codesign (macOS)
+    name: Compare golden snapshots and build iOS (macOS)
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -40,4 +44,5 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get --enforce-lockfile
+      - run: flutter test test/golden
       - run: flutter build ios --no-codesign

@@ -6,7 +6,7 @@ This file is the detailed record for the web alpha. Root [`plan.md`](../../plan.
 
 ## Goal
 
-Ship a working **web-only alpha** of Gavel: mock trial prep with mock AI and session-only data behind repository/service interfaces, hardened for browser use.
+Ship a working **web-only alpha** of Gavel: mock trial prep with mock AI behind repository/service interfaces, hardened for browser use, with workspace persistence in the current browser profile.
 
 ## Non-goals
 
@@ -17,15 +17,15 @@ Ship a working **web-only alpha** of Gavel: mock trial prep with mock AI and ses
 
 ## Prerequisites
 
-- Flutter **3.47.2** / Dart **3.13.2** (pinned in CI and `pubspec.lock`).
+- Flutter **3.50.0** / Dart **3.14.0** (pinned in CI and `pubspec.lock`).
 - Run and smoke-test in Edge or Chrome on Windows.
-- Agents verify with `flutter analyze` and `flutter test` only (no browser automation).
+- Agents verify with `flutter analyze` and `flutter test` only (no browser automation). Developers run Playwright / manual smoke.
 
 ## Alpha target: web only
 
 - **Run locally**: `flutter run -d edge` or `flutter run -d chrome`. For phone size, use DevTools device toolbar (for example 390×844).
-- **Done checklist for each completed slice**: `flutter analyze` passes, `flutter test` passes, manual smoke in Edge/Chrome, then commit and tag `v0.x`.
-- **CI** (from v0.1): Ubuntu runs analyze, test, and `flutter build web`; macOS runs `flutter build ios --no-codesign`; optional `flutter build apk --debug` on Ubuntu.
+- **Done checklist for each completed slice**: `flutter analyze` passes, `flutter test` passes, manual smoke in Edge/Chrome, then commit and tag `v0.x` / `v1.0`.
+- **CI**: Ubuntu runs analyze, test, `flutter build web`, and the Playwright prep workflow; macOS runs golden comparisons and `flutter build ios --no-codesign`.
 
 ## Where each part of the product description lives
 
@@ -89,6 +89,7 @@ lib/
   core/
     theme/        gavel_colors.dart, gavel_typography.dart, gavel_theme.dart, spacing.dart
     router/       app_router.dart, routes.dart
+    storage/      workspace_storage.dart (+ platform / web)
     widgets/      gavel_card.dart, stat_tile.dart, section_header.dart, status_pill.dart,
                   tag_chip.dart, progress_bar.dart, initials_avatar.dart,
                   gavel_bottom_nav.dart, app_shell.dart, empty_state.dart
@@ -107,8 +108,8 @@ lib/
   features/       onboarding/, home/, case_file/, examination/, research/, team/, me/, schedule/
 test/             mirrors lib/
   helpers/        pump_app.dart, fake_repositories.dart, test_clock.dart
-integration_test/ app_flow_test.dart   # v1.0
-test_driver/      integration_test.dart
+integration_test/ prep_workflow.spec.js (+ Playwright config)  # v1.0
+test/golden/      app_golden_test.dart, baselines/
 assets/           fonts/, images/
 ```
 
@@ -125,8 +126,8 @@ assets/           fonts/, images/
 - `test/data/`: models, mock repositories and services
 - `test/state/`: controllers and `TeammateMatcher`
 - `test/features/<feature>/<page>_test.dart`
-- `test/golden/`: visual regression (v1.0)
-- `integration_test/`: full flows in Chrome for alpha
+- `test/golden/`: visual regression (v1.0; macOS CI)
+- `integration_test/`: Playwright prep workflow in Chrome (v1.0; Ubuntu CI)
 - `test/helpers/pump_app.dart`: `pumpGavelApp(tester, {overrides, initialLocation, clock})`
 
 ---
@@ -160,7 +161,7 @@ assets/           fonts/, images/
 - Review: [docs/v0.6-review.md](../v0.6-review.md).
 
 ### v0.7: Team tab and Assign Role — Complete
-- Roster, sides, open slots, `TeammateMatcher`, assign → task queue (session-only, no notification).
+- Roster, sides, open slots, `TeammateMatcher`, assign → task queue (browser-persisted; no notification).
 - Tests: matcher, filter, assignment, task completion vs role coverage.
 - Review: [docs/v0.7-review.md](../v0.7-review.md).
 
@@ -175,13 +176,17 @@ assets/           fonts/, images/
 - Review: [docs/v0.9-review.md](../v0.9-review.md).
 
 ### v0.10: Team chat — Complete
-- Single channel, up to five linked tasks/exhibits, draft-preserving retry, idempotent message IDs.
+- Single channel, up to five linked tasks/exhibits/drafts, draft-preserving retry, idempotent message IDs.
 - Tests: send, mention opens linked item.
 - Review: [docs/v0.10-review.md](../v0.10-review.md).
 
 ### v0.11: Welcome / onboarding — Complete
 - Dark hero, feature cards, first-launch redirect, skip once onboarded.
 - Tests: first launch, enter → `/home`, skip when onboarded.
+
+### Browser persistence + SDK upgrade — Complete
+- Workspace storage for drafts, sources, research history, chat, tasks, roles, and agendas in the current browser profile.
+- Development/CI moved to Flutter 3.50.0 / Dart 3.14.0.
 
 ---
 
@@ -191,28 +196,27 @@ Polish, hardening, and full test pass on web.
 
 ### Ordered slices
 
-1. **Empty / loading / error states** — every list; test with a `FailingFake` repository.
-2. **Accessibility and layout** — semantics labels; checks at 1.3× text scale; max content width so phone layout stays centered on wide browser windows.
-3. **Golden tests** — each page at phone size (390×844), bundled fonts.
-4. **Integration flow** — `integration_test/app_flow_test.dart` via  
-   `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_flow_test.dart -d chrome`  
-   Flow: Welcome → Home → Research (ask + save source) → Case brief → Team (assign closing attorney) → team chat → Me (check off a task) → Schedule.
-5. **Coverage and docs** — at least 80% coverage on `lib/state` and `lib/data`; update [README.md](../../README.md) with web setup, test commands, and version history.
+1. **Empty / loading / error states** — **Remaining.** Audit every list with a `FailingFake` repository; finish before tagging `v1.0`.
+2. **Accessibility and layout** — **Landed.** Semantics labels; phone-width checks at 1.3× text scale (14 routes); max content width for wide browser windows. Research header overflow fixed.
+3. **Golden tests** — **Landed.** 15 route snapshots at 390×844 with bundled fonts; macOS CI compares pixels (`flutter test test/golden`; update with `--update-goldens`).
+4. **Integration flow** — **Landed.** `integration_test/prep_workflow.spec.js` (Playwright + headless Chrome against the web release build): Welcome, Home assignment, examination and Research, Team Chat, Practice Schedule, Profile, plus reload to verify persistence. Commands are in [README.md](../../README.md).
+5. **Coverage and docs** — **Landed above target.** State ~99.1% and data ~92.2% line coverage recorded; README documents web setup, verification, goldens, and Playwright.
 
 ### Done checklist (per remaining slice)
 
 - [ ] `flutter analyze` passes
 - [ ] `flutter test` passes
 - [ ] Manual smoke in Edge or Chrome (developers; agents do not drive the browser)
-- [ ] Commit; tag `v1.0` only when the full alpha checklist above is done
+- [ ] Loading / empty / error-state audit complete
+- [ ] Commit; tag `v1.0` only when that audit is done
 
 ### Testing notes
 
 - Prefer widget/unit tests that mirror `lib/`.
-- Goldens and the Chrome integration drive are part of this version, not earlier slices.
+- Goldens run on macOS CI; Playwright prep workflow runs on Ubuntu CI.
 - Keep mocks behind interfaces so v2/v4 swap-ins stay clean.
 
 ### Risks / ordering
 
-- Finish interface-backed mocks and error states before Firestore (v2).
+- Finish the remaining empty/loading/error audit before Firestore (v2).
 - Do not expand into Firebase, device signing, or live LLM work in this file.

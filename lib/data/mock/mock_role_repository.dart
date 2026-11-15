@@ -1,14 +1,24 @@
+import '../../core/storage/workspace_storage.dart';
 import '../models/trial_role.dart';
 import '../models/role_assignment.dart';
 import '../models/task_item.dart';
 import '../repositories/role_repository.dart';
 
 class MockRoleRepository implements RoleRepository {
-  MockRoleRepository({required Set<String> memberIds, required this.dueDate})
-    : memberIds = Set.unmodifiable(memberIds);
+  MockRoleRepository({
+    required Set<String> memberIds,
+    required this.dueDate,
+    this.storage,
+  }) : memberIds = Set.unmodifiable(memberIds),
+       _assignments = {
+         for (final assignment
+             in storage?.records('roles', RoleAssignment.fromMap) ?? [])
+           assignment.roleId: assignment,
+       };
   final Set<String> memberIds;
   final DateTime dueDate;
-  final Map<String, RoleAssignment> _assignments = {};
+  final WorkspaceStorage? storage;
+  final Map<String, RoleAssignment> _assignments;
   static final List<TrialRole> roles = List.unmodifiable([
     TrialRole(
       id: 'prosecution_opening',
@@ -153,6 +163,7 @@ class MockRoleRepository implements RoleRepository {
       ],
     );
     _assignments[roleId] = assignment;
+    storage?.putRecord('roles', roleId, assignment.toMap());
     return assignment;
   }
 }

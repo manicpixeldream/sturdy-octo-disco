@@ -48,7 +48,7 @@ class _LibraryListState extends State<LibraryList> {
         ),
         const SizedBox(height: Spacing.sm),
         Text(
-          'Saved for this session. The alpha library clears on reload.',
+          'Saved in this browser.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: Spacing.lg),

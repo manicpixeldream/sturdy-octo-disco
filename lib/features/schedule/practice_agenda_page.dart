@@ -27,6 +27,7 @@ class PracticeAgendaPage extends StatelessWidget {
     final cases = context.watch<CaseController>();
     final exams = context.watch<ExamController>();
     final team = context.watch<TeamController>();
+    final tasks = context.watch<TaskController>();
     final session = context.watch<SessionController>();
     final practice = schedule.sessionById(sessionId);
     final caseId = cases.activeCase?.id;
@@ -66,47 +67,68 @@ class PracticeAgendaPage extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.md),
             const Text(
-              'Plan the order of rehearsal. Agenda items and follow-up tasks are saved for this session.',
+              'Plan the order of rehearsal. Agenda items and follow-up tasks are saved in this browser.',
             ),
             const SizedBox(height: Spacing.lg),
             ..._agenda(context, schedule, cases, exams, caseId),
             const SizedBox(height: Spacing.lg),
-            OutlinedButton.icon(
-              key: const ValueKey('practice_add_follow_up'),
-              icon: const Icon(Icons.add_task),
-              label: const Text('Assign a follow-up task'),
-              onPressed: team.teammates.isEmpty
-                  ? null
-                  : () async {
-                      final tasks = context.read<TaskController>();
-                      final result =
-                          await showDialog<({String title, String assigneeId})>(
-                            context: context,
-                            builder: (_) => PracticeFollowUpDialog(
-                              teammates: team.teammates,
-                              currentTeammateId: session.currentTeammateId,
-                            ),
-                          );
-                      if (context.mounted && result != null) {
-                        final dueDate =
-                            practice.endsAt.isAfter(session.clock.now())
-                            ? practice.endsAt
-                            : session.clock.now();
-                        tasks.addFollowUp(
-                          result.title,
-                          result.assigneeId,
-                          dueDate,
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Follow-up added to the teammate’s task list.',
-                            ),
-                          ),
-                        );
-                      }
-                    },
-            ),
+            if (team.loadFailed || tasks.loadFailed)
+              LoadFailure(
+                title: 'Could not load follow-up assignments',
+                onRetry: () async {
+                  await Future.wait([
+                    if (team.loadFailed) team.load(),
+                    if (tasks.loadFailed) tasks.load(),
+                  ]);
+                },
+              )
+            else if (!team.isLoaded || !tasks.isLoaded)
+              const Center(
+                child: CircularProgressIndicator(
+                  semanticsLabel: 'Loading follow-up assignments',
+                ),
+              )
+            else if (team.teammates.isEmpty)
+              const Text('There are no teammates to assign a follow-up to.')
+            else
+              OutlinedButton.icon(
+                key: const ValueKey('practice_add_follow_up'),
+                icon: const Icon(Icons.add_task),
+                label: const Text('Assign a follow-up task'),
+                onPressed: () async {
+                  final today = session.clock.now();
+                  final dueDate = practice.endsAt.isAfter(today)
+                      ? practice.endsAt
+                      : today;
+                  final result =
+                      await showDialog<
+                        ({String title, String assigneeId, DateTime dueDate})
+                      >(
+                        context: context,
+                        builder: (_) => PracticeFollowUpDialog(
+                          teammates: team.teammates,
+                          currentTeammateId: session.currentTeammateId,
+                          today: today,
+                          initialDueDate: dueDate,
+                        ),
+                      );
+                  if (context.mounted && result != null) {
+                    tasks.addFollowUp(
+                      result.title,
+                      result.assigneeId,
+                      result.dueDate,
+                      workRoute: Routes.practiceAgenda(sessionId),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Follow-up added to the teammate’s task list.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
           ],
         ],
       ),

@@ -18,6 +18,7 @@ import '../../data/models/timing_rule.dart';
 import '../../state/case_controller.dart';
 import '../../state/exam_controller.dart';
 import '../../state/research_controller.dart';
+import '../../state/team_controller.dart';
 import '../research/research_context.dart';
 import 'widgets/question_editor_sheet.dart';
 import 'widgets/goal_editor_sheet.dart';
@@ -75,6 +76,7 @@ class _ExaminationPageState extends State<ExaminationPage> {
     final cases = context.watch<CaseController>();
     final exams = context.watch<ExamController>();
     final research = context.watch<ResearchController>();
+    final team = context.watch<TeamController>();
     final witness = cases.witnessById(widget.witnessId);
     final script = witness == null
         ? null
@@ -150,7 +152,7 @@ class _ExaminationPageState extends State<ExaminationPage> {
                 ),
                 StatTile(
                   value:
-                      '${script.questions.where((q) => q.exhibitIds.isNotEmpty).length}',
+                      '${script.questions.where((q) => q.exhibitIds.isNotEmpty || q.sourceIds.isNotEmpty).length}',
                   label: 'Evidence-linked',
                 ),
                 StatTile(
@@ -179,6 +181,37 @@ class _ExaminationPageState extends State<ExaminationPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: Spacing.md),
                       child: Text('${script.status.label} ▾'),
+                    ),
+                  ),
+                if (script.questions.isNotEmpty &&
+                    team.teammates.isNotEmpty &&
+                    !exams.isSaving)
+                  PopupMenuButton<String>(
+                    key: const ValueKey('exam_reviewer'),
+                    tooltip: 'Choose reviewer',
+                    initialValue: script.reviewerId ?? '',
+                    onSelected: (id) => exams.save(
+                      script.copyWith(
+                        reviewerId: id,
+                        clearReviewer: id.isEmpty,
+                      ),
+                    ),
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: '',
+                        child: Text('No reviewer'),
+                      ),
+                      for (final teammate in team.teammates)
+                        PopupMenuItem(
+                          value: teammate.id,
+                          child: Text(teammate.name),
+                        ),
+                    ],
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+                      child: Text(
+                        'Reviewer: ${team.byId(script.reviewerId ?? '')?.name ?? 'Choose'}',
+                      ),
                     ),
                   ),
                 if (cases.affidavits
@@ -402,7 +435,7 @@ class _ExaminationPageState extends State<ExaminationPage> {
             ),
             const SizedBox(height: Spacing.xl),
             const Text(
-              'Session-only drafts · Reloading resets scripts. Exhibit links track preparation references, not admitted evidence.',
+              'Drafts are saved in this browser. Exhibit links track preparation references, not admitted evidence.',
             ),
           ],
         ],

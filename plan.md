@@ -16,14 +16,14 @@ In v1, AI features run on mock data behind repository and service interfaces. La
 - Tests mirror `lib/`. Every slice adds unit/widget coverage for what it touches.
 - Agents verify with `flutter analyze` and `flutter test` only (no browser/device automation). Developers run manual smoke.
 
-Pinned SDK: Flutter **3.47.2** / Dart **3.13.2** (`pubspec.lock`, CI).
+Pinned SDK: Flutter **3.50.0** / Dart **3.14.0** (`pubspec.lock`, CI). Workspace changes persist in the current browser profile when storage is available.
 
 ## Status
 
 | Version | Status | Purpose |
 |---|---|---|
 | v0.1–v0.11 | **Complete** | Foundation through Welcome; see [v1-alpha.md](docs/plans/v1-alpha.md) and review notes below |
-| v1.0 alpha | **In progress / finishing** | Polish, a11y, goldens, integration flow, coverage |
+| v1.0 alpha | **In progress / finishing** | Polish remaining loading/empty/error audit; goldens, Playwright flow, a11y, and coverage largely landed |
 | v2 | **Planned** | Firebase Auth, Firestore sync, Storage, FCM |
 | v3 | **Planned** | iPhone + Android device validation (former Beta) |
 | v4 | **Planned** | ChatGPT researcher / case brief via Cloud Functions (former “v3”) |
