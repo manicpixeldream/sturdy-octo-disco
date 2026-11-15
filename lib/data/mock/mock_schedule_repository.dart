@@ -6,11 +6,16 @@ class MockScheduleRepository implements ScheduleRepository {
     : _sessions = List.unmodifiable(sessions);
   factory MockScheduleRepository.demo(DateTime today, List<String> members) =>
       MockScheduleRepository([
+        // Relative to launch day: this week, next week, and two weeks after.
         for (final (days, title, minutes) in [
           (0, 'Opening statements', 45),
           (2, 'Witness preparation', 60),
           (4, 'Full team scrimmage', 90),
           (8, 'Closing arguments', 60),
+          (14, 'Objection drills', 45),
+          (16, 'Direct exam run-through', 60),
+          (21, 'Cross exam run-through', 60),
+          (23, 'Final polish', 90),
         ])
           PracticeSession(
             id: 'practice_$days',

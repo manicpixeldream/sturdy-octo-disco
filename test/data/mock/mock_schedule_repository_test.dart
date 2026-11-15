@@ -8,9 +8,9 @@ void main() {
       'b',
     ]);
     final sessions = await repo.fetchSessions();
-    expect(sessions.length, 4);
+    expect(sessions.length, 8);
     expect(sessions.first.startsAt, DateTime(2026, 10, 26, 17));
-    expect(sessions.last.startsAt, DateTime(2026, 11, 3, 17));
+    expect(sessions.last.startsAt, DateTime(2026, 11, 18, 17));
     expect(
       sessions.every(
         (s) => s.durationMinutes > 0 && s.participantIds.contains('a'),
