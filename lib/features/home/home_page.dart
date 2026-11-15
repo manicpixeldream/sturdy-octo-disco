@@ -53,6 +53,7 @@ class HomePage extends StatelessWidget {
     }
 
     final tasks = context.watch<TaskController>();
+    final assignments = tasks.tasksFor(session.currentTeammateId);
     final loaded = caseCtrl.isLoaded && team.isLoaded && tasks.isLoaded;
     final me = team.byId(session.currentTeammateId);
     final greeting = greetingFor(session.clock.now());
@@ -121,13 +122,11 @@ class HomePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SectionHeader(title: 'Your assignments'),
-                      for (final (task, script)
-                          in tasks
-                              .tasksFor(session.currentTeammateId)
-                              .map(
-                                (task) =>
-                                    (task, assignedScript(task.workRoute)),
-                              ))
+                      if (assignments.isEmpty)
+                        const Text('You have no assignments yet.'),
+                      for (final (task, script) in assignments.map(
+                        (task) => (task, assignedScript(task.workRoute)),
+                      ))
                         AssignmentTile(
                           key: GavelKeys.homeAssignment(task.id),
                           task: task,
