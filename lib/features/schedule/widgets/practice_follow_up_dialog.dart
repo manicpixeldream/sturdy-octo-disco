@@ -50,7 +50,7 @@ class _PracticeFollowUpDialogState extends State<PracticeFollowUpDialog> {
             autofocus: true,
             maxLength: 160,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(labelText: 'What needs doing?'),
+            decoration: const InputDecoration(labelText: 'Task title'),
           ),
           const SizedBox(height: Spacing.md),
           DropdownButtonFormField<String>(
