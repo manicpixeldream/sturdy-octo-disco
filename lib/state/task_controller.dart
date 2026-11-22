@@ -26,7 +26,11 @@ class TaskController extends LoadController {
     DateTime dueDate, {
     String? workRoute,
   }) {
-    if (isDisposed || title.trim().isEmpty) return;
+    if (isDisposed ||
+        _repository is LiveTaskRepository ||
+        title.trim().isEmpty) {
+      return;
+    }
     String id;
     do {
       id =
@@ -109,7 +113,7 @@ class TaskController extends LoadController {
 
   Future<void> load() async {
     if (_saving.isNotEmpty) return;
-    await loadWith(_repository.fetchTasks, (records) {
+    void apply(List<TaskItem> records) {
       _tasks = List.unmodifiable(records);
       if (storage case final store?) {
         final restored = store.records('followUps', TaskItem.fromMap);
@@ -118,7 +122,14 @@ class TaskController extends LoadController {
           restored.where((task) => !existing.contains(task.id)),
         );
       }
-    });
+    }
+
+    final repository = _repository;
+    if (repository is LiveTaskRepository) {
+      await watchWith(repository.watchTasks(), apply);
+    } else {
+      await loadWith(_repository.fetchTasks, apply);
+    }
   }
 
   static double _readiness(Iterable<TaskItem> tasks) {

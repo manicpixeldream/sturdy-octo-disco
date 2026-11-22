@@ -117,9 +117,13 @@ class ScheduleController extends LoadController {
   }
 
   Future<void> load() async {
-    await loadWith(
-      _repository.fetchSessions,
-      (items) => _sessions = List.unmodifiable(items),
-    );
+    void apply(List<PracticeSession> records) =>
+        _sessions = List.unmodifiable(records);
+    final repository = _repository;
+    if (repository is LiveScheduleRepository) {
+      await watchWith(repository.watchSessions(), apply);
+    } else {
+      await loadWith(repository.fetchSessions, apply);
+    }
   }
 }

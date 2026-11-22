@@ -55,8 +55,10 @@ class SchedulePage extends StatelessWidget {
               ),
             ),
           const SizedBox(height: Spacing.md),
-          const Text(
-            'Demo schedule · Times use your device’s local time. Agendas and follow-ups are saved in this browser.',
+          Text(
+            session.sharedWorkspace
+                ? 'Team schedule · Times use your device’s local time. Agenda drafts are saved in this browser.'
+                : 'Demo schedule · Times use your device’s local time. Agendas and follow-ups are saved in this browser.',
           ),
           if (schedule.loadFailed)
             LoadFailure(title: 'Schedule unavailable', onRetry: schedule.load)

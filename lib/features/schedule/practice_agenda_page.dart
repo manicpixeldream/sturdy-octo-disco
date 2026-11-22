@@ -66,13 +66,17 @@ class PracticeAgendaPage extends StatelessWidget {
               style: Theme.of(context).textTheme.displaySmall,
             ),
             const SizedBox(height: Spacing.md),
-            const Text(
-              'Plan the order of rehearsal. Agenda items and follow-up tasks are saved in this browser.',
+            Text(
+              session.sharedWorkspace
+                  ? 'Plan the order of rehearsal. Your agenda draft is saved in this browser.'
+                  : 'Plan the order of rehearsal. Agenda items and follow-up tasks are saved in this browser.',
             ),
             const SizedBox(height: Spacing.lg),
             ..._agenda(context, schedule, cases, exams, caseId),
             const SizedBox(height: Spacing.lg),
-            if (team.loadFailed || tasks.loadFailed)
+            if (session.sharedWorkspace)
+              const Text('Shared follow-up tasks are read-only.')
+            else if (team.loadFailed || tasks.loadFailed)
               LoadFailure(
                 title: 'Could not load follow-up assignments',
                 onRetry: () async {

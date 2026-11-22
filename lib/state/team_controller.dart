@@ -21,9 +21,13 @@ class TeamController extends LoadController {
   }
 
   Future<void> load() async {
-    await loadWith(
-      _repository.fetchTeammates,
-      (records) => _teammates = List.unmodifiable(records),
-    );
+    void apply(List<Teammate> records) =>
+        _teammates = List.unmodifiable(records);
+    final repository = _repository;
+    if (repository is LiveTeamRepository) {
+      await watchWith(repository.watchTeammates(), apply);
+    } else {
+      await loadWith(repository.fetchTeammates, apply);
+    }
   }
 }

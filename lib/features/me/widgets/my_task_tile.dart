@@ -16,7 +16,7 @@ class MyTaskTile extends StatelessWidget {
   final TaskItem task;
   final DateTime today;
   final bool saving, failed;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: Spacing.md),
@@ -33,7 +33,9 @@ class MyTaskTile extends StatelessWidget {
           CheckboxListTile(
             key: ValueKey('my_task_${task.id}'),
             value: task.isDone,
-            onChanged: saving ? null : (value) => onChanged(value!),
+            onChanged: saving || onChanged == null
+                ? null
+                : (value) => onChanged!(value!),
             title: Text(task.title),
             subtitle: Text(
               saving
@@ -55,7 +57,9 @@ class MyTaskTile extends StatelessWidget {
                   ),
                   TextButton(
                     key: ValueKey('retry_task_${task.id}'),
-                    onPressed: saving ? null : () => onChanged(!task.isDone),
+                    onPressed: saving
+                        ? null
+                        : () => onChanged?.call(!task.isDone),
                     child: const Text('Try again'),
                   ),
                 ],

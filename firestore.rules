@@ -27,6 +27,25 @@ service cloud.firestore {
         && activeInvite(get(path).data);
     }
 
+    function belongsTo(teamId) {
+      return verified()
+        && get(/databases/$(database)/documents/memberships/$(request.auth.uid)).data.teamId == teamId;
+    }
+
+    match /teams/{teamId} {
+      allow get: if belongsTo(teamId);
+
+      match /{collection}/{id} {
+        allow read: if collection in ['members', 'tasks', 'sessions', 'chat', 'cases']
+          && belongsTo(teamId);
+      }
+
+      match /cases/{caseId}/{collection}/{id} {
+        allow read: if collection in ['exhibits', 'witnesses', 'affidavits', 'stipulations', 'timingRules', 'brief']
+          && belongsTo(teamId);
+      }
+    }
+
     match /teamInvites/{code} {
       allow get: if verified() && validCode(code) && activeInvite(resource.data);
     }

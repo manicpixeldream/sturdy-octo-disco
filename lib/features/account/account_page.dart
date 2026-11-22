@@ -133,6 +133,7 @@ class _AccountPageState extends State<AccountPage> {
                   key: _form,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    spacing: 18,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Builder(
@@ -141,12 +142,14 @@ class _AccountPageState extends State<AccountPage> {
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                       ),
-                      const SizedBox(height: 16),
                       if (widget.loading || _busy)
                         const LinearProgressIndicator(),
                       if (retry != null) ...[
                         const Text('Check your connection and try again.'),
                         FilledButton(
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(0, 48),
+                          ),
                           onPressed: _busy ? null : retry,
                           child: const Text('Retry'),
                         ),
@@ -182,8 +185,10 @@ class _AccountPageState extends State<AccountPage> {
                               if (!_busy) _submitAuth();
                             },
                           ),
-                        const SizedBox(height: 16),
                         FilledButton(
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(0, 48),
+                          ),
                           onPressed: _busy ? null : _submitAuth,
                           child: Text(switch (_mode) {
                             _AuthMode.signIn => 'Sign in',
@@ -229,8 +234,10 @@ class _AccountPageState extends State<AccountPage> {
                                 ? 'Enter your invite code.'
                                 : null,
                           ),
-                          const SizedBox(height: 16),
                           FilledButton(
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size(0, 48),
+                            ),
                             onPressed: _busy
                                 ? null
                                 : () {
@@ -250,6 +257,9 @@ class _AccountPageState extends State<AccountPage> {
                             'Send a verification link, open it from your email, then return here.',
                           ),
                           FilledButton(
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size(0, 48),
+                            ),
                             onPressed: _busy
                                 ? null
                                 : () => _run(

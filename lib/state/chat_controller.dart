@@ -101,7 +101,7 @@ class ChatController extends LoadController {
         return true;
       });
     }
-    await loadWith(() => _repository.fetchMessages(id), (messages) {
+    void apply(List<ChatMessage> messages) {
       final ids = <String>{};
       if (messages.any((m) => m.caseId != id || !ids.add(m.id))) {
         throw StateError('Invalid channel data');
@@ -126,7 +126,14 @@ class ChatController extends LoadController {
         }
       }
       _loaded = true;
-    });
+    }
+
+    final repository = _repository;
+    if (repository is LiveChatRepository) {
+      await watchWith(repository.watchMessages(id), apply);
+    } else {
+      await loadWith(() => _repository.fetchMessages(id), apply);
+    }
   }
 
   List<ChatMention> get availableMentions => List.unmodifiable([
@@ -161,6 +168,7 @@ class ChatController extends LoadController {
   Future<bool> send(String text, List<ChatMention> mentions) async {
     final body = text.trim();
     if (isDisposed ||
+        _repository is LiveChatRepository ||
         !_loaded ||
         isLoading ||
         _sending ||

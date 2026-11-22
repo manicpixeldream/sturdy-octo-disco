@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'app.dart';
 import 'core/storage/workspace_storage_platform.dart'
     if (dart.library.js_interop) 'core/storage/workspace_storage_web.dart';
+import 'data/firestore/firestore_workspace.dart';
 import 'features/account/account_gate.dart';
 import 'features/account/account_session.dart';
 import 'features/onboarding/onboarding.dart';
@@ -38,11 +39,22 @@ Future<void> main() async {
   runApp(
     AccountGate(
       session: session,
-      workspace: (account, teamId) => GavelApp(
-        storage: openWorkspaceStorage(namespace: '${account.uid}.$teamId'),
-        onSignOut: session.signOut,
-        accountEmail: account.email,
-      ),
+      workspace: (account, teamId) {
+        final cloud = FirestoreWorkspace(FirebaseFirestore.instance, teamId);
+        return GavelApp(
+          storage: openWorkspaceStorage(namespace: '${account.uid}.$teamId'),
+          onSignOut: session.signOut,
+          accountEmail: account.email,
+          sharedMemberId: account.uid,
+          caseRepository: cloud.cases,
+          caseBriefService: cloud.cases,
+          teamRepository: cloud.team,
+          taskRepository: cloud.tasks,
+          scheduleRepository: cloud.schedule,
+          chatRepository: cloud.chat,
+          roleRepository: cloud.roles,
+        );
+      },
     ),
   );
 }

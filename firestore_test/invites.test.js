@@ -77,5 +77,31 @@ test('only verified users can redeem a live invite for themselves', async () => 
   await assertFails(getDocs(collection(member, 'memberships')));
   await assertFails(updateDoc(membership(member), { teamId: 'other' }));
   await assertFails(deleteDoc(membership(member)));
-  await assertFails(getDoc(doc(member, 'teams', teamId)));
+  await assertSucceeds(getDoc(doc(member, 'teams', teamId)));
+});
+
+test('workspace reads are limited to members of that team', async () => {
+  const other = 'other-team';
+  await env.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    for (const team of [teamId, other]) {
+      await setDoc(doc(db, 'teams', team), { activeCaseId: 'case_harmon' });
+      await setDoc(doc(db, 'teams', team, 'tasks', 'task_1'), { title: 'Review' });
+      await setDoc(doc(db, 'teams', team, 'cases', 'case_harmon', 'exhibits', 'ex_1'), { title: 'Exhibit' });
+    }
+    await setDoc(doc(db, 'memberships', 'reader'), { teamId });
+  });
+  const reader = env.authenticatedContext('reader', { email_verified: true }).firestore();
+  const outsider = env.authenticatedContext('outsider', { email_verified: true }).firestore();
+  const tasks = (db, team) => collection(db, 'teams', team, 'tasks');
+  const exhibit = (db, team) => doc(db, 'teams', team, 'cases', 'case_harmon', 'exhibits', 'ex_1');
+
+  await assertSucceeds(getDocs(tasks(reader, teamId)));
+  await assertSucceeds(getDoc(exhibit(reader, teamId)));
+  await assertFails(getDocs(tasks(reader, other)));
+  await assertFails(getDoc(exhibit(reader, other)));
+  await assertFails(getDocs(tasks(outsider, teamId)));
+  await assertFails(getDocs(collection(reader, 'teams')));
+  await assertFails(setDoc(doc(tasks(reader, teamId), 'new'), { title: 'Blocked' }));
+  await assertFails(updateDoc(exhibit(reader, teamId), { title: 'Blocked' }));
 });

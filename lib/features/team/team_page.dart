@@ -1,3 +1,4 @@
+import '../../state/session_controller.dart';
 import '../../core/router/routes.dart';
 import '../../core/widgets/workspace_columns.dart';
 
@@ -33,6 +34,7 @@ class _TeamPageState extends State<TeamPage> {
     final team = context.watch<TeamController>();
     final tasks = context.watch<TaskController>();
     final roles = context.watch<RoleController>();
+    final shared = context.watch<SessionController>().sharedWorkspace;
     final failed = team.loadFailed || tasks.loadFailed || roles.loadFailed;
     final sideRoles = roles.roles.where((role) => role.side == filter);
     return WorkspacePage(
@@ -70,11 +72,12 @@ class _TeamPageState extends State<TeamPage> {
               runSpacing: Spacing.md,
               children: [
                 StatTile(value: '${team.teammates.length}', label: 'Teammates'),
-                StatTile(
-                  key: const ValueKey('team_role_coverage'),
-                  value: '${roles.assignments.length}/${roles.roles.length}',
-                  label: 'Roles filled',
-                ),
+                if (!shared)
+                  StatTile(
+                    key: const ValueKey('team_role_coverage'),
+                    value: '${roles.assignments.length}/${roles.roles.length}',
+                    label: 'Roles filled',
+                  ),
                 StatTile(
                   key: const ValueKey('team_completion'),
                   value: '${(tasks.teamReadiness * 100).round()}%',
@@ -89,39 +92,55 @@ class _TeamPageState extends State<TeamPage> {
               '${tasks.doneCount} of ${tasks.tasks.length} preparation tasks complete. New responsibilities may lower this percentage.',
             ),
             WorkspaceColumns(
-              primary: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SectionHeader(title: 'Trial roles'),
-                  TeamRoleFilter(
-                    selected: filter,
-                    onChanged: (value) => setState(() => filter = value),
-                  ),
-                  const SizedBox(height: Spacing.md),
-                  for (final (title, group) in [
-                    ('Attorneys', sideRoles.where((role) => !role.isWitness)),
-                    ('Witnesses', sideRoles.where((role) => role.isWitness)),
-                  ]) ...[
-                    SectionHeader(title: title),
-                    if (group.isEmpty)
-                      Text('No ${title.toLowerCase()} listed for $filter.')
-                    else
-                      RoleGrid(
-                        children: [
-                          for (final role in group)
-                            RoleTile(
-                              role: role,
-                              assignee: team.byId(
-                                roles.assignmentFor(role.id)?.teammateId ?? '',
-                              ),
-                              onAssign: () =>
-                                  context.push(Routes.assignRole(role.id)),
+              primary: shared
+                  ? const Text(
+                      'The shared roster and task status are read-only.',
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SectionHeader(title: 'Trial roles'),
+                        TeamRoleFilter(
+                          selected: filter,
+                          onChanged: (value) => setState(() => filter = value),
+                        ),
+                        const SizedBox(height: Spacing.md),
+                        for (final (title, group) in [
+                          (
+                            'Attorneys',
+                            sideRoles.where((role) => !role.isWitness),
+                          ),
+                          (
+                            'Witnesses',
+                            sideRoles.where((role) => role.isWitness),
+                          ),
+                        ]) ...[
+                          SectionHeader(title: title),
+                          if (group.isEmpty)
+                            Text(
+                              'No ${title.toLowerCase()} listed for $filter.',
+                            )
+                          else
+                            RoleGrid(
+                              children: [
+                                for (final role in group)
+                                  RoleTile(
+                                    role: role,
+                                    assignee: team.byId(
+                                      roles
+                                              .assignmentFor(role.id)
+                                              ?.teammateId ??
+                                          '',
+                                    ),
+                                    onAssign: () => context.push(
+                                      Routes.assignRole(role.id),
+                                    ),
+                                  ),
+                              ],
                             ),
                         ],
-                      ),
-                  ],
-                ],
-              ),
+                      ],
+                    ),
               secondary: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -138,10 +157,11 @@ class _TeamPageState extends State<TeamPage> {
                 ],
               ),
             ),
-            const SectionHeader(title: 'Team coordination'),
-            const Text(
-              'Use Team Chat to link tasks, exhibits, and drafts. Chat and assignments are saved in this browser. No messages or notifications are sent to teammates.',
-            ),
+            if (!shared) const SectionHeader(title: 'Team coordination'),
+            if (!shared)
+              const Text(
+                'Use Team Chat to link tasks, exhibits, and drafts. Chat and assignments are saved in this browser. No messages or notifications are sent to teammates.',
+              ),
           ],
         ],
       ),

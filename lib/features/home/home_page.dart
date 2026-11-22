@@ -85,7 +85,9 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: Spacing.sm),
                 Text(
-                  'Demo workspace · Work is saved in this browser',
+                  session.sharedWorkspace
+                      ? 'Shared workspace · Drafts are saved in this browser'
+                      : 'Demo workspace · Work is saved in this browser',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: Spacing.xxl),

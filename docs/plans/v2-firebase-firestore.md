@@ -1,6 +1,6 @@
 # v2 — Firebase and Firestore
 
-**Status:** FlutterFire bootstrap and email Auth + team invites are implemented. Firebase setup and browser smoke are pending. The next implementation slice is the Firestore read path.
+**Status:** FlutterFire bootstrap, email Auth + team invites, and the Firestore read path are implemented. Firebase setup and browser smoke are pending. The next implementation slice is the shared write path.
 
 **Purpose:** Accounts, shared team data, real-time sync, storage, and notifications.
 
@@ -53,26 +53,27 @@ v1 already routes UI → controllers → **interfaces** → mocks. v2 adds imple
 
 ### Data model (maps from v1 `toMap`/`fromMap`)
 
-- `teams/{teamId}` with subcollections `members`, `cases/{caseId}`, `tasks`, `sessions`, `chat`
-- `cases/{caseId}` with subcollections `exhibits`, `witnesses`, `affidavits`, `brief`, `exam_scripts`, `sources`
+- `teams/{teamId}` stores `activeCaseId` and has `members`, `cases`, `tasks`, `sessions`, and `chat` subcollections.
+- The active case document has `exhibits`, `witnesses`, `affidavits`, `stipulations`, `timingRules`, and `brief/current`. Research builds its sample source catalogue from the case materials.
+- Record document IDs match model IDs. Chat records carry `caseId`. Roster IDs and the IDs referenced by task assignees and practice participants match Firebase Auth UIDs for real members.
 
 ### Auth model
 
 - This iteration uses verified email/password accounts. Google and Apple sign-in can be added together if social sign-in is needed.
 - `memberships/{uid}` stores one team ID and the invite code used to join. Only the account owner can read it. Clients can create it with a valid invite but cannot modify or delete it.
-- Firebase Auth and a server-confirmed membership gate the normal web, iOS, and Android entry points. Demo builds use the original Welcome flow. The prep screens still use demo repositories, with browser storage scoped to the account and team.
+- Firebase Auth and a server-confirmed membership gate the normal web, iOS, and Android entry points. Demo builds use the original Welcome flow. The shared workspace reads Firestore data. Private draft storage remains scoped to account and team in the browser.
 
 ## Ordered iterations
 
 Suggested tags: `v2.1`, `v2.2`, … (or keep working on a `v2` branch until a release tag).
 
-1. **Bundle ID and FlutterFire bootstrap** — complete. The app initializes Firebase on web, iOS, and Android. Existing prep screens continue to use the demo repositories until the later repository slices.
+1. **Bundle ID and FlutterFire bootstrap** — complete. The app initializes Firebase on web, iOS, and Android. The guest demo continues to use demo repositories.
 
 2. **Auth + team invite** — implemented.
    Account creation, sign-in, email verification, password reset, invite redemption, membership restoration, and sign-out. Cloud setup and browser smoke remain on the checklist.
 
-3. **Firestore repositories (read path)**  
-   Implement case, team, task, schedule, chat read/streams against the collections above; seed or migrate demo State v. Harmon for one team.
+3. **Firestore repositories (read path)** — implemented.
+   Signed-in members read their team's case, roster, task status, practice schedule, and active-case chat history via Firestore subscriptions. The case brief loads from Firestore. Private drafts stay local, and shared writes remain disabled. An administrator can seed State v. Harmon for one team using the commands below.
 
 4. **Write path + real-time UX**  
    Assignments, tasks, chat sends, and readiness update live for other members; offline persistence on.
@@ -128,6 +129,38 @@ Run the rules tests in an isolated project with Node.js, Java 21, and Firebase C
 npm ci --prefix firestore_test
 firebase emulators:exec --project demo-gavel --only firestore "npm --prefix firestore_test test"
 ```
+
+## Firestore read checklist
+
+- [x] Connect case, roster, tasks, practice schedule, and chat to Firestore reads.
+- [x] Limit reads to the signed-in member's own team and keep shared writes disabled.
+- [x] Keep the guest demo and browser-local drafts.
+- [x] Verify the Harmon seed import and team access rules in the emulator (62 seed records, two rules tests).
+- [x] Run Flutter analysis, tests (268 passed), and a production web build.
+- [ ] Deploy the reviewed rules and seed the target team.
+- [ ] Complete manual browser smoke with a seeded team.
+
+### Seed and verify a team
+
+Create the test account in Firebase Auth and note its UID. Export the fictional
+case and map the demo user's assignments to that UID. Then run the import with
+Firestore administrator Application Default Credentials. Use a fresh test team
+or a team that has no Harmon records. The import sets its active case and creates
+the seed records in one commit. It aborts if any seed record already exists.
+
+```sh
+flutter test tool/export_harmon.dart \
+  --dart-define=HARMON_OUTPUT=/tmp/gavel-harmon.json \
+  --dart-define=HARMON_MEMBER_UID=YOUR_TEST_USER_UID
+node tool/import_harmon.mjs YOUR_FIREBASE_PROJECT YOUR_TEAM_ID /tmp/gavel-harmon.json
+```
+
+1. Sign in with a verified account and redeem an invite for the seeded team.
+2. Check that Case shows Harmon, Team shows the roster, Profile shows the mapped
+   tasks, and Practice Schedule and Team Chat show imported records.
+3. Change a task title or status in the Firebase console. Confirm it updates in
+   Gavel without a reload and the app has no controls to change the shared status.
+4. Sign in as a member of a different team and confirm the Harmon data is unavailable.
 
 ## Done checklist (per slice)
 

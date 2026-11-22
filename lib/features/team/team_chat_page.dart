@@ -126,7 +126,9 @@ class _TeamChatPageState extends State<TeamChatPage> {
                                 const SizedBox(height: Spacing.sm),
                               ],
                               Text(
-                                compact
+                                session.sharedWorkspace
+                                    ? 'Shared message history · Read-only'
+                                    : compact
                                     ? 'Local demo · Saved in this browser'
                                     : '${cases.activeCase!.title} · Local demo channel. No messages or notifications are sent to teammates.',
                                 style: Theme.of(context).textTheme.bodySmall,
@@ -142,7 +144,9 @@ class _TeamChatPageState extends State<TeamChatPage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(Spacing.xl),
                                 child: Text(
-                                  'Start the conversation. Link a task, exhibit, or draft to give your message context.',
+                                  session.sharedWorkspace
+                                      ? 'No team messages yet.'
+                                      : 'Start the conversation. Link a task, exhibit, or draft to give your message context.',
                                   key: const ValueKey('chat_empty'),
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.bodyLarge,
@@ -204,33 +208,35 @@ class _TeamChatPageState extends State<TeamChatPage> {
                               ],
                             ),
                     ),
-                    const Divider(height: 1),
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: constraints.maxHeight * .65,
-                      ),
-                      child: SingleChildScrollView(
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          heightFactor: 1,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 840),
-                            child: ChatComposer(
-                              key: ValueKey('chat_composer_${chat.caseId}'),
-                              enabled:
-                                  team.byId(session.currentTeammateId) != null,
-                              sending: chat.isSending,
-                              failed: chat.sendFailed,
-                              items: chat.availableMentions,
-                              onSend: chat.send,
-                              initialText: chat.draftText,
-                              initialMentions: chat.draftMentions,
-                              onDraftChanged: chat.saveDraft,
+                    if (!session.sharedWorkspace) const Divider(height: 1),
+                    if (!session.sharedWorkspace)
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: constraints.maxHeight * .65,
+                        ),
+                        child: SingleChildScrollView(
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            heightFactor: 1,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 840),
+                              child: ChatComposer(
+                                key: ValueKey('chat_composer_${chat.caseId}'),
+                                enabled:
+                                    team.byId(session.currentTeammateId) !=
+                                    null,
+                                sending: chat.isSending,
+                                failed: chat.sendFailed,
+                                items: chat.availableMentions,
+                                onSend: chat.send,
+                                initialText: chat.draftText,
+                                initialMentions: chat.draftMentions,
+                                onDraftChanged: chat.saveDraft,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 );
               },

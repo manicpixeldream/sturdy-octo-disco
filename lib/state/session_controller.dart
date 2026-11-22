@@ -5,7 +5,11 @@ import 'package:flutter/widgets.dart';
 import '../core/clock.dart';
 
 class SessionController extends ChangeNotifier with WidgetsBindingObserver {
-  SessionController({required this.currentTeammateId, required this.clock}) {
+  SessionController({
+    required this.currentTeammateId,
+    required this.clock,
+    this.sharedWorkspace = false,
+  }) {
     _lastMinute = _minute(clock.now());
     WidgetsBinding.instance.addObserver(this);
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
@@ -15,6 +19,7 @@ class SessionController extends ChangeNotifier with WidgetsBindingObserver {
 
   final String currentTeammateId;
   final Clock clock;
+  final bool sharedWorkspace;
   Timer? _timer;
   late DateTime _lastMinute;
 

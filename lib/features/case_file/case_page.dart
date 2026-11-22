@@ -145,7 +145,9 @@ class _CasePageState extends State<CasePage> {
                 ),
                 const SizedBox(height: Spacing.sm),
                 Text(
-                  'Demo case materials',
+                  context.watch<SessionController>().sharedWorkspace
+                      ? 'Shared case materials'
+                      : 'Demo case materials',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: Spacing.lg),

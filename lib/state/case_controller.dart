@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'load_controller.dart';
 
 import '../core/clock.dart';
@@ -108,49 +110,59 @@ class CaseController extends LoadController {
     ++_loadGeneration;
     ++_briefRequest;
     _isBriefLoading = false;
-    final loaded = await loadWith(
-      () async {
-        final activeCase = await _repository.fetchActiveCase();
-        final materials = await (
-          _repository.fetchExhibits(activeCase.id),
-          _repository.fetchWitnesses(activeCase.id),
-          _repository.fetchAffidavits(activeCase.id),
-          _repository.fetchStipulations(activeCase.id),
-          _repository.fetchTimingRules(activeCase.id),
-        ).wait;
-        return (activeCase, materials);
-      },
-      (result) {
-        final (
-          activeCase,
-          (exhibits, witnesses, affidavits, stipulations, timingRules),
-        ) = result;
-        if (_activeCase?.id != activeCase.id) {
-          final caseId = activeCase.id;
-          for (final phase in const [TrialPhase.opening, TrialPhase.closing]) {
-            final draft = storage?.read(
-              'argument.$caseId.${phase.name}',
-              (value) => value as String,
-            );
-            if (draft != null) _argumentDrafts[(caseId, phase)] = draft;
-            final sources = storage?.read(
-              'argumentSources.$caseId.${phase.name}',
-              (value) => Set<String>.from(value as List),
-            );
-            if (sources != null) _argumentSources[(caseId, phase)] = sources;
-          }
-        }
-        _activeCase = activeCase;
-        _exhibits = List.unmodifiable(exhibits);
-        _witnesses = List.unmodifiable(witnesses);
-        _affidavits = List.unmodifiable(affidavits);
-        _stipulations = List.unmodifiable(stipulations);
-        _timingRules = List.unmodifiable(timingRules);
-        _brief = null;
-        _briefFailed = false;
-      },
-    );
+    final repository = _repository;
+    if (repository is LiveCaseRepository) {
+      await watchWith(repository.watchCase(), (packet) {
+        final changedCase = _activeCase?.id != packet.$1.id;
+        _apply(packet);
+        if (changedCase || _brief == null) unawaited(loadBrief());
+      });
+      return;
+    }
+    _brief = null;
+    _briefFailed = false;
+    final loaded = await loadWith(() async {
+      final activeCase = await _repository.fetchActiveCase();
+      final materials = await (
+        _repository.fetchExhibits(activeCase.id),
+        _repository.fetchWitnesses(activeCase.id),
+        _repository.fetchAffidavits(activeCase.id),
+        _repository.fetchStipulations(activeCase.id),
+        _repository.fetchTimingRules(activeCase.id),
+      ).wait;
+      return (activeCase, materials);
+    }, _apply);
     if (loaded) await loadBrief();
+  }
+
+  void _apply(CasePacket result) {
+    final (
+      activeCase,
+      (exhibits, witnesses, affidavits, stipulations, timingRules),
+    ) = result;
+    if (_activeCase?.id != activeCase.id) {
+      _brief = null;
+      _briefFailed = false;
+      final caseId = activeCase.id;
+      for (final phase in const [TrialPhase.opening, TrialPhase.closing]) {
+        final draft = storage?.read(
+          'argument.$caseId.${phase.name}',
+          (value) => value as String,
+        );
+        if (draft != null) _argumentDrafts[(caseId, phase)] = draft;
+        final sources = storage?.read(
+          'argumentSources.$caseId.${phase.name}',
+          (value) => Set<String>.from(value as List),
+        );
+        if (sources != null) _argumentSources[(caseId, phase)] = sources;
+      }
+    }
+    _activeCase = activeCase;
+    _exhibits = List.unmodifiable(exhibits);
+    _witnesses = List.unmodifiable(witnesses);
+    _affidavits = List.unmodifiable(affidavits);
+    _stipulations = List.unmodifiable(stipulations);
+    _timingRules = List.unmodifiable(timingRules);
   }
 
   Future<void> loadBrief() async {

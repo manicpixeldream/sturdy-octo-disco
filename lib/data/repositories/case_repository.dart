@@ -18,3 +18,18 @@ abstract interface class CaseRepository {
 
   Future<List<TimingRule>> fetchTimingRules(String caseId);
 }
+
+typedef CasePacket = (
+  CaseFile,
+  (
+    List<Exhibit>,
+    List<Witness>,
+    List<Affidavit>,
+    List<Stipulation>,
+    List<TimingRule>,
+  ),
+);
+
+abstract interface class LiveCaseRepository implements CaseRepository {
+  Stream<CasePacket> watchCase();
+}

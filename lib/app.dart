@@ -47,6 +47,7 @@ class GavelApp extends StatefulWidget {
     this.onboarding,
     this.onSignOut,
     this.accountEmail,
+    this.sharedMemberId,
     this.storage,
     this.clock,
     this.seed,
@@ -66,6 +67,7 @@ class GavelApp extends StatefulWidget {
   final Onboarding? onboarding;
   final Future<void> Function()? onSignOut;
   final String? accountEmail;
+  final String? sharedMemberId;
   final WorkspaceStorage? storage;
   final Clock? clock;
   final SeedData? seed;
@@ -117,7 +119,8 @@ class _GavelAppState extends State<GavelApp> {
     }
     final seed = widget.seed ?? SeedData.harmon(today: workspaceStart);
     _session = SessionController(
-      currentTeammateId: seed.currentTeammateId,
+      currentTeammateId: widget.sharedMemberId ?? seed.currentTeammateId,
+      sharedWorkspace: widget.sharedMemberId != null,
       clock: clock,
     );
     final caseRepository =
@@ -163,7 +166,7 @@ class _GavelAppState extends State<GavelApp> {
             seed.teammates.map((m) => m.id).toList(),
           ),
       clock,
-      seed.currentTeammateId,
+      _session.currentTeammateId,
       storage: storage,
     )..load();
     _chat = ChatController(

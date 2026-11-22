@@ -6,3 +6,7 @@ abstract interface class ChatRepository {
   /// Retrying the same message ID/payload is idempotent. Failure leaves data unchanged.
   Future<ChatMessage> sendMessage(ChatMessage message);
 }
+
+abstract interface class LiveChatRepository implements ChatRepository {
+  Stream<List<ChatMessage>> watchMessages(String caseId);
+}

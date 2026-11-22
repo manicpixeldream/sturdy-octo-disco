@@ -1,3 +1,5 @@
+import '../../state/session_controller.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -116,7 +118,9 @@ class AffidavitPage extends StatelessWidget {
                 ),
                 const SizedBox(height: Spacing.xxxl),
                 Text(
-                  'Demo case materials · Fictional sample packet',
+                  context.watch<SessionController>().sharedWorkspace
+                      ? 'Shared case materials'
+                      : 'Demo case materials · Fictional sample packet',
                   style: theme.textTheme.bodySmall,
                 ),
               ],

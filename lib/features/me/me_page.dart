@@ -127,7 +127,9 @@ class MePage extends StatelessWidget {
                       today: session.clock.now(),
                       saving: tasks.isSaving(task.id),
                       failed: tasks.saveFailed(task.id),
-                      onChanged: (value) => tasks.setCompleted(task.id, value),
+                      onChanged: session.sharedWorkspace
+                          ? null
+                          : (value) => tasks.setCompleted(task.id, value),
                     ),
                 ],
               ),
@@ -140,8 +142,8 @@ class MePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: Spacing.xl),
-            const Text(
-              'Demo profile · Task completion and assignments are saved in this browser.',
+            Text(
+              session.sharedWorkspace ? 'Team task status is read-only.' : 'Demo profile · Task completion and assignments are saved in this browser.',
             ),
           ],
         ],
