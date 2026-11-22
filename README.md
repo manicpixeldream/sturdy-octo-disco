@@ -1,10 +1,8 @@
-# Gavel · v0.11 alpha
+# Gavel
 
-An editorial workspace for mock trial preparation, built with Flutter. The alpha
-contains Home, the Case workspace, a source-linked Research hub,
-the Team roster and role assignment workflow, Profile checklists, Practice Schedule,
-Examination Builder, Team Chat, and the shared navigation/design system.
-Roadmap: [plan.md](plan.md). Alpha hardening detail: [docs/plans/v1-alpha.md](docs/plans/v1-alpha.md).
+Gavel is a Flutter workspace for mock trial preparation. The browser demo
+includes the complete alpha workflow. Firebase team workspaces are under
+development. See the [roadmap](plan.md) and [alpha completion record](docs/plans/v1-alpha.md).
 
 ## Run locally
 
@@ -20,7 +18,12 @@ The command above runs the local demo. To exercise account sign-in and team
 invites, omit `--dart-define=GAVEL_DEMO=true` after completing the
 [Firebase setup](docs/plans/v2-firebase-firestore.md#firebase-setup-and-manual-smoke).
 Signed-in members read their team workspace from Firestore. They can complete
-or reopen their own tasks. Private drafts stay in the browser. See the
+or reopen their own tasks, and rostered members can post in Team Chat.
+Shared messages can link tasks and exhibits. Captains and coaches can assign
+trial roles and create the responsibility tasks in one operation. Rostered
+practice participants can assign follow-ups to fellow participants. Shared
+writes require the deployed Firestore rules and a connection. Private drafts
+stay in the browser. See the
 [team seed instructions](docs/plans/v2-firebase-firestore.md#seed-and-verify-a-team)
 for a sample workspace.
 
@@ -28,30 +31,35 @@ The UI supports phone, tablet, and desktop widths. Global navigation changes
 from a bottom bar to a sidebar on wider screens. The bundled Fraunces and Inter
 fonts work without a font service.
 
-## Welcome in v0.11
+## Browser demo and private drafts
 
-The first visit opens Welcome. Select **Enter the war room** to go to Home.
+The first visit to the browser demo opens Welcome. Select **Enter the war room** to go to Home.
 The browser remembers this choice for the same site and profile. If site
 storage is unavailable, Welcome stays dismissed for the current session.
 
-Gavel saves workspace changes locally in the same browser profile and site.
+The demo saves workspace changes locally in the same browser profile and site.
 Drafts, saved sources, research history, chat, tasks, role assignments, and
 agendas survive reloads when browser storage is available. Clearing the site’s
-data removes the workspace. Each device has its own copy.
+data removes this local workspace. Signed-in accounts keep private drafts,
+saved sources, and research history in separate browser storage for each
+account and team. Shared task status and sent team messages live in Firestore.
+Native builds do not yet persist those private drafts across restarts.
 
 ## Prep workflow
 
 Open an assignment on Home to reach its linked work or task details. In
 Examination Builder, use **Research** on a question to find and attach a source,
 then use the review status menu to mark the script ready for review or rehearsal.
-Case also opens Research from exhibits and argument drafts. Team Chat's **Drafts**
-picker links to a script or argument.
+Case also opens Research from exhibits and argument drafts. In the demo,
+Team Chat's **Drafts** picker links to a script or argument. Shared chat links
+are limited to tasks and exhibits.
 
 Open a practice agenda from **Profile → Practice Schedule**. Add scripts and
-arguments, arrange the order, check the time limits and flagged questions, and
-assign follow-up tasks with a due date and a link back to their agenda.
+arguments, arrange the order, and check time limits and flagged questions.
+Follow-up tasks carry a due date and link to the agenda. Shared follow-ups can
+be assigned to fellow practice participants.
 
-## Team Chat in v0.10
+## Team Chat
 
 Open Team → Open team chat. The single active-case demo channel supports text,
 task, exhibit, and draft references, and message timestamps. Use Link item to search and
@@ -67,9 +75,10 @@ The composer retains drafts and selected links after a failed send. Retrying an
 unchanged draft reuses its message ID, preventing duplicate sends. Ctrl+Enter or
 Cmd+Enter sends; Enter adds a newline. Loading errors have retry controls.
 
-Messages and drafts are saved in this browser.
-No real teammates receive messages, and there is no live sync, notification,
-read-receipt or online-presence service in this alpha.
+Demo messages stay in the browser. In a Firebase team workspace, rostered
+members can send to the team's active case once the Firestore rules are deployed.
+Shared messages receive a server timestamp. Drafts stay local. Notifications,
+read receipts, and online presence are future work.
 
 ## Examination Builder in v0.9
 
@@ -110,7 +119,7 @@ attendance. Times use the device's local time. The sample goal is 180 minutes.
 Practice dates and participants are fixed in the demo. Agenda edits, task
 completion, and assignments are saved in this browser.
 
-## Team in v0.7
+## Team roles in the browser demo
 
 Team separates role coverage from task completion. Filter prosecution/defense sides, each with attorney and witness groups, open a role, review its responsibilities, select
 a teammate, and assign it. Each responsibility becomes an unfinished task due on
@@ -121,13 +130,14 @@ Suggestions use a deterministic workload ranking (fewest unfinished tasks, then
 name and ID), not live AI or inferred skills. Multiple roles per teammate are
 allowed; users must review trial scheduling and conflicts. Filled roles are
 read-only in this slice. Assignments and their tasks are saved in this browser,
-and teammates are not notified. Team chat is available in v0.10.
+and teammates are not notified. Firebase teams use the same role views with assignment limited to captains and coaches.
 
 ## Research in v0.6
 
 - **Ask:** use a suggestion or enter a question. Responses are prepared,
-  keyword-matched demonstrations with numbered points and citations. They are
-  not live AI or live web research.
+  keyword-matched demonstrations with numbered points and citations in the
+  browser demo. Firebase teams receive general training references and can read
+  their own case materials in the Library. Live AI and web research are planned.
 - **Library:** browse the source catalogue, save references, and search saved
   sources by title/citation. Saves and research history are stored in this browser.
 - **Sources:** read the source summary or original sample packet text, copy an
@@ -151,8 +161,8 @@ separate from case facts; the case materials have not been rewritten.
 
 The demo trial is 23 days from the first visit. Task deadlines and practice
 dates use that same starting date so they stay tied to your saved workspace. While the app stays open, calendar labels refresh as time advances
-and when the app resumes. Real, persistent dates and shared accounts are future
-backend work.
+and when the app resumes. Firebase workspaces use dates stored with the team
+records.
 
 ## Verification
 
@@ -162,7 +172,8 @@ flutter test
 flutter build web
 ```
 
-CI analyzes/tests/builds the web app on Ubuntu. On macOS, it compares phone-sized
+CI analyzes, tests, and builds the web app on Ubuntu. It also runs the Firestore
+rules tests in an isolated emulator. On macOS, it compares phone-sized
 golden snapshots and checks an unsigned iOS build. Run the pixel comparisons
 locally on macOS with `flutter test test/golden`. For intentional visual
 changes, run `flutter test --update-goldens test/golden` and review the PNG
@@ -209,4 +220,5 @@ context. Failure traces go to `integration_test/test-results`.
 See [v0.10 notes](docs/v0.10-review.md), [v0.9 notes](docs/v0.9-review.md), [v0.8 notes](docs/v0.8-review.md), [v0.7 notes](docs/v0.7-review.md), [v0.6 notes](docs/v0.6-review.md), the
 [original review](docs/v0.5-review.md), and the
 [design notes](docs/ui-redesign.md). Release tags are created after the manual
-smoke test; the version in `pubspec.yaml` describes the implemented feature slice.
+smoke test; the package build version in `pubspec.yaml` is still `0.11.0+11`. The v1.0
+alpha verification is complete and its release tag remains pending.

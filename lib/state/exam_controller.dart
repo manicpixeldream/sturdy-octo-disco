@@ -81,7 +81,9 @@ class ExamController extends LoadController {
     await loadWith(() => _repository.fetchScripts(id), (scripts) {
       final ids = <String>{};
       for (final script in scripts) {
-        if (!ids.add(script.id) || !_valid(script)) {
+        if (!ids.add(script.id) ||
+            script.caseId != id ||
+            (!cases.isLive && !_valid(script))) {
           throw StateError('Invalid script catalogue');
         }
       }
@@ -94,9 +96,22 @@ class ExamController extends LoadController {
   bool _valid(ExamScript script) =>
       script.caseId == _caseId &&
       cases.witnessById(script.witnessId) != null &&
-      script.questions.every(
-        (q) => q.exhibitIds.every((id) => cases.exhibitById(id) != null),
-      );
+      script.questions.every((question) {
+        final previous = cases.isLive
+            ? scriptFor(
+                script.witnessId,
+                script.phase,
+              ).questions.where((item) => item.id == question.id).firstOrNull
+            : null;
+        // Keep existing links when a shared packet changes. New links must
+        // still point to a current exhibit.
+        return question.exhibitIds.every(
+          (id) =>
+              cases.exhibitById(id) != null ||
+              (previous?.exhibitIds.contains(id) ?? false),
+        );
+      });
+
   ExamScript scriptFor(String witnessId, TrialPhase phase) =>
       _scripts
           .where((s) => s.witnessId == witnessId && s.phase == phase)
@@ -285,16 +300,17 @@ class ExamController extends LoadController {
   void _syncCitations() {
     if (isDisposed || !_loaded || _caseId == null) return;
     _research.replaceExamCitations(_caseId!, [
-      for (final script in _scripts.where(_valid))
-        for (final q in script.questions)
-          for (final sourceId in {...q.exhibitIds, ...q.sourceIds})
-            Citation(
-              sourceId: sourceId,
-              location: CitationLocation.examQuestion,
-              referenceId: '${script.witnessId}|${script.phase.name}|${q.id}',
-              label:
-                  '${cases.witnessById(script.witnessId)?.name} · ${script.phase.label}: ${q.text}',
-            ),
+      for (final script in _scripts)
+        if (cases.witnessById(script.witnessId) != null)
+          for (final q in script.questions)
+            for (final sourceId in {...q.exhibitIds, ...q.sourceIds})
+              Citation(
+                sourceId: sourceId,
+                location: CitationLocation.examQuestion,
+                referenceId: '${script.witnessId}|${script.phase.name}|${q.id}',
+                label:
+                    '${cases.witnessById(script.witnessId)?.name} · ${script.phase.label}: ${q.text}',
+              ),
     ]);
   }
 

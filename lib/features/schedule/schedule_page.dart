@@ -56,7 +56,9 @@ class SchedulePage extends StatelessWidget {
             ),
           const SizedBox(height: Spacing.md),
           Text(
-            session.sharedWorkspace
+            !session.persistsLocalWork
+                ? 'Times use your device’s local time. Agenda drafts stay in this session.'
+                : session.sharedWorkspace
                 ? 'Team schedule · Times use your device’s local time. Agenda drafts are saved in this browser.'
                 : 'Demo schedule · Times use your device’s local time. Agendas and follow-ups are saved in this browser.',
           ),

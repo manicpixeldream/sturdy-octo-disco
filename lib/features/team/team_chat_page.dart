@@ -38,8 +38,10 @@ class _TeamChatPageState extends State<TeamChatPage> {
     final cases = context.watch<CaseController>();
     final team = context.watch<TeamController>();
     final tasks = context.watch<TaskController>();
-    final roles = context.watch<RoleController>();
     final session = context.watch<SessionController>();
+    final roles = session.sharedWorkspace
+        ? null
+        : context.watch<RoleController>();
     if (_caseId != chat.caseId) {
       _caseId = chat.caseId;
       _lastMessage = null;
@@ -64,13 +66,13 @@ class _TeamChatPageState extends State<TeamChatPage> {
         cases.loadFailed ||
         team.loadFailed ||
         tasks.loadFailed ||
-        roles.loadFailed ||
+        roles?.loadFailed == true ||
         chat.loadFailed;
     final loaded =
         cases.isLoaded &&
         team.isLoaded &&
         tasks.isLoaded &&
-        roles.isLoaded &&
+        roles?.isLoaded != false &&
         chat.isLoaded;
     return WorkspacePage(
       title: 'Team chat',
@@ -88,7 +90,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
                   if (cases.loadFailed) cases.load();
                   if (team.loadFailed) team.load();
                   if (tasks.loadFailed) tasks.load();
-                  if (roles.loadFailed) roles.load();
+                  if (roles?.loadFailed == true) roles?.load();
                   if (chat.loadFailed) chat.load();
                 },
               ),
@@ -127,7 +129,9 @@ class _TeamChatPageState extends State<TeamChatPage> {
                               ],
                               Text(
                                 session.sharedWorkspace
-                                    ? 'Shared message history · Read-only'
+                                    ? 'Shared with your team'
+                                    : !session.persistsLocalWork
+                                    ? 'Local demo · This session'
                                     : compact
                                     ? 'Local demo · Saved in this browser'
                                     : '${cases.activeCase!.title} · Local demo channel. No messages or notifications are sent to teammates.',
@@ -145,7 +149,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
                                 padding: const EdgeInsets.all(Spacing.xl),
                                 child: Text(
                                   session.sharedWorkspace
-                                      ? 'No team messages yet.'
+                                      ? 'Start the conversation. You can link a task or exhibit.'
                                       : 'Start the conversation. Link a task, exhibit, or draft to give your message context.',
                                   key: const ValueKey('chat_empty'),
                                   textAlign: TextAlign.center,
@@ -208,35 +212,42 @@ class _TeamChatPageState extends State<TeamChatPage> {
                               ],
                             ),
                     ),
-                    if (!session.sharedWorkspace) const Divider(height: 1),
-                    if (!session.sharedWorkspace)
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: constraints.maxHeight * .65,
+                    if (session.sharedWorkspace &&
+                        team.isLoaded &&
+                        team.byId(session.currentTeammateId) == null)
+                      const Padding(
+                        padding: EdgeInsets.all(Spacing.md),
+                        child: Text(
+                          'Ask your team lead to add you to the roster to post messages.',
                         ),
-                        child: SingleChildScrollView(
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            heightFactor: 1,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 840),
-                              child: ChatComposer(
-                                key: ValueKey('chat_composer_${chat.caseId}'),
-                                enabled:
-                                    team.byId(session.currentTeammateId) !=
-                                    null,
-                                sending: chat.isSending,
-                                failed: chat.sendFailed,
-                                items: chat.availableMentions,
-                                onSend: chat.send,
-                                initialText: chat.draftText,
-                                initialMentions: chat.draftMentions,
-                                onDraftChanged: chat.saveDraft,
-                              ),
+                      ),
+                    const Divider(height: 1),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: constraints.maxHeight * .65,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          heightFactor: 1,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 840),
+                            child: ChatComposer(
+                              key: ValueKey('chat_composer_${chat.caseId}'),
+                              enabled:
+                                  team.byId(session.currentTeammateId) != null,
+                              sending: chat.isSending,
+                              failed: chat.sendFailed,
+                              items: chat.availableMentions,
+                              onSend: chat.send,
+                              initialText: chat.draftText,
+                              initialMentions: chat.draftMentions,
+                              onDraftChanged: chat.saveDraft,
                             ),
                           ),
                         ),
                       ),
+                    ),
                   ],
                 );
               },

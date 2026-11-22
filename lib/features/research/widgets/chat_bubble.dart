@@ -115,6 +115,11 @@ class ChatBubble extends StatelessWidget {
                                     source: source,
                                     number: sourceNumbers[id]!,
                                     onOpen: () => onOpenSource(id),
+                                  )
+                                else
+                                  Text(
+                                    'Source unavailable',
+                                    style: theme.textTheme.bodySmall,
                                   ),
                             ],
                           ),

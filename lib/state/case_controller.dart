@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'load_controller.dart';
 
 import '../core/clock.dart';
@@ -30,6 +32,12 @@ class CaseController extends LoadController {
   final CaseBriefService? briefService;
   int _loadGeneration = 0;
   int _briefRequest = 0;
+  StreamSubscription<CaseBrief?>? _briefSubscription;
+  Completer<void>? _briefInitial;
+  int _sourceRevision = 0;
+
+  bool get isLive => _repository is LiveCaseRepository;
+  int get sourceRevision => _sourceRevision;
 
   final _argumentSources = <(String, TrialPhase), Set<String>>{};
   final _argumentDrafts = <(String, TrialPhase), String>{};
@@ -109,13 +117,18 @@ class CaseController extends LoadController {
     if (isDisposed) return;
     ++_loadGeneration;
     ++_briefRequest;
+    _cancelBrief();
     _isBriefLoading = false;
     final repository = _repository;
     if (repository is LiveCaseRepository) {
+      var firstPacket = true;
       await watchWith(repository.watchCase(), (packet) {
         final changedCase = _activeCase?.id != packet.$1.id;
         _apply(packet);
-        if (changedCase || _brief == null) unawaited(loadBrief());
+        if (firstPacket || changedCase) {
+          firstPacket = false;
+          unawaited(loadBrief());
+        }
       });
       return;
     }
@@ -157,6 +170,11 @@ class CaseController extends LoadController {
         if (sources != null) _argumentSources[(caseId, phase)] = sources;
       }
     }
+    if (_activeCase?.id != activeCase.id ||
+        !listEquals(_exhibits, exhibits) ||
+        !listEquals(_affidavits, affidavits)) {
+      _sourceRevision++;
+    }
     _activeCase = activeCase;
     _exhibits = List.unmodifiable(exhibits);
     _witnesses = List.unmodifiable(witnesses);
@@ -168,37 +186,63 @@ class CaseController extends LoadController {
   Future<void> loadBrief() async {
     final caseId = _activeCase?.id;
     final service = briefService;
-    if (isDisposed || caseId == null || service == null) {
-      return;
-    }
+    if (isDisposed || caseId == null || service == null) return;
+
     final generation = _loadGeneration;
     final request = ++_briefRequest;
+    _cancelBrief();
     _isBriefLoading = true;
     _briefFailed = false;
     notifyListeners();
-    try {
-      final brief = await service.fetchBrief(caseId);
-      if (brief.caseId != caseId) {
-        throw StateError('Brief belongs to another case.');
-      }
-      if (!isDisposed &&
-          generation == _loadGeneration &&
-          request == _briefRequest) {
-        _brief = brief;
-      }
-    } catch (_) {
-      if (!isDisposed &&
-          generation == _loadGeneration &&
-          request == _briefRequest) {
-        _briefFailed = true;
-      }
-    } finally {
-      if (!isDisposed &&
-          generation == _loadGeneration &&
-          request == _briefRequest) {
-        _isBriefLoading = false;
-        notifyListeners();
-      }
+
+    bool isCurrent() =>
+        !isDisposed &&
+        generation == _loadGeneration &&
+        request == _briefRequest;
+
+    void apply(CaseBrief? value, {bool failed = false}) {
+      if (!isCurrent()) return;
+      _briefFailed = failed || (value != null && value.caseId != caseId);
+      _brief = _briefFailed ? null : value;
+      _isBriefLoading = false;
+      final initial = _briefInitial;
+      if (initial != null && !initial.isCompleted) initial.complete();
+      notifyListeners();
     }
+
+    if (service is LiveCaseBriefService) {
+      final initial = _briefInitial = Completer<void>();
+      _briefSubscription = service
+          .watchBrief(caseId)
+          .listen(
+            apply,
+            onError: (Object error, StackTrace stack) =>
+                apply(null, failed: true),
+            onDone: () {
+              if (!initial.isCompleted) apply(null, failed: true);
+            },
+          );
+      return initial.future;
+    }
+
+    try {
+      apply(await service.fetchBrief(caseId));
+    } catch (_) {
+      apply(null, failed: true);
+    }
+  }
+
+  void _cancelBrief() {
+    unawaited(_briefSubscription?.cancel());
+    _briefSubscription = null;
+    final initial = _briefInitial;
+    if (initial != null && !initial.isCompleted) initial.complete();
+    _briefInitial = null;
+  }
+
+  @override
+  void dispose() {
+    _cancelBrief();
+    super.dispose();
   }
 }

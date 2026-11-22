@@ -27,13 +27,17 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       - run: flutter build web --no-web-resources-cdn --dart-define=GAVEL_DEMO=true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - run: npm ci
         working-directory: integration_test
       - run: npm test
         working-directory: integration_test
+      - run: flutter build web --no-web-resources-cdn
 
   firestore:
-    name: Verify team invite rules
+    name: Verify Firestore workspace rules
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

@@ -13,6 +13,7 @@ class CaseBriefSection extends StatelessWidget {
   const CaseBriefSection({
     super.key,
     this.factKeys,
+    required this.shared,
     required this.brief,
     required this.isLoading,
     required this.failed,
@@ -23,6 +24,7 @@ class CaseBriefSection extends StatelessWidget {
 
   final Map<String, GlobalKey>? factKeys;
   final CaseBrief? brief;
+  final bool shared;
   final bool isLoading;
   final bool failed;
   final VoidCallback onRetry;
@@ -67,7 +69,7 @@ class CaseBriefSection extends StatelessWidget {
       children: [
         const SectionHeader(title: 'Case brief'),
         Text(
-          'Sample AI brief · Open each source to check the supporting material.',
+          shared ? 'Open each source to check the supporting material.' : 'Sample AI brief · Open each source to check the supporting material.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: Spacing.lg),

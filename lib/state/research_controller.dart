@@ -60,6 +60,7 @@ class ResearchController extends LoadController {
   }
 
   String? _caseId;
+  int _sourceRevision = -1;
   bool _loaded = false;
   List<ResearchSource> _sources = const [];
   final List<ResearchMessage> _messages = [];
@@ -84,9 +85,10 @@ class ResearchController extends LoadController {
       List.unmodifiable(_citations.values.where((c) => c.sourceId == sourceId));
 
   void _caseChanged() {
-    if (isDisposed) return;
+    if (isDisposed || _cases.isLoading || _cases.loadFailed) return;
     final id = _cases.activeCase?.id;
-    if (id != null && id != _caseId) {
+    if (id != null &&
+        (id != _caseId || _sourceRevision != _cases.sourceRevision)) {
       unawaited(load());
     } else {
       _syncBriefCitations();
@@ -132,6 +134,7 @@ class ResearchController extends LoadController {
       });
     }
     _caseId = id;
+    _sourceRevision = _cases.sourceRevision;
     await loadWith(() => _service.fetchSources(id), (sources) {
       final ids = <String>{};
       for (final source in sources) {

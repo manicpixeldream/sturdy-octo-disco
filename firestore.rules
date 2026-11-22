@@ -29,7 +29,160 @@ service cloud.firestore {
 
     function belongsTo(teamId) {
       return verified()
+        && exists(/databases/$(database)/documents/teams/$(teamId))
         && get(/databases/$(database)/documents/memberships/$(request.auth.uid)).data.teamId == teamId;
+    }
+
+    function validMention(mention, teamId, caseId) {
+      return mention is map
+        && mention.keys().hasAll(['kind', 'itemId', 'label'])
+        && mention.keys().hasOnly(['kind', 'itemId', 'label'])
+        && mention.itemId is string
+        && mention.itemId.matches('^[^/]{1,128}$')
+        && mention.label is string
+        && mention.label.size() <= 512
+        && mention.label.matches('(?s).*\\S.*')
+        && (
+          (mention.kind == 'task'
+            && exists(/databases/$(database)/documents/teams/$(teamId)/tasks/$(mention.itemId)))
+          || (mention.kind == 'exhibit'
+            && exists(/databases/$(database)/documents/teams/$(teamId)/cases/$(caseId)/exhibits/$(mention.itemId)))
+        );
+    }
+
+    function mentionKey(mentions, index, emptyKey) {
+      return mentions.size() > index
+        ? mentions[index].kind + ':' + mentions[index].itemId
+        : emptyKey;
+    }
+
+    function validMentions(mentions, teamId, caseId) {
+      return mentions is list
+        && mentions.size() <= 5
+        && (mentions.size() < 1 || validMention(mentions[0], teamId, caseId))
+        && (mentions.size() < 2 || validMention(mentions[1], teamId, caseId))
+        && (mentions.size() < 3 || validMention(mentions[2], teamId, caseId))
+        && (mentions.size() < 4 || validMention(mentions[3], teamId, caseId))
+        && (mentions.size() < 5 || validMention(mentions[4], teamId, caseId))
+        && [
+          mentionKey(mentions, 0, 'empty0'),
+          mentionKey(mentions, 1, 'empty1'),
+          mentionKey(mentions, 2, 'empty2'),
+          mentionKey(mentions, 3, 'empty3'),
+          mentionKey(mentions, 4, 'empty4')
+        ].toSet().size() == 5;
+    }
+
+    function validMessage(message, teamId) {
+      return message.keys().hasAll(['caseId', 'senderId', 'text', 'createdAt', 'mentions'])
+        && message.keys().hasOnly(['caseId', 'senderId', 'text', 'createdAt', 'mentions'])
+        && message.senderId == request.auth.uid
+        && exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid))
+        && message.caseId is string
+        && message.caseId == get(/databases/$(database)/documents/teams/$(teamId)).data.activeCaseId
+        && message.createdAt == request.time
+        && message.text is string
+        && message.text.size() <= 2000
+        && validMentions(message.mentions, teamId, message.caseId)
+        && (message.text.matches('(?s).*\\S.*') || message.mentions.size() > 0);
+    }
+
+    function validRecordId(id) {
+      return id is string && id.matches('^[A-Za-z0-9_-]{1,128}$');
+    }
+
+    function rosterMember(teamId, uid) {
+      return exists(/databases/$(database)/documents/teams/$(teamId)/members/$(uid));
+    }
+
+    function canAssignRoles(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.teamRole
+        in ['captain', 'coach'];
+    }
+
+    function roleTaskId(caseId, roleId, slot) {
+      return 'role.' + caseId + '.' + roleId + '.' + (slot == 0 ? '0' : slot == 1 ? '1' : '2');
+    }
+
+    function roleTaskFollowsAssignment(teamId, caseId, roleId, assignee, slot) {
+      let id = roleTaskId(caseId, roleId, slot);
+      let task = getAfter(/databases/$(database)/documents/teams/$(teamId)/tasks/$(id)).data;
+      return task.assigneeId == assignee
+        && task.caseId == caseId
+        && task.roleId == roleId
+        && task.responsibilityIndex == slot
+        && task.isDone == false;
+    }
+
+    function assigningRole(teamId, caseId, roleId) {
+      let change = request.resource.data;
+      let responsibilities = resource.data.responsibilities;
+      let assignee = change.assigneeId;
+      return validRecordId(caseId)
+        && validRecordId(roleId)
+        && belongsTo(teamId)
+        && canAssignRoles(teamId)
+        && get(/databases/$(database)/documents/teams/$(teamId)).data.activeCaseId == caseId
+        && resource.data.get('assigneeId', null) == null
+        && change.diff(resource.data).affectedKeys().hasOnly(['assigneeId'])
+        && validRecordId(assignee)
+        && rosterMember(teamId, assignee)
+        && responsibilities is list
+        && responsibilities.size() >= 1
+        && responsibilities.size() <= 3
+        && roleTaskFollowsAssignment(teamId, caseId, roleId, assignee, 0)
+        && (responsibilities.size() < 2 || roleTaskFollowsAssignment(teamId, caseId, roleId, assignee, 1))
+        && (responsibilities.size() < 3 || roleTaskFollowsAssignment(teamId, caseId, roleId, assignee, 2));
+    }
+
+    function validResponsibility(teamId, task) {
+      let rolePath = /databases/$(database)/documents/teams/$(teamId)/cases/$(task.caseId)/roles/$(task.roleId);
+      let before = get(rolePath).data;
+      let after = getAfter(rolePath).data;
+      return before.get('assigneeId', null) == null
+        && after.assigneeId == task.assigneeId
+        && task.responsibilityIndex < before.responsibilities.size()
+        && task.title == before.title + ': ' + before.responsibilities[task.responsibilityIndex]
+        && task.dueDate == get(/databases/$(database)/documents/teams/$(teamId)/cases/$(task.caseId)).data.trialDate;
+    }
+
+    function creatingRoleTask(teamId, taskId, task) {
+      // The role update in the same transaction checks the caller's authority.
+      return task.keys().hasOnly(['id', 'title', 'assigneeId', 'dueDate', 'isDone', 'caseId', 'roleId', 'responsibilityIndex'])
+        && task.id == taskId
+        && task.isDone == false
+        && validRecordId(task.caseId)
+        && validRecordId(task.roleId)
+        && task.responsibilityIndex is int
+        && task.responsibilityIndex >= 0
+        && task.responsibilityIndex < 3
+        && taskId == roleTaskId(task.caseId, task.roleId, task.responsibilityIndex)
+        && validResponsibility(teamId, task);
+    }
+
+    function participantsCanAssign(teamId, task) {
+      let session = get(/databases/$(database)/documents/teams/$(teamId)/sessions/$(task.sessionId)).data;
+      return request.auth.uid in session.participantIds
+        && task.assigneeId in session.participantIds;
+    }
+
+    function creatingFollowUp(teamId, taskId, task) {
+      return task.keys().hasOnly(['id', 'title', 'assigneeId', 'dueDate', 'isDone', 'workRoute', 'sessionId'])
+        && task.id == taskId
+        && taskId.matches('^follow_up_[a-f0-9]{32}$')
+        && task.isDone == false
+        && task.title is string
+        && task.title.size() <= 160
+        && task.title.matches('(?s).*\\S.*')
+        && task.dueDate is string
+        && task.dueDate.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T00:00:00[.]000$')
+        && validRecordId(task.sessionId)
+        && validRecordId(task.assigneeId)
+        && task.workRoute == '/me/schedule/' + task.sessionId
+        && belongsTo(teamId)
+        && rosterMember(teamId, request.auth.uid)
+        && rosterMember(teamId, task.assigneeId)
+        && participantsCanAssign(teamId, task);
     }
 
     match /teams/{teamId} {
@@ -41,14 +194,26 @@ service cloud.firestore {
       }
 
       match /tasks/{taskId} {
+        allow create: if creatingRoleTask(teamId, taskId, request.resource.data)
+          || creatingFollowUp(teamId, taskId, request.resource.data);
         allow update: if belongsTo(teamId)
           && resource.data.assigneeId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isDone'])
           && request.resource.data.isDone is bool;
       }
 
+      match /chat/{messageId} {
+        allow create: if belongsTo(teamId)
+          && messageId.matches('^[A-Za-z0-9_-]{1,128}$')
+          && validMessage(request.resource.data, teamId);
+      }
+
+      match /cases/{caseId}/roles/{roleId} {
+        allow update: if assigningRole(teamId, caseId, roleId);
+      }
+
       match /cases/{caseId}/{collection}/{id} {
-        allow read: if collection in ['exhibits', 'witnesses', 'affidavits', 'stipulations', 'timingRules', 'brief']
+        allow read: if collection in ['exhibits', 'witnesses', 'affidavits', 'stipulations', 'timingRules', 'brief', 'roles']
           && belongsTo(teamId);
       }
     }

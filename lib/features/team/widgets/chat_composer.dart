@@ -65,6 +65,18 @@ class _ChatComposerState extends State<ChatComposer> {
   }
 
   @override
+  void didUpdateWidget(ChatComposer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.failed &&
+        !widget.failed &&
+        widget.initialText.isEmpty &&
+        widget.initialMentions.isEmpty) {
+      _text.clear();
+      _mentions = const [];
+    }
+  }
+
+  @override
   void dispose() {
     _text.dispose();
     super.dispose();

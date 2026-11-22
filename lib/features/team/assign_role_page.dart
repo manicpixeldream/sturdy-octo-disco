@@ -8,6 +8,7 @@ import '../../core/widgets/workspace_scroll_view.dart';
 import '../../core/widgets/load_failure.dart';
 import '../../core/widgets/section_header.dart';
 import '../../state/team_controller.dart';
+import '../../state/session_controller.dart';
 import '../../state/task_controller.dart';
 import '../../state/role_controller.dart';
 import '../../core/widgets/gavel_card.dart';
@@ -29,6 +30,11 @@ class _AssignRolePageState extends State<AssignRolePage> {
     final roles = context.watch<RoleController>();
     final team = context.watch<TeamController>();
     final tasks = context.watch<TaskController>();
+    final session = context.watch<SessionController>();
+    final canAssign =
+        !session.sharedWorkspace ||
+        team.byId(session.currentTeammateId)?.canAssignRoles == true;
+    final caseId = roles.caseId;
     final role = roles.byId(widget.roleId);
     final assignment = roles.assignmentFor(widget.roleId);
     final selected = selectedId == null ? null : team.byId(selectedId!);
@@ -69,8 +75,10 @@ class _AssignRolePageState extends State<AssignRolePage> {
               ],
             ),
             const SectionHeader(title: 'Responsibilities'),
-            const Text(
-              'All responsibilities are added as unfinished tasks, due on the demo trial date.',
+            Text(
+              session.sharedWorkspace
+                  ? 'Responsibilities become unfinished tasks due on the trial date.'
+                  : 'All responsibilities are added as unfinished tasks, due on the demo trial date.',
             ),
             GavelCard(
               child: Column(
@@ -94,12 +102,16 @@ class _AssignRolePageState extends State<AssignRolePage> {
             if (assignment != null) ...[
               const SectionHeader(title: 'Role assigned'),
               Text(
-                'Assigned to ${team.byId(assignment.teammateId)?.name ?? assignment.teammateId}. Responsibilities are in their task queue.',
+                'Assigned to ${team.byId(assignment.teammateId)?.name ?? 'a former teammate'}. Responsibilities are in their task queue.',
               ),
-            ] else ...[
+            ] else if (!canAssign)
+              const Text('Only a captain or coach can assign this role.')
+            else ...[
               const SectionHeader(title: 'Suggested teammates'),
-              const Text(
-                'Demo suggestions rank the fewest unfinished tasks first, then name. No AI or skill assessment is used. Teammates may hold multiple roles; review trial scheduling before assigning.',
+              Text(
+                session.sharedWorkspace
+                    ? 'Suggestions rank the fewest unfinished tasks first, then name. Review availability before assigning.'
+                    : 'Demo suggestions rank the fewest unfinished tasks first, then name. No AI or skill assessment is used. Teammates may hold multiple roles; review trial scheduling before assigning.',
               ),
               const SizedBox(height: Spacing.md),
               for (final member in TeammateMatcher.rank(
@@ -133,6 +145,7 @@ class _AssignRolePageState extends State<AssignRolePage> {
                         final success = await roles.assign(
                           role.id,
                           selected.id,
+                          expectedCaseId: caseId,
                         );
                         if (!context.mounted || !success) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -153,8 +166,12 @@ class _AssignRolePageState extends State<AssignRolePage> {
               ),
             ],
             const SizedBox(height: Spacing.lg),
-            const Text(
-              'Assignments are saved in this browser. Teammates are not notified.',
+            Text(
+              session.sharedWorkspace
+                  ? 'Assignments and responsibility tasks are shared with the team.'
+                  : session.persistsLocalWork
+                  ? 'Assignments are saved in this browser. Teammates are not notified.'
+                  : 'Demo assignments stay in this session.',
             ),
           ],
         ],

@@ -11,50 +11,66 @@ import 'core/storage/workspace_storage_platform.dart'
 import 'data/firestore/firestore_workspace.dart';
 import 'features/account/account_gate.dart';
 import 'features/account/account_session.dart';
+import 'features/account/firebase_startup.dart';
 import 'features/onboarding/onboarding.dart';
 import 'firebase_options.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final supportsFirebase =
       kIsWeb ||
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS;
-  if (supportsFirebase) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  }
   // The work screens pushed onto the shell also have standalone routes.
   GoRouter.optionURLReflectsImperativeAPIs = true;
   const demo = bool.fromEnvironment('GAVEL_DEMO');
   if (demo || !supportsFirebase) {
-    runApp(GavelApp(onboarding: Onboarding(), storage: openWorkspaceStorage()));
+    final storage = openWorkspaceStorage();
+    runApp(
+      GavelApp(
+        onboarding: Onboarding(),
+        storage: storage,
+        persistsLocalWork: storage != null,
+      ),
+    );
     return;
   }
+  runApp(
+    FirebaseStartup(
+      initialize: () async {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      },
+      workspace: (_) => _sharedWorkspace(),
+    ),
+  );
+}
+
+Widget _sharedWorkspace() {
   final session = FirebaseAccountSession(
     FirebaseAuth.instance,
     FirebaseFirestore.instance,
   );
-  runApp(
-    AccountGate(
-      session: session,
-      workspace: (account, teamId) {
-        final cloud = FirestoreWorkspace(FirebaseFirestore.instance, teamId);
-        return GavelApp(
-          storage: openWorkspaceStorage(namespace: '${account.uid}.$teamId'),
-          onSignOut: session.signOut,
-          accountEmail: account.email,
-          sharedMemberId: account.uid,
-          caseRepository: cloud.cases,
-          caseBriefService: cloud.cases,
-          teamRepository: cloud.team,
-          taskRepository: cloud.tasks,
-          scheduleRepository: cloud.schedule,
-          chatRepository: cloud.chat,
-          roleRepository: cloud.roles,
-        );
-      },
-    ),
+  return AccountGate(
+    session: session,
+    workspace: (account, teamId) {
+      final cloud = FirestoreWorkspace(FirebaseFirestore.instance, teamId);
+      final storage = openWorkspaceStorage(namespace: '${account.uid}.$teamId');
+      return GavelApp(
+        storage: storage,
+        persistsLocalWork: storage != null,
+        onSignOut: session.signOut,
+        accountEmail: account.email,
+        sharedMemberId: account.uid,
+        caseRepository: cloud.cases,
+        caseBriefService: cloud.cases,
+        teamRepository: cloud.team,
+        taskRepository: cloud.tasks,
+        scheduleRepository: cloud.schedule,
+        chatRepository: cloud.chat,
+        roleRepository: cloud.roles,
+      );
+    },
   );
 }

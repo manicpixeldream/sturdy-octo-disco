@@ -1,4 +1,7 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:provider/provider.dart';
+
+import '../../../state/session_controller.dart';
 
 import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/empty_state.dart';
@@ -48,7 +51,9 @@ class _LibraryListState extends State<LibraryList> {
         ),
         const SizedBox(height: Spacing.sm),
         Text(
-          'Saved in this browser.',
+          context.watch<SessionController>().persistsLocalWork
+              ? 'Saved in this browser.'
+              : 'Saved for this session.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: Spacing.lg),

@@ -148,6 +148,15 @@ class _QuestionEditorSheetState extends State<QuestionEditorSheet> {
                       ),
                   ],
                 ),
+                for (final id in _exhibits.where(
+                  (id) => !widget.exhibits.any((exhibit) => exhibit.id == id),
+                ))
+                  InputChip(
+                    label: Text('Unavailable exhibit: $id'),
+                    onDeleted: _saving
+                        ? null
+                        : () => setState(() => _exhibits.remove(id)),
+                  ),
                 if (_sources.isNotEmpty) ...[
                   const SizedBox(height: Spacing.lg),
                   const Text('Attached research sources'),

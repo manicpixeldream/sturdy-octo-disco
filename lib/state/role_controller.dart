@@ -11,6 +11,8 @@ class RoleController extends LoadController {
   List<TrialRole> _roles = const [];
   List<RoleAssignment> _assignments = const [];
   bool _isLoaded = false;
+  String? _caseId;
+  String? get caseId => _caseId;
   bool _isSaving = false;
   bool _saveFailed = false;
   List<TrialRole> get roles => _roles;
@@ -36,11 +38,19 @@ class RoleController extends LoadController {
       _tasks.setRoleTasks(_assignments.expand((a) => a.tasks).toList());
   Future<void> load() async {
     if (_isSaving) return;
+    final repository = _repository;
+    if (repository is LiveRoleRepository) {
+      await watchWith(repository.watchRoleRoster(), (result) {
+        _caseId = result.$1;
+        _roles = List.unmodifiable(result.$2);
+        _assignments = List.unmodifiable(result.$3);
+        _isLoaded = true;
+      });
+      return;
+    }
     await loadWith(
-      () async => (
-        await _repository.fetchRoles(),
-        await _repository.fetchAssignments(),
-      ),
+      () async =>
+          (await repository.fetchRoles(), await repository.fetchAssignments()),
       (result) {
         _roles = List.unmodifiable(result.$1);
         _assignments = List.unmodifiable(result.$2);
@@ -50,11 +60,20 @@ class RoleController extends LoadController {
     );
   }
 
-  Future<bool> assign(String roleId, String teammateId) async {
+  Future<bool> assign(
+    String roleId,
+    String teammateId, {
+    String? expectedCaseId,
+  }) async {
+    final caseId = _caseId;
+    final repository = _repository;
     if (isDisposed ||
         !_isLoaded ||
         isLoading ||
+        loadFailed ||
         _isSaving ||
+        (repository is LiveRoleRepository &&
+            (caseId == null || expectedCaseId != caseId)) ||
         assignmentFor(roleId) != null) {
       return false;
     }
@@ -62,13 +81,18 @@ class RoleController extends LoadController {
     _saveFailed = false;
     notifyListeners();
     try {
-      final assignment = await _repository.assign(roleId, teammateId);
-      if (isDisposed) return false;
-      _assignments = List.unmodifiable([..._assignments, assignment]);
-      _syncTasks();
+      if (repository is LiveRoleRepository) {
+        await repository.assignForCase(caseId!, roleId, teammateId);
+      } else {
+        final assignment = await repository.assign(roleId, teammateId);
+        if (isDisposed) return false;
+        _assignments = List.unmodifiable([..._assignments, assignment]);
+        _syncTasks();
+      }
+      if (isDisposed || _caseId != caseId) return false;
       return true;
     } catch (_) {
-      if (!isDisposed) _saveFailed = true;
+      if (!isDisposed && _caseId == caseId) _saveFailed = true;
       return false;
     } finally {
       if (!isDisposed) {

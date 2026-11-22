@@ -14,7 +14,7 @@ In v1, AI features run on mock data behind repository and service interfaces. La
 - State: `provider` + `ChangeNotifier`. Navigation: `go_router` + `StatefulShellRoute` for the five tabs.
 - Stable `ValueKey`s on interactive/asserted widgets.
 - Tests mirror `lib/`. Every slice adds unit/widget coverage for what it touches.
-- Agents verify with `flutter analyze` and `flutter test` only (no browser/device automation). Developers run manual smoke.
+- Agents use Flutter analysis, tests, and builds, plus emulator rules tests for Firestore changes. CI runs Playwright. Developers handle manual browser and device checks.
 
 Pinned SDK: Flutter **3.50.0** / Dart **3.14.0** (`pubspec.lock`, CI). Workspace changes persist in the current browser profile when storage is available.
 
@@ -23,8 +23,8 @@ Pinned SDK: Flutter **3.50.0** / Dart **3.14.0** (`pubspec.lock`, CI). Workspace
 | Version | Status | Purpose |
 |---|---|---|
 | v0.1–v0.11 | **Complete** | Foundation through Welcome; see [v1-alpha.md](docs/plans/v1-alpha.md) and review notes below |
-| v1.0 alpha | **Complete** | Alpha features, screen-state audit, goldens, Chrome flow, and coverage |
-| v2 | **In progress** | FlutterFire, Auth/invites, and Firestore reads implemented; shared writes in progress |
+| v1.0 alpha | **Verified, tag pending** | Alpha features, screen-state audit, goldens, Chrome flow, and coverage |
+| v2 | **In progress** | FlutterFire, Auth/invites, and Firestore reads and shared writes implemented; rollout and offline validation pending |
 | v3 | **Planned** | iPhone + Android device validation (former Beta) |
 | v4 | **Planned** | ChatGPT researcher / case brief via Cloud Functions (former “v3”) |
 | v5 | **Planned** | Pre-launch extras; coach/judge, timer, iPad, later ideas |
@@ -35,7 +35,7 @@ To work on a version, open **`@plan.md`** and the matching file under **`docs/pl
 
 | Version | Purpose | Path | Status |
 |---|---|---|---|
-| v0.1–v0.11 + v1.0 | Alpha completion record | [`docs/plans/v1-alpha.md`](docs/plans/v1-alpha.md) | Complete |
+| v0.1–v0.11 + v1.0 | Alpha completion record | [`docs/plans/v1-alpha.md`](docs/plans/v1-alpha.md) | Verified, tag pending |
 | v2 | Firebase + Firestore | [`docs/plans/v2-firebase-firestore.md`](docs/plans/v2-firebase-firestore.md) | In progress |
 | v3 | iPhone + Android device testing | [`docs/plans/v3-mobile-device-testing.md`](docs/plans/v3-mobile-device-testing.md) | Planned |
 | v4 | ChatGPT LLM researcher / case brief | [`docs/plans/v4-chatgpt-llm.md`](docs/plans/v4-chatgpt-llm.md) | Planned |
@@ -46,16 +46,14 @@ How-to index: [`docs/plans/README.md`](docs/plans/README.md).
 ### Example prompts
 
 ```text
-Build the next unfinished slice of @docs/plans/v1-alpha.md
-Follow guiding rules in @plan.md.
-Verify with flutter analyze and flutter test only. Give 3–5 manual smoke steps when done.
+Review alpha release readiness using @docs/plans/v1-alpha.md.
 ```
 
 ```text
 Build the next slice of @docs/plans/v2-firebase-firestore.md
 Follow guiding rules in @plan.md.
 Finalize / respect the bundle ID notes in that file.
-Verify with flutter analyze and flutter test only. Give 3–5 manual smoke steps when done.
+Run Flutter analysis and tests, and the emulator rules tests if Firestore rules change.
 ```
 
 ```text

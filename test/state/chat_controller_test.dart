@@ -9,6 +9,7 @@ import 'package:gavel/data/models/case_file.dart';
 import 'package:gavel/data/mock/mock_chat_repository.dart';
 import 'package:gavel/data/mock/mock_case_repository.dart';
 import 'package:gavel/data/mock/seed_data.dart';
+import 'package:gavel/data/repositories/chat_repository.dart';
 
 import '../helpers/chat_fixture.dart';
 
@@ -31,6 +32,26 @@ class FlakyChat extends MockChatRepository {
   }
 }
 
+class LiveChat extends MockChatRepository implements LiveChatRepository {
+  final snapshots = StreamController<List<ChatMessage>>.broadcast();
+  final attempts = <ChatMessage>[];
+  final responses = <Completer<ChatMessage>>[];
+
+  @override
+  Stream<List<ChatMessage>> watchMessages(String caseId) async* {
+    yield const [];
+    yield* snapshots.stream;
+  }
+
+  @override
+  Future<ChatMessage> sendMessage(ChatMessage message) {
+    attempts.add(message);
+    final response = Completer<ChatMessage>();
+    responses.add(response);
+    return response.future;
+  }
+}
+
 class SwitchingCase extends MockCaseRepository {
   SwitchingCase(SeedData seed)
     : current = seed.caseFile,
@@ -45,6 +66,45 @@ class SwitchingCase extends MockCaseRepository {
 }
 
 void main() {
+  test(
+    'live chat retries the same message and reconciles late confirmations',
+    () async {
+      final repository = LiveChat();
+      final fixture = await ChatFixture.create(repository: repository);
+      addTearDown(() async {
+        fixture.dispose();
+        await repository.snapshots.close();
+      });
+
+      expect(
+        fixture.chat.availableMentions.every(
+          (item) => item.kind != ChatMentionKind.draft,
+        ),
+        isTrue,
+      );
+      final first = fixture.chat.send('Ready to practice', []);
+      repository.responses.single.completeError(StateError('Connection lost'));
+      expect(await first, isFalse);
+      expect(fixture.chat.draftText, 'Ready to practice');
+      expect(fixture.chat.messages, isEmpty);
+
+      final retry = fixture.chat.send('Ready to practice', []);
+      final attempt = repository.attempts.last;
+      expect(attempt, repository.attempts.first);
+      final confirmed = ChatMessage.fromMap({
+        ...attempt.toMap(),
+        'createdAt': '2026-10-26T10:01:00Z',
+      });
+      repository.snapshots.add([confirmed]);
+      await Future<void>.delayed(Duration.zero);
+      repository.responses.last.completeError(StateError('Response lost'));
+      expect(await retry, isTrue);
+      expect(fixture.chat.messages, [confirmed]);
+      expect(fixture.chat.draftText, isEmpty);
+      expect(fixture.chat.sendFailed, isFalse);
+    },
+  );
+
   for (final (sent, edited) in [(true, false), (true, true), (false, false)]) {
     test(
       'restores interrupted chat send (sent: $sent, edited: $edited)',

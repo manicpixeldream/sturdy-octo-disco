@@ -5,9 +5,14 @@ import '../../core/theme/spacing.dart';
 import 'widgets/feature_card.dart';
 
 class WelcomePage extends StatelessWidget {
-  const WelcomePage({super.key, required this.onEnter});
+  const WelcomePage({
+    super.key,
+    required this.onEnter,
+    this.persistsLocalWork = true,
+  });
 
   final VoidCallback onEnter;
+  final bool persistsLocalWork;
 
   @override
   Widget build(BuildContext context) => Theme(
@@ -71,7 +76,9 @@ class WelcomePage extends StatelessWidget {
                       ),
                       const SizedBox(height: Spacing.lg),
                       Text(
-                        'This demo saves your work in this browser. Teammates on other devices have separate copies.',
+                        persistsLocalWork
+                            ? 'This demo saves your work in this browser. Teammates on other devices have separate copies.'
+                            : 'This demo keeps your work for this session.',
                         style: text.bodySmall,
                       ),
                       const SizedBox(height: Spacing.xl),

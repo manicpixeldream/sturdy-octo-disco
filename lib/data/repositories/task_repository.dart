@@ -10,3 +10,7 @@ abstract interface class TaskRepository {
 abstract interface class LiveTaskRepository implements TaskRepository {
   Stream<List<TaskItem>> watchTasks();
 }
+
+abstract interface class FollowUpTaskRepository {
+  Future<void> createFollowUp(String sessionId, TaskItem task);
+}

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gavel/data/mock/mock_schedule_repository.dart';
+import 'package:gavel/data/mock/mock_role_repository.dart';
 import 'package:gavel/data/mock/seed_data.dart';
 import 'package:gavel/data/models/chat_message.dart';
 
@@ -10,7 +11,8 @@ void main() {
   test('export the Harmon packet for a Firestore team', () async {
     const output = String.fromEnvironment('HARMON_OUTPUT');
     const memberUid = String.fromEnvironment('HARMON_MEMBER_UID');
-    if (output.isEmpty || memberUid.isEmpty || memberUid.contains('/')) {
+    if (output.isEmpty ||
+        !RegExp(r'^[A-Za-z0-9_-]{1,128}$').hasMatch(memberUid)) {
       fail('Pass HARMON_OUTPUT and HARMON_MEMBER_UID using --dart-define.');
     }
     final today = DateTime.now();
@@ -18,7 +20,10 @@ void main() {
     String remap(String id) => id == seed.currentTeammateId ? memberUid : id;
     final members = [
       for (final member in seed.teammates)
-        member.copyWith(id: remap(member.id)),
+        member.copyWith(
+          id: remap(member.id),
+          teamRole: member.id == seed.currentTeammateId ? 'captain' : null,
+        ),
     ];
     final sessions = await MockScheduleRepository.demo(
       today,
@@ -38,6 +43,8 @@ void main() {
       for (final item in seed.timingRules)
         '$casePath/timingRules/${item.id}': item.toMap(),
       '$casePath/brief/current': seed.caseBrief.toMap(),
+      for (final role in MockRoleRepository.roles)
+        '$casePath/roles/${role.id}': role.toMap(),
       for (final item in members) 'members/${item.id}': item.toMap(),
       for (final item in seed.tasks)
         'tasks/${item.id}': item

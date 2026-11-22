@@ -1,5 +1,7 @@
 # Editorial workspace redesign
 
+> Historical milestone notes. See the [current README](../README.md) for current behavior, including browser persistence and Firebase team workspaces.
+
 ## Design system
 
 - Warm paper `#F8F6F1`, charcoal `#292421`, burgundy `#641F32`, and muted warm-gray secondary text.

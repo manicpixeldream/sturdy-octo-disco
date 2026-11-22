@@ -151,7 +151,11 @@ class _AccountPageState extends State<AccountPage> {
                       if (widget.loading || _busy)
                         const LinearProgressIndicator(),
                       if (retry != null) ...[
-                        const Text('Check your connection and try again.'),
+                        Text(
+                          account == null
+                              ? 'Check your connection and try again.'
+                              : 'Could not check your team access. Try again or ask your team lead to check the workspace setup.',
+                        ),
                         FilledButton(
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(0, 48),

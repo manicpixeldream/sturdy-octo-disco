@@ -1,5 +1,6 @@
 import 'load_controller.dart';
 import '../core/storage/workspace_storage.dart';
+import '../core/router/routes.dart';
 
 import 'dart:math';
 
@@ -48,6 +49,56 @@ class TaskController extends LoadController {
     notifyListeners();
   }
 
+  final _failedFollowUps = <String, TaskItem>{};
+  final _savingFollowUps = <String>{};
+
+  Future<bool> createPracticeFollowUp(
+    String sessionId,
+    String title,
+    String assigneeId,
+    DateTime dueDate,
+  ) async {
+    final body = title.trim();
+    if (isDisposed || body.isEmpty) return false;
+    final repository = _repository;
+    final route = Routes.practiceAgenda(sessionId);
+    if (repository is! FollowUpTaskRepository) {
+      if (repository is LiveTaskRepository) return false;
+      addFollowUp(body, assigneeId, dueDate, workRoute: route);
+      return true;
+    }
+
+    if (!_savingFollowUps.add(sessionId)) return false;
+    final date = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final previous = _failedFollowUps[sessionId];
+    final task =
+        previous != null &&
+            previous.title == body &&
+            previous.assigneeId == assigneeId &&
+            previous.dueDate == date
+        ? previous
+        : TaskItem(
+            id: 'follow_up_${List.generate(16, (_) => _random.nextInt(256).toRadixString(16).padLeft(2, '0')).join()}',
+            title: body,
+            assigneeId: assigneeId,
+            dueDate: date,
+            workRoute: route,
+          );
+    _failedFollowUps[sessionId] = task;
+    try {
+      await (repository as FollowUpTaskRepository).createFollowUp(
+        sessionId,
+        task,
+      );
+      _failedFollowUps.remove(sessionId);
+      return !isDisposed;
+    } catch (_) {
+      return false;
+    } finally {
+      _savingFollowUps.remove(sessionId);
+    }
+  }
+
   List<TaskItem> get tasks => List.unmodifiable(
     {
       ...{for (final t in _roleTasks) t.id: t},
@@ -62,9 +113,15 @@ class TaskController extends LoadController {
   }
 
   final Set<String> _saving = {};
-  final Set<String> _saveErrors = {};
+  final Map<String, bool> _saveErrors = {};
   bool isSaving(String id) => _saving.contains(id);
-  bool saveFailed(String id) => _saveErrors.contains(id);
+  bool saveFailed(String id) => _saveErrors.containsKey(id);
+
+  Future<bool> retryCompletion(String id) {
+    final desired = _saveErrors[id];
+    return desired == null ? Future.value(false) : setCompleted(id, desired);
+  }
+
   Future<bool> setCompleted(String id, bool completed) async {
     if (isDisposed || !isLoaded || isLoading || _saving.contains(id)) {
       return false;
@@ -87,7 +144,11 @@ class TaskController extends LoadController {
       }
       return true;
     } catch (_) {
-      if (!isDisposed) _saveErrors.add(id);
+      if (!isDisposed &&
+          (_repository is! LiveTaskRepository ||
+              tasks.any((task) => task.id == id && task.isDone != completed))) {
+        _saveErrors[id] = completed;
+      }
       return false;
     } finally {
       if (!isDisposed) {
@@ -119,6 +180,12 @@ class TaskController extends LoadController {
     if (_saving.isNotEmpty) return;
     void apply(List<TaskItem> records) {
       _tasks = List.unmodifiable(records);
+      if (_repository is LiveTaskRepository) {
+        _saveErrors.removeWhere((id, desired) {
+          final task = records.where((item) => item.id == id).firstOrNull;
+          return task == null || task.isDone == desired;
+        });
+      }
       if (_repository is! LiveTaskRepository && storage != null) {
         final store = storage!;
         final restored = store.records('followUps', TaskItem.fromMap);

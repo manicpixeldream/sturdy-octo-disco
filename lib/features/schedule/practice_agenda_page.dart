@@ -67,16 +67,16 @@ class PracticeAgendaPage extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.md),
             Text(
-              session.sharedWorkspace
+              !session.persistsLocalWork
+                  ? 'Plan the order of rehearsal. Your agenda draft stays in this session.'
+                  : session.sharedWorkspace
                   ? 'Plan the order of rehearsal. Your agenda draft is saved in this browser.'
                   : 'Plan the order of rehearsal. Agenda items and follow-up tasks are saved in this browser.',
             ),
             const SizedBox(height: Spacing.lg),
             ..._agenda(context, schedule, cases, exams, caseId),
             const SizedBox(height: Spacing.lg),
-            if (session.sharedWorkspace)
-              const Text('Shared follow-up tasks are read-only.')
-            else if (team.loadFailed || tasks.loadFailed)
+            if (team.loadFailed || tasks.loadFailed)
               LoadFailure(
                 title: 'Could not load follow-up assignments',
                 onRetry: () async {
@@ -92,6 +92,11 @@ class PracticeAgendaPage extends StatelessWidget {
                   semanticsLabel: 'Loading follow-up assignments',
                 ),
               )
+            else if (session.sharedWorkspace &&
+                team.byId(session.currentTeammateId) == null)
+              const Text(
+                'Ask your team lead to add you to the roster to assign follow-ups.',
+              )
             else if (team.teammates.isEmpty)
               const Text('There are no teammates to assign a follow-up to.')
             else
@@ -104,25 +109,44 @@ class PracticeAgendaPage extends StatelessWidget {
                   final dueDate = practice.endsAt.isAfter(today)
                       ? practice.endsAt
                       : today;
-                  final result =
-                      await showDialog<
-                        ({String title, String assigneeId, DateTime dueDate})
-                      >(
-                        context: context,
-                        builder: (_) => PracticeFollowUpDialog(
-                          teammates: team.teammates,
-                          currentTeammateId: session.currentTeammateId,
-                          today: today,
-                          initialDueDate: dueDate,
-                        ),
-                      );
-                  if (context.mounted && result != null) {
-                    tasks.addFollowUp(
-                      result.title,
-                      result.assigneeId,
-                      result.dueDate,
-                      workRoute: Routes.practiceAgenda(sessionId),
-                    );
+                  final eligible = session.sharedWorkspace
+                      ? team.teammates
+                            .where(
+                              (member) =>
+                                  practice.participantIds.contains(member.id),
+                            )
+                            .toList()
+                      : team.teammates;
+                  if (eligible.isEmpty) return;
+                  final saved = await showDialog<bool>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => PracticeFollowUpDialog(
+                      teammates: eligible,
+                      currentTeammateId: session.currentTeammateId,
+                      today: today,
+                      initialDueDate: dueDate,
+                      onSave: (title, assigneeId, due) async {
+                        final current = schedule.sessionById(sessionId);
+                        if (cases.activeCase?.id != caseId ||
+                            current == null ||
+                            (session.sharedWorkspace &&
+                                (!current.participantIds.contains(assigneeId) ||
+                                    !current.participantIds.contains(
+                                      session.currentTeammateId,
+                                    )))) {
+                          return false;
+                        }
+                        return tasks.createPracticeFollowUp(
+                          sessionId,
+                          title,
+                          assigneeId,
+                          due,
+                        );
+                      },
+                    ),
+                  );
+                  if (context.mounted && saved == true) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(

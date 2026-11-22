@@ -5,12 +5,17 @@ import 'package:go_router/go_router.dart';
 import 'package:gavel/core/clock.dart';
 import 'package:gavel/core/router/routes.dart';
 import 'package:gavel/data/mock/mock_exam_repository.dart';
+import 'package:gavel/data/mock/mock_case_repository.dart';
+import 'package:gavel/data/mock/seed_data.dart';
+import 'package:gavel/data/models/case_file.dart';
+import 'package:gavel/data/models/witness.dart';
 import 'package:gavel/data/models/exam_question.dart';
 import 'package:gavel/data/models/exam_script.dart';
 import 'package:gavel/data/models/timing_rule.dart';
 import 'package:gavel/data/models/citation.dart';
 import 'package:gavel/features/examination/examination_page.dart';
 import 'package:gavel/state/exam_controller.dart';
+import 'package:gavel/state/case_controller.dart';
 import 'package:gavel/state/research_controller.dart';
 import 'package:gavel/state/theme_controller.dart';
 import 'package:gavel/core/theme/gavel_theme.dart';
@@ -24,6 +29,23 @@ class FailingSaveRepository extends MockExamRepository {
     if (fail) throw StateError('offline');
     return super.saveScript(script);
   }
+}
+
+class _SwitchingPacket extends MockCaseRepository {
+  _SwitchingPacket(this.seed)
+    : currentCase = seed.caseFile,
+      super(activeCase: seed.caseFile, exhibits: [], witnesses: seed.witnesses);
+
+  final SeedData seed;
+  CaseFile currentCase;
+
+  @override
+  Future<CaseFile> fetchActiveCase() async => currentCase;
+
+  @override
+  Future<List<Witness>> fetchWitnesses(String caseId) async => [
+    for (final witness in seed.witnesses) witness.copyWith(caseId: caseId),
+  ];
 }
 
 Future<void> reveal(WidgetTester tester, Finder target) async {
@@ -57,6 +79,41 @@ Future<void> click(WidgetTester tester, String key) async {
 
 void main() {
   final clock = Clock.fixed(DateTime(2026, 10, 26));
+  testWidgets('an open question editor cannot save into a replacement case', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1000, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repo = _SwitchingPacket(SeedData.harmon(today: clock.now()));
+    await pumpGavelApp(
+      tester,
+      initialLocation: Routes.exam('wit_reyes'),
+      caseRepository: repo,
+      clock: clock,
+    );
+    final context = tester.element(find.byType(ExaminationPage));
+    final cases = context.read<CaseController>();
+    final exams = context.read<ExamController>();
+    await click(tester, 'exam_add_question');
+    final field = find.byKey(const ValueKey('question_text'));
+    await tester.enterText(field, 'Question for the original case');
+
+    repo.currentCase = repo.currentCase.copyWith(id: 'replacement');
+    await cases.load();
+    await tester.pumpAndSettle();
+    expect(
+      exams.scriptFor('wit_reyes', TrialPhase.direct).caseId,
+      'replacement',
+    );
+    await click(tester, 'question_save');
+
+    expect(exams.scriptFor('wit_reyes', TrialPhase.direct).questions, isEmpty);
+    expect(find.text('Question for the original case'), findsOneWidget);
+    expect(find.textContaining('Could not save'), findsOneWidget);
+  });
+
   testWidgets('saves Unicode goals and questions within the visible limits', (
     tester,
   ) async {

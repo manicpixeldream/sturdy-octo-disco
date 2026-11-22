@@ -11,7 +11,7 @@ Root [`plan.md`](../../plan.md) is the only top-level roadmap. This folder holds
 ```text
 Build the next slice of @docs/plans/v2-firebase-firestore.md
 Follow guiding rules in @plan.md.
-Verify with flutter analyze and flutter test only. Give 3–5 manual smoke steps when done.
+Run Flutter analysis and tests, and the emulator rules tests if Firestore rules change.
 ```
 
 ## Files

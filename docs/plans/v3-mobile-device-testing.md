@@ -48,7 +48,9 @@ Prefer fixing layout/platform bugs over inventing parallel mobile-only screens.
    - Dynamic Type at larger text sizes  
 
 4. **Integration tests on device**  
-   `flutter test integration_test -d <iphone-id>` (extend alpha Chrome flow as needed).
+   Add a Dart `integration_test` flow that covers the native prep paths, then run
+   the specific Dart file with `flutter test integration_test/device/prep_workflow_test.dart -d <iphone-id>`.
+   The existing JavaScript Playwright tests in `integration_test/` run on the web.
 
 5. **Android smoke**  
    Same critical paths on emulator or physical device.

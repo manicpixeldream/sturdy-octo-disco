@@ -1,6 +1,6 @@
 # v2 — Firebase and Firestore
 
-**Status:** FlutterFire bootstrap, email Auth + team invites, and the Firestore read path are implemented. Firebase setup and browser smoke are pending. The shared write path is in progress.
+**Status:** FlutterFire bootstrap, email Auth + team invites, and the Firestore read path are implemented. Firebase setup and browser smoke are pending. Shared writes are implemented in code and await rollout. Offline persistence remains open.
 
 **Purpose:** Accounts, shared team data, real-time sync, storage, and notifications.
 
@@ -56,6 +56,8 @@ v1 already routes UI → controllers → **interfaces** → mocks. v2 adds imple
 - `teams/{teamId}` stores `activeCaseId` and has `members`, `cases`, `tasks`, `sessions`, and `chat` subcollections.
 - The active case document has `exhibits`, `witnesses`, `affidavits`, `stipulations`, `timingRules`, and `brief/current`. Research builds its sample source catalogue from the case materials.
 - Record document IDs match model IDs. Chat records carry `caseId`. Roster IDs and the IDs referenced by task assignees and practice participants match Firebase Auth UIDs for real members.
+- Administrators configure trial roles under `teams/{teamId}/cases/{caseId}/roles`, with one to three responsibilities per role. They set the optional `teamRole` field on roster entries to `captain` or `coach` to grant assignment authority. Members cannot edit roster permissions.
+- A role assignment fills the role's `assigneeId` and creates the exact responsibility tasks in one transaction. A practice follow-up stores its `sessionId` and links to that session's agenda.
 
 ### Auth model
 
@@ -73,11 +75,12 @@ Suggested tags: `v2.1`, `v2.2`, … (or keep working on a `v2` branch until a re
    Account creation, sign-in, email verification, password reset, invite redemption, membership restoration, and sign-out. Cloud setup and browser smoke remain on the checklist.
 
 3. **Firestore repositories (read path)** — implemented.
-   Signed-in members read their team's case, roster, task status, practice schedule, and active-case chat history via Firestore subscriptions. The case brief loads from Firestore. Private drafts stay local. An administrator can seed State v. Harmon for one team using the commands below.
+   Signed-in members read their team's case, roster, task status, practice schedule, and active-case chat history via Firestore subscriptions. The case brief and packet materials update from Firestore. Private drafts stay local. An administrator can seed State v. Harmon for one team using the commands below.
 
 4. **Write path + real-time UX** — in progress.
-   Task completion is implemented. Role assignments, follow-up tasks, chat sends,
-   and offline persistence are pending. Task snapshots update shared readiness.
+   Task completion, shared chat, captain/coach role assignments, and participant
+   follow-ups are implemented. Task snapshots update shared readiness.
+   Transactions require a connection. Offline behavior and persistence remain open.
 
 5. **Storage**  
    Upload case packet PDFs and exhibit images to Firebase Storage; link from case models.
@@ -110,6 +113,11 @@ Enable Email/Password in Firebase Authentication. For web Google sign-in, enable
 Google under **Authentication → Sign-in method**, set Gavel's public display
 name and support email, and add the web app's domain under **Authorized
 domains**. Add `localhost` if you need to test with Flutter locally.
+
+As of November 21, 2026, the project has Auth enabled and no default Firestore
+database or Firestore rules release. Before testing an invite on the live app,
+create the default database in the chosen region, seed a team, and deploy the
+reviewed Firestore rules. A successful Google sign-in only verifies the Auth step.
 
 Set up Firestore and review
 `firestore.rules` against the project's existing rules before deploying it. Using
@@ -153,7 +161,9 @@ Create the test account in Firebase Auth and note its UID. Export the fictional
 case and map the demo user's assignments to that UID. Then run the import with
 Firestore administrator Application Default Credentials. Use a fresh test team
 or a team that has no Harmon records. The import sets its active case and creates
-the seed records in one commit. It aborts if any seed record already exists.
+the seed records in one commit. It aborts if any seed record already exists. The export
+includes trial roles and gives the supplied test account captain authority in
+the sample roster.
 
 ```sh
 flutter test tool/export_harmon.dart \
@@ -176,7 +186,14 @@ node tool/import_harmon.mjs YOUR_FIREBASE_PROJECT YOUR_TEAM_ID /tmp/gavel-harmon
 - [x] Preserve the previous task state on a failed write and offer retry.
 - [x] Verify task writes with Flutter analysis, 270 Flutter tests, and three Firestore rules tests.
 - [ ] Deploy the reviewed rules and check task completion across two signed-in team accounts.
-- [ ] Enable shared role assignments, follow-up task creation, and chat sends.
+- [x] Let rostered members send messages with task and exhibit links in their team's active case.
+- [x] Preserve failed drafts and retry the same message ID. Confirmed chat messages use the server timestamp.
+- [x] Verify shared sends with Flutter analysis, 271 Flutter tests, the production web build, and four Firestore rules tests.
+- [ ] Deploy the reviewed rules and check sending and receiving across two team accounts.
+- [x] Let captains and coaches assign a role and create all responsibility tasks atomically.
+- [x] Let rostered participants assign practice follow-ups to fellow participants and keep the draft on failure.
+- [x] Verify role assignments and follow-ups with Flutter analysis, 276 Flutter tests, the web build, and seven emulator rules tests. The Harmon seed imported 76 records.
+- [ ] Deploy the reviewed rules and verify assignments and follow-ups across two signed-in team accounts.
 - [ ] Verify offline behavior and enable persistence as appropriate.
 
 ## Done checklist (per slice)

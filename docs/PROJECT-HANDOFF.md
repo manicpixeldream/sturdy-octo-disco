@@ -19,7 +19,7 @@ Gavel is a Flutter web alpha for student mock trial teams. It brings case materi
 | [v0.10](v0.10-review.md) | Added local Team Chat, timestamps, keyboard sending, and a searchable picker for up to five task or exhibit links. Task mentions open task details; exhibit mentions open the source reader. Failed sends keep the draft; unchanged retries reuse the message ID. | 196 tests and analysis passed. |
 | v0.11 | Added first-visit Welcome and connected Home assignments, examination research, draft review, Team Chat, and practice agendas. | Covered by onboarding and prep workflow tests. |
 | Browser persistence and SDK upgrade | Persisted workspace changes in browser storage and moved development and CI to Flutter 3.50.0 and Dart 3.14.0. | Persistence tests, static analysis, web build, and unsigned iOS build passed. |
-| v1.0 accessibility checks | Added phone-width checks for 14 routes at 1.3× text and fixed an overflow in the Research header. | Static analysis and 238 tests passed. Line coverage was 99.1% for state and 92.2% for data. |
+| v1.0 accessibility checks | Added phone-width checks for 14 routes at 1.3× text and fixed an overflow in the Research header. | Static analysis and 238 tests passed. The final [alpha coverage record](plans/v1-alpha.md#ordered-slices) reports 99.2% for state and 92.2% for data. |
 
 ## Design and implementation
 
@@ -32,7 +32,7 @@ Gavel is a Flutter web alpha for student mock trial teams. It brings case materi
 ## Git and preview
 
 - Repository: [manicpixeldream/sturdy-octo-disco](https://github.com/manicpixeldream/sturdy-octo-disco).
-- Published milestones: v0.5 `3aba191`, v0.6 `97f92a4`, v0.7–v0.8 `74fbd9f`, and countdown refinement `079346e`.
+- Milestone commits: v0.5 `3aba191`, v0.6 `97f92a4`, v0.7–v0.8 `74fbd9f`, and countdown refinement `079346e`.
 - Commit `5892c93` connects assignments, research, review, and practice. Use `git status` to check for ongoing local edits.
 
 ## Run and verify
@@ -54,12 +54,38 @@ CI also runs a web build and checks an unsigned iOS build. Developers run the br
 4. Open Team Chat, send a task and exhibit reference, and open both. Check the composer with larger text, the keyboard open, and Midnight enabled.
 5. Reload on the same site and browser profile. Confirm Welcome stays dismissed and the drafts, messages, and task and agenda changes are still available.
 
+The Firebase code implements email and web Google Auth, invite redemption,
+team reads, task completion, chat sends, role assignments, and practice follow-ups. See the
+[v2 rollout checklist](plans/v2-firebase-firestore.md#shared-write-checklist)
+for current deployment and manual verification status.
+
+## Consistency audit
+
+The audit followed the original v1 plan and milestone reviews through the
+Firebase and shared chat implementation. The original readiness and timing
+findings are covered by separate role coverage and aggregate examination
+timing. Historical reset and SDK notes are preserved as milestone records.
+
+| Finding | Resolution |
+|---|---|
+| Firebase initialized in the guest demo, and startup failure left a blank screen. | Demo startup skips Firebase. Signed-in startup reports initialization failure and offers retry. |
+| Brief and Research data could lag edits to a shared case. | Case briefs use a live listener. Changed exhibits and affidavits refresh the Research catalogue. A failed packet component stays failed until it recovers. |
+| Shared case materials were labeled fictional and could trigger prepared Harmon assertions. | Shared materials use their own provenance. Case-specific prepared answers stay in the demo. |
+| Packet edits could block saved examination drafts. An open editor could target a replacement case. | Preserve existing references, expose removed links, reject new invalid links, and check the case before applying editor or Research actions. |
+| Retrying a failed task update could invert a more recent status. | Retry the original requested status. Clear the retry when Firestore confirms that status. |
+| Deleting a Firestore team left its subcollections accessible through old memberships. | Require the parent team to exist before granting access. |
+| Native screens promised browser persistence. | Native screens describe session-only private work. The browser keeps its existing persistence. |
+| Release status, historical reviews, and device test commands gave conflicting instructions. | Separate verified alpha from the pending tag, distinguish demo from shared behavior, and document that native integration tests still need a Dart runner. CI builds both web entry points. |
+
+Live setup is deferred. Auth is configured, but the Firebase project has no
+default Firestore database or published rules. Offline Firestore persistence and physical device validation are still planned.
+
 ## Next steps
 
 Use the root [plan.md](../plan.md) agent routing table. Detailed plans live under [docs/plans/](plans/).
 
 1. Tag the verified web alpha when ready to publish. The [alpha completion record](plans/v1-alpha.md) captures the hosted checks.
-2. Continue [v2 Firebase / Firestore](plans/v2-firebase-firestore.md) with shared writes after Firebase setup and manual verification of Auth and team reads.
+2. Continue [v2 Firebase / Firestore](plans/v2-firebase-firestore.md) with live team verification after Firebase setup, followed by offline behavior and persistence.
 3. v3 iPhone + Android device testing (former Beta): [plans/v3-mobile-device-testing.md](plans/v3-mobile-device-testing.md).
 4. v4 ChatGPT LLM (former plan “v3”): [plans/v4-chatgpt-llm.md](plans/v4-chatgpt-llm.md).
 5. v5 pre-launch / later ideas: [plans/v5-prelaunch-and-future.md](plans/v5-prelaunch-and-future.md).

@@ -28,6 +28,7 @@ GoRouter createAppRouter({
   Onboarding? onboarding,
   Future<void> Function()? onSignOut,
   String? accountEmail,
+  bool persistsLocalWork = true,
 }) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -42,6 +43,7 @@ GoRouter createAppRouter({
       GoRoute(
         path: Routes.welcome,
         builder: (context, state) => WelcomePage(
+          persistsLocalWork: persistsLocalWork,
           onEnter: () {
             onboarding?.complete();
             context.go(Routes.home);

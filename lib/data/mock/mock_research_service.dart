@@ -8,10 +8,12 @@ import '../services/research_service.dart';
 class MockResearchService implements ResearchService {
   const MockResearchService({
     required this.caseRepository,
+    this.samplePacket = true,
     this.delay = const Duration(milliseconds: 250),
   });
   final CaseRepository caseRepository;
   final Duration delay;
+  final bool samplePacket;
 
   static const referenceSources = [
     ResearchSource(
@@ -57,9 +59,12 @@ class MockResearchService implements ResearchService {
           id: exhibit.id,
           title: exhibit.title,
           kind: ResearchSourceKind.caseMaterial,
-          citation: '${exhibit.label} · Sample case packet',
+          citation:
+              '${exhibit.label} · ${samplePacket ? 'Sample case packet' : 'Case packet'}',
           content: exhibit.description,
-          context: 'Fictional demo exhibit description. No original document or image is attached.',
+          context: samplePacket
+              ? 'Fictional demo exhibit description. No original document or image is attached.'
+              : 'Exhibit description from your team’s case packet.',
           caseId: caseId,
           evidenceKind: EvidenceKind.exhibit,
         ),
@@ -70,7 +75,9 @@ class MockResearchService implements ResearchService {
           kind: ResearchSourceKind.caseMaterial,
           citation: 'Affidavit · ${affidavit.title}',
           content: affidavit.body,
-          context: 'Fictional demo witness statement, reproduced from the case packet.',
+          context: samplePacket
+              ? 'Fictional demo witness statement, reproduced from the case packet.'
+              : 'Witness statement from your team’s case packet.',
           caseId: caseId,
           evidenceKind: EvidenceKind.affidavit,
         ),
@@ -91,7 +98,8 @@ class MockResearchService implements ResearchService {
         RegExp(pattern, caseSensitive: false).hasMatch(text);
     ResearchAnswerPoint point(String text, List<String> sourceIds) =>
         ResearchAnswerPoint(text: text, sourceIds: sourceIds);
-    if (caseId != 'case_harmon' ||
+    if (!samplePacket ||
+        caseId != 'case_harmon' ||
         !ids.containsAll([
           'aff_okafor',
           'ex_4',

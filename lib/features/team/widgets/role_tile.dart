@@ -11,11 +11,15 @@ class RoleTile extends StatelessWidget {
     super.key,
     required this.role,
     required this.assignee,
+    required this.assigned,
     required this.onAssign,
+    this.canAssign = true,
   });
   final TrialRole role;
   final Teammate? assignee;
+  final bool assigned;
   final VoidCallback onAssign;
+  final bool canAssign;
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -43,9 +47,12 @@ class RoleTile extends StatelessWidget {
                   child: Text(role.title, style: titleStyle),
                 ),
                 const SizedBox(height: Spacing.md),
-                RoleMetadata(side: role.side, assigned: assignee != null),
+                RoleMetadata(side: role.side, assigned: assigned),
                 const SizedBox(height: Spacing.md),
-                Text(assignee?.name ?? 'No teammate assigned'),
+                Text(
+                  assignee?.name ??
+                      (assigned ? 'Former teammate' : 'No teammate assigned'),
+                ),
                 const SizedBox(height: Spacing.xs),
                 Text(
                   '${role.responsibilities.length} preparation responsibilities',
@@ -59,7 +66,11 @@ class RoleTile extends StatelessWidget {
                 key: ValueKey('assign_role_${role.id}'),
                 onPressed: onAssign,
                 child: Text(
-                  assignee == null ? 'Assign role' : 'View assignment',
+                  assigned
+                      ? 'View assignment'
+                      : canAssign
+                      ? 'Assign role'
+                      : 'View role',
                 ),
               ),
             ),

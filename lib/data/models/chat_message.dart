@@ -92,15 +92,18 @@ class ChatMessage {
         createdAt: createdAt,
         mentions: mentions ?? this.mentions,
       );
-  @override
-  bool operator ==(Object other) =>
-      other is ChatMessage &&
+  bool samePayloadAs(ChatMessage other) =>
       id == other.id &&
       caseId == other.caseId &&
       senderId == other.senderId &&
       text == other.text &&
-      createdAt == other.createdAt &&
       listEquals(mentions, other.mentions);
+
+  @override
+  bool operator ==(Object other) =>
+      other is ChatMessage &&
+      createdAt == other.createdAt &&
+      samePayloadAs(other);
   @override
   int get hashCode => Object.hash(
     id,

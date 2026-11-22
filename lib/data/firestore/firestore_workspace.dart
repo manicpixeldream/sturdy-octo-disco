@@ -44,7 +44,65 @@ Stream<List<T>> _records<T>(
       ],
     );
 
-Never _readOnly() => throw UnsupportedError('Shared workspace is read-only.');
+Future<List<T>> _fetchRecords<T>(
+  _Document parent,
+  String name,
+  T Function(Map<String, Object?>) decode,
+) async {
+  final snapshot = await parent.collection(name).get();
+  return [for (final document in snapshot.docs) decode(_data(document))];
+}
+
+String _activeCaseId(DocumentSnapshot<Map<String, dynamic>> snapshot) {
+  final id = _data(snapshot)['activeCaseId'];
+  if (id is! String || id.isEmpty || id.contains('/')) {
+    throw StateError('No active case has been configured.');
+  }
+  return id;
+}
+
+Stream<T> _watchActiveCase<T>(
+  _Document teamDocument,
+  Stream<T> Function(String) read,
+) => Stream.multi((output) {
+  StreamSubscription<T>? packet;
+  var generation = 0;
+  String? activeId;
+  void stopPacket() {
+    generation++;
+    activeId = null;
+    unawaited(packet?.cancel());
+    packet = null;
+  }
+
+  final team = teamDocument
+      .snapshots()
+      .map(_activeCaseId)
+      .listen(
+        (id) {
+          if (activeId == id) return;
+          stopPacket();
+          activeId = id;
+          final current = generation;
+          packet = read(id).listen(
+            (value) {
+              if (current == generation) output.add(value);
+            },
+            onError: (Object error, StackTrace stack) {
+              if (current == generation) output.addError(error, stack);
+            },
+          );
+        },
+        onError: (Object error, StackTrace stack) {
+          stopPacket();
+          output.addError(error, stack);
+        },
+      );
+  output.onCancel = () async {
+    stopPacket();
+    await team.cancel();
+  };
+});
 
 class FirestoreWorkspace {
   FirestoreWorkspace(FirebaseFirestore database, String teamId)
@@ -56,22 +114,15 @@ class FirestoreWorkspace {
   late final tasks = FirestoreTaskRepository(_team);
   late final schedule = FirestoreScheduleRepository(_team);
   late final chat = FirestoreChatRepository(_team);
-  late final roles = FirestoreReadOnlyRoles();
+  late final roles = FirestoreRoleRepository(_team);
 }
 
-class FirestoreCaseRepository implements LiveCaseRepository, CaseBriefService {
+class FirestoreCaseRepository
+    implements LiveCaseRepository, LiveCaseBriefService {
   FirestoreCaseRepository(this._team);
   final _Document _team;
 
   _Document _case(String id) => _team.collection('cases').doc(id);
-
-  String _activeId(DocumentSnapshot<Map<String, dynamic>> snapshot) {
-    final id = _data(snapshot)['activeCaseId'];
-    if (id is! String || id.isEmpty || id.contains('/')) {
-      throw StateError('No active case has been configured.');
-    }
-    return id;
-  }
 
   Stream<CaseFile> _watchCaseFile(String id) =>
       _case(id)
@@ -99,45 +150,7 @@ class FirestoreCaseRepository implements LiveCaseRepository, CaseBriefService {
       );
 
   @override
-  Stream<CasePacket> watchCase() => Stream.multi((output) {
-    StreamSubscription<CasePacket>? packet;
-    var generation = 0;
-    String? activeId;
-    void stopPacket() {
-      generation++;
-      activeId = null;
-      unawaited(packet?.cancel());
-      packet = null;
-    }
-
-    final team = _team
-        .snapshots()
-        .map(_activeId)
-        .listen(
-          (id) {
-            if (activeId == id) return;
-            stopPacket();
-            activeId = id;
-            final current = generation;
-            packet = _watchPacket(id).listen(
-              (value) {
-                if (current == generation) output.add(value);
-              },
-              onError: (Object error, StackTrace stack) {
-                if (current == generation) output.addError(error, stack);
-              },
-            );
-          },
-          onError: (Object error, StackTrace stack) {
-            stopPacket();
-            output.addError(error, stack);
-          },
-        );
-    output.onCancel = () async {
-      stopPacket();
-      await team.cancel();
-    };
-  });
+  Stream<CasePacket> watchCase() => _watchActiveCase(_team, _watchPacket);
 
   Stream<CasePacket> _watchPacket(String id) => Stream.multi((output) {
     CaseFile? file;
@@ -146,21 +159,27 @@ class FirestoreCaseRepository implements LiveCaseRepository, CaseBriefService {
     List<Affidavit>? affidavits;
     List<Stipulation>? stipulations;
     List<TimingRule>? rules;
-    StreamSubscription<T> watch<T>(Stream<T> stream, void Function(T) apply) =>
-        stream.listen((value) {
-          apply(value);
-          if ((file, exhibits, witnesses, affidavits, stipulations, rules)
-              case (
-                final f?,
-                final e?,
-                final w?,
-                final a?,
-                final s?,
-                final r?,
-              )) {
-            output.add((f, (e, w, a, s, r)));
-          }
-        }, onError: output.addError);
+    StreamSubscription<T> watch<T>(Stream<T> stream, void Function(T?) apply) =>
+        stream.listen(
+          (value) {
+            apply(value);
+            if ((file, exhibits, witnesses, affidavits, stipulations, rules)
+                case (
+                  final f?,
+                  final e?,
+                  final w?,
+                  final a?,
+                  final s?,
+                  final r?,
+                )) {
+              output.add((f, (e, w, a, s, r)));
+            }
+          },
+          onError: (Object error, StackTrace stack) {
+            apply(null);
+            output.addError(error, stack);
+          },
+        );
 
     final subscriptions = [
       watch(_watchCaseFile(id), (value) => file = value),
@@ -176,27 +195,41 @@ class FirestoreCaseRepository implements LiveCaseRepository, CaseBriefService {
   @override
   Future<CaseFile> fetchActiveCase() async {
     final snapshot = await _team.get();
-    return _watchCaseFile(_activeId(snapshot)).first;
+    return _watchCaseFile(_activeCaseId(snapshot)).first;
   }
 
   @override
-  Future<List<Exhibit>> fetchExhibits(String caseId) => _exhibits(caseId).first;
+  Future<List<Exhibit>> fetchExhibits(String caseId) async =>
+      (await _fetchRecords(_case(caseId), 'exhibits', Exhibit.fromMap))
+        ..sort((a, b) => a.number.compareTo(b.number));
   @override
   Future<List<Witness>> fetchWitnesses(String caseId) =>
       _witnesses(caseId).first;
   @override
   Future<List<Affidavit>> fetchAffidavits(String caseId) =>
-      _affidavits(caseId).first;
+      _fetchRecords(_case(caseId), 'affidavits', Affidavit.fromMap);
   @override
   Future<List<Stipulation>> fetchStipulations(String caseId) =>
       _stipulations(caseId).first;
   @override
   Future<List<TimingRule>> fetchTimingRules(String caseId) =>
       _timingRules(caseId).first;
+  _Document _brief(String caseId) =>
+      _case(caseId).collection('brief').doc('current');
+
   @override
-  Future<CaseBrief> fetchBrief(String caseId) async => CaseBrief.fromMap(
-    _data(await _case(caseId).collection('brief').doc('current').get()),
-  );
+  Stream<CaseBrief?> watchBrief(String caseId) => _brief(caseId)
+      .snapshots(includeMetadataChanges: true)
+      .where((snapshot) => snapshot.exists || !snapshot.metadata.isFromCache)
+      .map(
+        (snapshot) =>
+            snapshot.exists ? CaseBrief.fromMap(_data(snapshot)) : null,
+      )
+      .distinct();
+
+  @override
+  Future<CaseBrief> fetchBrief(String caseId) async =>
+      CaseBrief.fromMap(_data(await _brief(caseId).get()));
 }
 
 class FirestoreTeamRepository implements LiveTeamRepository {
@@ -209,7 +242,8 @@ class FirestoreTeamRepository implements LiveTeamRepository {
   Future<List<Teammate>> fetchTeammates() => watchTeammates().first;
 }
 
-class FirestoreTaskRepository implements LiveTaskRepository {
+class FirestoreTaskRepository
+    implements LiveTaskRepository, FollowUpTaskRepository {
   FirestoreTaskRepository(this._team);
   final _Document _team;
 
@@ -237,6 +271,24 @@ class FirestoreTaskRepository implements LiveTaskRepository {
       return latest.copyWith(isDone: completed);
     });
   }
+
+  @override
+  Future<void> createFollowUp(String sessionId, TaskItem task) {
+    final document = _team.collection('tasks').doc(task.id);
+    final payload = task.toMap()..['sessionId'] = sessionId;
+    return _team.firestore.runTransaction((transaction) async {
+      final previous = await transaction.get(document);
+      if (!previous.exists) {
+        transaction.set(document, payload);
+        return;
+      }
+      final data = _data(previous);
+      if (data['sessionId'] != sessionId ||
+          TaskItem.fromMap(data).copyWith(isDone: false) != task) {
+        throw StateError('Conflicting follow-up task.');
+      }
+    });
+  }
 }
 
 class FirestoreScheduleRepository implements LiveScheduleRepository {
@@ -252,34 +304,165 @@ class FirestoreScheduleRepository implements LiveScheduleRepository {
 class FirestoreChatRepository implements LiveChatRepository {
   FirestoreChatRepository(this._team);
   final _Document _team;
+
+  ChatMessage _decode(DocumentSnapshot<Map<String, dynamic>> document) {
+    final data = _data(document);
+    if (data['createdAt'] case final Timestamp time) {
+      data['createdAt'] = time.toDate().toUtc().toIso8601String();
+    }
+    return ChatMessage.fromMap(data);
+  }
+
+  ChatMessage? _decodeHistory(DocumentSnapshot<Map<String, dynamic>> document) {
+    if (document.metadata.hasPendingWrites) return null;
+    try {
+      return _decode(document);
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    } on ArgumentError {
+      return null;
+    }
+  }
+
   @override
   Stream<List<ChatMessage>> watchMessages(String caseId) => _team
       .collection('chat')
       .where('caseId', isEqualTo: caseId)
-      .snapshots()
+      .snapshots(includeMetadataChanges: true)
       .map(
         (snapshot) =>
-            [
-              for (final document in snapshot.docs)
-                ChatMessage.fromMap(_data(document)),
-            ]..sort((a, b) {
-              final order = a.createdAt.compareTo(b.createdAt);
-              return order == 0 ? a.id.compareTo(b.id) : order;
-            }),
+            [for (final document in snapshot.docs) ?_decodeHistory(document)]
+              ..sort((a, b) {
+                final order = a.createdAt.compareTo(b.createdAt);
+                return order == 0 ? a.id.compareTo(b.id) : order;
+              }),
       );
+
   @override
   Future<List<ChatMessage>> fetchMessages(String caseId) =>
       watchMessages(caseId).first;
+
   @override
-  Future<ChatMessage> sendMessage(ChatMessage message) async => _readOnly();
+  Future<ChatMessage> sendMessage(ChatMessage message) {
+    final document = _team.collection('chat').doc(message.id);
+    return _team.firestore.runTransaction((transaction) async {
+      final previous = await transaction.get(document);
+      if (previous.exists) {
+        final saved = _decode(previous);
+        if (!saved.samePayloadAs(message)) {
+          throw StateError('Conflicting message ID.');
+        }
+        return saved;
+      }
+      transaction.set(
+        document,
+        message.toMap()
+          ..remove('id')
+          ..['createdAt'] = FieldValue.serverTimestamp(),
+      );
+      return message;
+    });
+  }
 }
 
-class FirestoreReadOnlyRoles implements RoleRepository {
+class FirestoreRoleRepository implements LiveRoleRepository {
+  FirestoreRoleRepository(this._team);
+  final _Document _team;
+
+  _Document _case(String caseId) => _team.collection('cases').doc(caseId);
+
   @override
-  Future<List<TrialRole>> fetchRoles() async => const [];
+  Stream<RoleRoster> watchRoleRoster() => _watchActiveCase(
+    _team,
+    (caseId) =>
+        _case(caseId)
+            .collection('roles')
+            .snapshots(includeMetadataChanges: true)
+            .where((snapshot) => !snapshot.metadata.hasPendingWrites)
+            .map((snapshot) {
+              final roles = <TrialRole>[];
+              final assignments = <RoleAssignment>[];
+              for (final document in snapshot.docs) {
+                final data = _data(document);
+                final role = TrialRole.fromMap(data);
+                roles.add(role);
+                if (data['assigneeId'] case final String assigneeId) {
+                  assignments.add(
+                    RoleAssignment(
+                      roleId: role.id,
+                      teammateId: assigneeId,
+                      tasks: const [],
+                    ),
+                  );
+                }
+              }
+              return (caseId, roles, assignments);
+            }),
+  );
+
   @override
-  Future<List<RoleAssignment>> fetchAssignments() async => const [];
+  Future<List<TrialRole>> fetchRoles() async =>
+      (await watchRoleRoster().first).$2;
+
+  @override
+  Future<List<RoleAssignment>> fetchAssignments() async =>
+      (await watchRoleRoster().first).$3;
+
   @override
   Future<RoleAssignment> assign(String roleId, String teammateId) async =>
-      _readOnly();
+      assignForCase(_activeCaseId(await _team.get()), roleId, teammateId);
+
+  @override
+  Future<RoleAssignment> assignForCase(
+    String caseId,
+    String roleId,
+    String teammateId,
+  ) {
+    final caseFile = _case(caseId);
+    final roleDocument = caseFile.collection('roles').doc(roleId);
+    return _team.firestore.runTransaction((transaction) async {
+      if (_activeCaseId(await transaction.get(_team)) != caseId) {
+        throw StateError('The active case changed.');
+      }
+      final packet = _data(await transaction.get(caseFile));
+      final data = _data(await transaction.get(roleDocument));
+      final role = TrialRole.fromMap(data);
+      final dueDate = packet['trialDate']! as String;
+      final assignee = data['assigneeId'];
+      if (assignee != null && assignee != teammateId) {
+        throw StateError('Role already assigned.');
+      }
+      if (role.responsibilities.isEmpty || role.responsibilities.length > 3) {
+        throw StateError('Shared roles require one to three responsibilities.');
+      }
+      final tasks = [
+        for (final (index, item) in role.responsibilities.indexed)
+          TaskItem(
+            id: 'role.$caseId.$roleId.$index',
+            title: '${role.title}: $item',
+            assigneeId: teammateId,
+            dueDate: DateTime.parse(dueDate),
+          ),
+      ];
+      if (assignee == null) {
+        transaction.update(roleDocument, {'assigneeId': teammateId});
+        for (final (index, task) in tasks.indexed) {
+          transaction.set(_team.collection('tasks').doc(task.id), {
+            ...task.toMap(),
+            'dueDate': dueDate,
+            'caseId': caseId,
+            'roleId': roleId,
+            'responsibilityIndex': index,
+          });
+        }
+      }
+      return RoleAssignment(
+        roleId: roleId,
+        teammateId: teammateId,
+        tasks: tasks,
+      );
+    });
+  }
 }

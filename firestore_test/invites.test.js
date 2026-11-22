@@ -12,6 +12,8 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  runTransaction,
+  serverTimestamp,
   Timestamp,
   updateDoc,
 } from 'firebase/firestore';
@@ -138,4 +140,198 @@ test('only an assignee can change completion and teammates see the update', asyn
     assert.equal(task.data().isDone, isDone);
     assert.equal(task.data().title, 'Review');
   }
+});
+
+test('chat authors can append to their own active channel without impersonating another member', async () => {
+  const activeCase = 'case_harmon';
+  const senderId = 'chat-sender';
+  const team = 'chat-team';
+  const otherTeam = 'other-chat-team';
+  const chat = (db, id, teamId = team) => doc(db, 'teams', teamId, 'chat', id);
+  const verified = (uid) => env.authenticatedContext(uid, { email_verified: true }).firestore();
+  await env.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    for (const id of [team, otherTeam]) {
+      await setDoc(doc(db, 'teams', id), { activeCaseId: activeCase });
+    }
+    for (const uid of [senderId, 'chat-reader', 'unlisted-member']) {
+      await setDoc(doc(db, 'memberships', uid), { teamId: team });
+    }
+    await setDoc(doc(db, 'teams', team, 'members', senderId), { name: 'Sender' });
+    await setDoc(doc(db, 'teams', team, 'tasks', 'review'), { title: 'Review' });
+    await setDoc(doc(db, 'teams', team, 'cases', activeCase, 'exhibits', 'ex_1'), { title: 'Exhibit' });
+  });
+
+  const sender = verified(senderId);
+  const reader = verified('chat-reader');
+  const unlisted = verified('unlisted-member');
+  const outsider = verified('chat-outsider');
+  const data = { caseId: activeCase, senderId, text: 'Ready to practice', createdAt: serverTimestamp(), mentions: [] };
+  const task = { kind: 'task', itemId: 'review', label: 'Review' };
+  const exhibit = { kind: 'exhibit', itemId: 'ex_1', label: 'Exhibit' };
+
+  await assertFails(setDoc(chat(outsider, 'outsider'), {...data, senderId: 'chat-outsider'}));
+  await assertFails(setDoc(chat(unlisted, 'unlisted'), {...data, senderId: 'unlisted-member'}));
+  await assertFails(setDoc(chat(sender, 'wrong-team', otherTeam), data));
+  await assertFails(setDoc(chat(sender, 'spoofed'), {...data, senderId: 'chat-reader'}));
+  await assertFails(setDoc(chat(sender, 'inactive'), {...data, caseId: 'case_old'}));
+  await assertFails(setDoc(chat(sender, 'client-clock'), {...data, createdAt: Timestamp.now()}));
+  await assertFails(setDoc(chat(sender, 'empty'), {...data, text: '  ' }));
+  await assertFails(setDoc(chat(sender, 'long'), {...data, text: 'x'.repeat(2001)}));
+  await assertFails(setDoc(chat(sender, 'malformed'), {...data, mentions: [42]}));
+  await assertFails(setDoc(chat(sender, 'missing-task'), {...data, mentions: [{...task, itemId: 'missing'}]}));
+  await assertFails(setDoc(chat(sender, 'duplicates'), {...data, mentions: [task, {...task, label: 'Other label'}]}));
+  await assertFails(setDoc(chat(sender, 'private-draft'), {...data, mentions: [{kind: 'draft', itemId: 'opening', label: 'Draft'}]}));
+
+  await assertSucceeds(setDoc(chat(sender, 'text-only'), {...data, text: 'Ready\nto practice'}));
+  const payload = {...data, text: '', mentions: [task, exhibit]};
+  const reference = chat(sender, 'stable-message-id');
+  const send = () => runTransaction(sender, async (transaction) => {
+    const saved = await transaction.get(reference);
+    if (!saved.exists()) transaction.set(reference, payload);
+  });
+  await assertSucceeds(send());
+  await assertSucceeds(send());
+  const history = await assertSucceeds(getDocs(collection(reader, 'teams', team, 'chat')));
+  assert.equal(history.size, 2);
+  const saved = history.docs.find((message) => message.id === reference.id).data();
+  assert.equal(saved.senderId, senderId);
+  assert.equal(saved.mentions.length, 2);
+  await assertFails(getDoc(chat(outsider, 'stable-message-id')));
+  await assertFails(updateDoc(reference, {text: 'Changed'}));
+  await assertFails(deleteDoc(reference));
+});
+
+test('removing a team closes access to its remaining subcollections', async () => {
+  const orphaned = 'deleted-team';
+  const uid = 'previous-member';
+  const task = (db) => doc(db, 'teams', orphaned, 'tasks', 'old-task');
+  await env.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, 'memberships', uid), { teamId: orphaned });
+    await setDoc(task(db), { assigneeId: uid, isDone: false });
+  });
+  const member = env.authenticatedContext(uid, { email_verified: true }).firestore();
+  await assertFails(getDoc(task(member)));
+  await assertFails(updateDoc(task(member), { isDone: true }));
+});
+
+test('captains and coaches assign a role and its exact responsibilities in one write', async () => {
+  const team = 'role-team';
+  const caseId = 'case_harmon';
+  const previousCase = 'old_case';
+  const trialDate = '2026-12-14T00:00:00.000';
+  const roleId = 'opening';
+  const rolePath = (db, id = caseId, role = roleId) =>
+    doc(db, 'teams', team, 'cases', id, 'roles', role);
+  const taskPath = (db, index, id = caseId, role = roleId) =>
+    doc(db, 'teams', team, 'tasks', `role.${id}.${role}.${index}`);
+  const captain = 'captain';
+  const coach = 'coach';
+  const member = 'role-member';
+  const recipient = 'role-recipient';
+  const responsibilities = ['Draft', 'Rehearse', 'Check time'];
+  const signedIn = (uid) => env.authenticatedContext(uid, {email_verified: true}).firestore();
+  await env.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, 'teams', team), {activeCaseId: caseId});
+    for (const id of [caseId, previousCase]) {
+      await setDoc(doc(db, 'teams', team, 'cases', id), {trialDate});
+      for (const role of [roleId, 'alternate']) {
+        await setDoc(rolePath(db, id, role), {title: 'Attorney', responsibilities});
+      }
+    }
+    for (const [uid, teamRole] of [[captain, 'captain'], [coach, 'coach'], [member, 'member'], [recipient, 'member']]) {
+      await setDoc(doc(db, 'memberships', uid), {teamId: team});
+      await setDoc(doc(db, 'teams', team, 'members', uid), {teamRole});
+    }
+  });
+  const taskData = (index, assigneeId, id = caseId, role = roleId) => ({
+    id: `role.${id}.${role}.${index}`,
+    title: `Attorney: ${responsibilities[index]}`,
+    assigneeId,
+    dueDate: trialDate,
+    isDone: false,
+    caseId: id,
+    roleId: role,
+    responsibilityIndex: index,
+  });
+  const assign = (db, {
+    assigneeId = recipient, id = caseId, role = roleId,
+    slots = [0, 1, 2], override = {},
+  } = {}) => runTransaction(db, async (transaction) => {
+    const roleDoc = rolePath(db, id, role);
+    await transaction.get(roleDoc);
+    transaction.update(roleDoc, {assigneeId});
+    for (const index of slots) {
+      transaction.set(taskPath(db, index, id, role), {
+        ...taskData(index, assigneeId, id, role),
+        ...override,
+      });
+    }
+  });
+  const captainDb = signedIn(captain);
+  const memberDb = signedIn(member);
+
+  await assertSucceeds(getDoc(rolePath(memberDb)));
+  await assertFails(updateDoc(doc(memberDb, 'teams', team, 'members', member), {teamRole: 'captain'}));
+  await assertFails(assign(memberDb));
+  await assertFails(assign(captainDb, {id: previousCase}));
+  await assertFails(assign(captainDb, {assigneeId: 'not-on-roster'}));
+  await assertFails(updateDoc(rolePath(captainDb), {assigneeId: recipient}));
+  await assertFails(assign(captainDb, {slots: [0, 1]}));
+  await assertFails(assign(captainDb, {override: {title: 'Untrusted'}}));
+  await assertFails(assign(captainDb, {override: {dueDate: '2026-11-21T00:00:00.000'}}));
+  await assertFails(setDoc(taskPath(captainDb, 0), taskData(0, recipient)));
+
+  const outcomes = await Promise.allSettled([
+    assign(captainDb),
+    assign(signedIn(coach), {assigneeId: member}),
+  ]);
+  assert.equal(outcomes.filter((result) => result.status === 'fulfilled').length, 1);
+  const assigned = (await assertSucceeds(getDoc(rolePath(memberDb)))).data().assigneeId;
+  for (const index of [0, 1, 2]) {
+    const task = await assertSucceeds(getDoc(taskPath(memberDb, index)));
+    assert.deepEqual(task.data(), taskData(index, assigned));
+  }
+  await assertFails(assign(captainDb, {assigneeId: 'not-on-roster'}));
+  await assertFails(deleteDoc(rolePath(captainDb)));
+  await assertSucceeds(assign(signedIn(coach), {role: 'alternate'}));
+});
+
+test('practice follow-ups must link to a session shared by both rostered teammates', async () => {
+  const team = 'practice-team';
+  const sessionId = 'practice_1';
+  const author = 'practice-author';
+  const participant = 'practice-participant';
+  const nonparticipant = 'practice-nonparticipant';
+  const signedIn = (uid) => env.authenticatedContext(uid, {email_verified: true}).firestore();
+  await env.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, 'teams', team), {activeCaseId: 'case_harmon'});
+    await setDoc(doc(db, 'teams', team, 'sessions', sessionId), {participantIds: [author, participant, 'not-rostered']});
+    for (const uid of [author, participant, nonparticipant]) {
+      await setDoc(doc(db, 'memberships', uid), {teamId: team});
+      await setDoc(doc(db, 'teams', team, 'members', uid), {name: uid});
+    }
+  });
+  const id = 'follow_up_' + 'a'.repeat(32);
+  const task = (db) => doc(db, 'teams', team, 'tasks', id);
+  const data = {
+    id, sessionId, assigneeId: participant, title: 'Review exhibit',
+    dueDate: '2026-11-22T00:00:00.000', isDone: false,
+    workRoute: '/me/schedule/' + sessionId,
+  };
+  const authorDb = signedIn(author);
+  const participantDb = signedIn(participant);
+  await assertFails(setDoc(task(signedIn(nonparticipant)), data));
+  await assertFails(setDoc(task(authorDb), {...data, assigneeId: nonparticipant}));
+  await assertFails(setDoc(task(authorDb), {...data, assigneeId: 'not-rostered'}));
+  await assertFails(setDoc(task(authorDb), {...data, workRoute: '/team'}));
+  await assertFails(setDoc(task(authorDb), {...data, title: ' '}));
+  await assertFails(setDoc(task(authorDb), {...data, isDone: true}));
+  await assertSucceeds(setDoc(task(authorDb), data));
+  assert.equal((await assertSucceeds(getDoc(task(participantDb)))).data().title, data.title);
+  await assertSucceeds(updateDoc(task(participantDb), {isDone: true}));
+  await assertFails(updateDoc(task(authorDb), {isDone: false}));
 });

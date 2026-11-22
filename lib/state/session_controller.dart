@@ -9,6 +9,7 @@ class SessionController extends ChangeNotifier with WidgetsBindingObserver {
     required this.currentTeammateId,
     required this.clock,
     this.sharedWorkspace = false,
+    this.persistsLocalWork = true,
   }) {
     _lastMinute = _minute(clock.now());
     WidgetsBinding.instance.addObserver(this);
@@ -20,6 +21,7 @@ class SessionController extends ChangeNotifier with WidgetsBindingObserver {
   final String currentTeammateId;
   final Clock clock;
   final bool sharedWorkspace;
+  final bool persistsLocalWork;
   Timer? _timer;
   late DateTime _lastMinute;
 

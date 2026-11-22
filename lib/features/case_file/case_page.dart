@@ -160,6 +160,7 @@ class _CasePageState extends State<CasePage> {
                     ),
                     CaseSection.brief => CaseBriefSection(
                       brief: controller.brief,
+                      shared: controller.isLive,
                       factKeys: _factKeys,
                       isLoading: controller.isBriefLoading,
                       failed: controller.briefFailed,

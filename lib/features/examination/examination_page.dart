@@ -16,6 +16,7 @@ import '../../data/models/exam_question.dart';
 import '../../data/models/exam_script.dart';
 import '../../data/models/timing_rule.dart';
 import '../../state/case_controller.dart';
+import '../../state/session_controller.dart';
 import '../../state/exam_controller.dart';
 import '../../state/research_controller.dart';
 import '../../state/team_controller.dart';
@@ -54,6 +55,7 @@ class _ExaminationPageState extends State<ExaminationPage> {
     ExamQuestion? question,
   ]) {
     final witness = widget.witnessId, phase = widget.phase;
+    final caseId = cases.activeCase?.id;
     final questionId = question?.id ?? exams.newQuestionId();
     showModalBottomSheet<void>(
       context: context,
@@ -66,7 +68,9 @@ class _ExaminationPageState extends State<ExaminationPage> {
         exhibits: cases.exhibits,
         sourceLabel: (id) =>
             context.read<ResearchController>().sourceById(id)?.title ?? id,
-        onSave: (q) => exams.upsertQuestion(witness, phase, q),
+        onSave: (q) async =>
+            cases.activeCase?.id == caseId &&
+            await exams.upsertQuestion(witness, phase, q),
       ),
     );
   }
@@ -74,6 +78,7 @@ class _ExaminationPageState extends State<ExaminationPage> {
   @override
   Widget build(BuildContext context) {
     final cases = context.watch<CaseController>();
+    final session = context.watch<SessionController>();
     final exams = context.watch<ExamController>();
     final research = context.watch<ResearchController>();
     final team = context.watch<TeamController>();
@@ -248,11 +253,13 @@ class _ExaminationPageState extends State<ExaminationPage> {
                             enableDrag: false,
                             builder: (_) => GoalEditorSheet(
                               initial: script.goal,
-                              onSave: (goal) => exams.save(
-                                exams
-                                    .scriptFor(witness.id, widget.phase)
-                                    .copyWith(goal: goal),
-                              ),
+                              onSave: (goal) async =>
+                                  cases.activeCase?.id == script.caseId &&
+                                  await exams.save(
+                                    exams
+                                        .scriptFor(witness.id, script.phase)
+                                        .copyWith(goal: goal),
+                                  ),
                             ),
                           ),
                     child: const Text('Edit goal'),
@@ -355,12 +362,14 @@ class _ExaminationPageState extends State<ExaminationPage> {
                           extra: ResearchContext(
                             label: 'question ${index + 1}',
                             excerpt: question.text,
-                            attachSource: (id) => exams.attachSource(
-                              witness.id,
-                              phase,
-                              question.id,
-                              id,
-                            ),
+                            attachSource: (id) async =>
+                                cases.activeCase?.id == script.caseId &&
+                                await exams.attachSource(
+                                  witness.id,
+                                  phase,
+                                  question.id,
+                                  id,
+                                ),
                           ),
                         );
                       },
@@ -412,7 +421,9 @@ class _ExaminationPageState extends State<ExaminationPage> {
                                   ],
                                 ),
                               );
-                              if (confirmed == true && context.mounted) {
+                              if (confirmed == true &&
+                                  context.mounted &&
+                                  cases.activeCase?.id == script.caseId) {
                                 await exams.deleteQuestion(
                                   witness.id,
                                   widget.phase,
@@ -434,8 +445,10 @@ class _ExaminationPageState extends State<ExaminationPage> {
               ),
             ),
             const SizedBox(height: Spacing.xl),
-            const Text(
-              'Drafts are saved in this browser. Exhibit links track preparation references, not admitted evidence.',
+            Text(
+              session.persistsLocalWork
+                  ? 'Drafts are saved in this browser. Exhibit links track preparation references, not admitted evidence.'
+                  : 'Drafts stay in this session. Exhibit links track preparation references.',
             ),
           ],
         ],

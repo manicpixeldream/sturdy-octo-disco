@@ -61,10 +61,8 @@ class ChatController extends LoadController {
   bool get isSending => _sending;
   bool get sendFailed => _sendFailed;
   ChatMessage? _failedDraft;
-  int _version = 0, _sequence = 0;
-  final _messageNamespace = Random.secure()
-      .nextInt(0x1000000)
-      .toRadixString(16);
+  int _version = 0;
+  final _random = Random.secure();
   void _caseChanged() {
     final id = cases.activeCase?.id;
     if (!isDisposed && id != null && id != _caseId) unawaited(load());
@@ -114,7 +112,7 @@ class ChatController extends LoadController {
               draftMentions.map((mention) => mention.id).toList(),
               pending.mentions.map((mention) => mention.id).toList(),
             );
-        if (ids.contains(pending.id)) {
+        if (messages.any(pending.samePayloadAs)) {
           _failedDraft = null;
           _sendFailed = false;
           saveDraft(
@@ -122,7 +120,7 @@ class ChatController extends LoadController {
             matchesDraft ? const [] : draftMentions,
           );
         } else {
-          _sendFailed = matchesDraft;
+          _sendFailed = !_sending && matchesDraft;
         }
       }
       _loaded = true;
@@ -143,19 +141,21 @@ class ChatController extends LoadController {
         itemId: task.id,
         label: task.title,
       ),
-    for (final phase in const [TrialPhase.opening, TrialPhase.closing])
-      ChatMention(
-        kind: ChatMentionKind.draft,
-        itemId: Routes.argument(phase.name),
-        label: phase.label,
-      ),
-    for (final witness in cases.witnesses)
-      for (final phase in const [TrialPhase.direct, TrialPhase.cross])
+    if (_repository is! LiveChatRepository) ...[
+      for (final phase in const [TrialPhase.opening, TrialPhase.closing])
         ChatMention(
           kind: ChatMentionKind.draft,
-          itemId: Routes.exam(witness.id, phase: phase.name),
-          label: '${witness.name} · ${phase.label}',
+          itemId: Routes.argument(phase.name),
+          label: phase.label,
         ),
+      for (final witness in cases.witnesses)
+        for (final phase in const [TrialPhase.direct, TrialPhase.cross])
+          ChatMention(
+            kind: ChatMentionKind.draft,
+            itemId: Routes.exam(witness.id, phase: phase.name),
+            label: '${witness.name} · ${phase.label}',
+          ),
+    ],
     for (final exhibit in cases.exhibits)
       ChatMention(
         kind: ChatMentionKind.exhibit,
@@ -168,7 +168,6 @@ class ChatController extends LoadController {
   Future<bool> send(String text, List<ChatMention> mentions) async {
     final body = text.trim();
     if (isDisposed ||
-        _repository is LiveChatRepository ||
         !_loaded ||
         isLoading ||
         _sending ||
@@ -207,7 +206,7 @@ class ChatController extends LoadController {
       String id;
       do {
         id =
-            'chat_${(++_sequence).toString().padLeft(8, '0')}_$_messageNamespace';
+            'chat_${List.generate(16, (_) => _random.nextInt(256).toRadixString(16).padLeft(2, '0')).join()}';
       } while (_messages.any((m) => m.id == id));
       draft = ChatMessage(
         id: id,
@@ -229,22 +228,21 @@ class ChatController extends LoadController {
           .sendMessage(draft)
           .timeout(requestTimeout);
       if (isDisposed || version != _version) return false;
-      if (saved.id != draft.id ||
-          saved.caseId != draft.caseId ||
-          saved.senderId != draft.senderId ||
-          saved.text != draft.text ||
-          !listEquals(saved.mentions, draft.mentions)) {
+      if (!saved.samePayloadAs(draft)) {
         throw StateError('Invalid sent message');
       }
-      _messages = List.unmodifiable([
-        ..._messages.where((m) => m.id != saved.id),
-        saved,
-      ]);
+      if (_repository is! LiveChatRepository) {
+        _messages = List.unmodifiable([
+          ..._messages.where((m) => m.id != saved.id),
+          saved,
+        ]);
+      }
       _failedDraft = null;
       saveDraft('', const []);
       return true;
     } catch (_) {
       if (!isDisposed && version == _version) {
+        if (_messages.any(draft.samePayloadAs)) return true;
         _sendFailed = true;
         _failedDraft = draft;
       }

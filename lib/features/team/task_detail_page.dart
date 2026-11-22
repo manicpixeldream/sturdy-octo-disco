@@ -21,8 +21,10 @@ class TaskDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final tasks = context.watch<TaskController>();
     final team = context.watch<TeamController>();
-    final roles = context.watch<RoleController>();
     final session = context.watch<SessionController>();
+    final roles = session.sharedWorkspace
+        ? null
+        : context.watch<RoleController>();
     final task = tasks.tasks.where((t) => t.id == taskId).firstOrNull;
     return WorkspacePage(
       title: 'Task',
@@ -36,16 +38,18 @@ class TaskDetailPage extends StatelessWidget {
       child: WorkspaceScrollView(
         maxWidth: LayoutTokens.reading,
         children: [
-          if (tasks.loadFailed || team.loadFailed || roles.loadFailed)
+          if (tasks.loadFailed || team.loadFailed || roles?.loadFailed == true)
             LoadFailure(
               title: 'Task unavailable',
               onRetry: () {
                 tasks.load();
                 team.load();
-                roles.load();
+                roles?.load();
               },
             )
-          else if (!tasks.isLoaded || !team.isLoaded || !roles.isLoaded)
+          else if (!tasks.isLoaded ||
+              !team.isLoaded ||
+              roles?.isLoaded == false)
             const Center(child: CircularProgressIndicator())
           else if (task == null)
             const Text(

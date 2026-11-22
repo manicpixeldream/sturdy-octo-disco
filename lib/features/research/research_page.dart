@@ -255,7 +255,7 @@ class _ResearchPageState extends State<ResearchPage> {
                                                 (m) => m.id == widget.messageId,
                                               ))
                                             const Text(
-                                              'This answer is unavailable in this browser. Ask a new question below.',
+                                              'This answer is unavailable in this workspace. Ask a new question below.',
                                             ),
                                           if (controller.messages.isEmpty) ...[
                                             Text(

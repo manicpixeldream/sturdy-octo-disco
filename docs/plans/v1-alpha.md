@@ -1,6 +1,6 @@
 # v1 alpha — completion record
 
-**Status:** v0.1–v1.0 implementation and verification **Complete**.
+**Status:** v0.1–v1.0 implementation and verification are complete. The v1.0 release tag is pending.
 
 This file is the detailed record for the web alpha. Root [`plan.md`](../../plan.md) stays the short roadmap. Do not treat completed v0.x sections below as open todos.
 
@@ -19,7 +19,7 @@ Ship a working **web-only alpha** of Gavel: mock trial prep with mock AI behind 
 
 - Flutter **3.50.0** / Dart **3.14.0** (pinned in CI and `pubspec.lock`).
 - Run and smoke-test in Edge or Chrome on Windows.
-- Agents verify with `flutter analyze` and `flutter test` only (no browser automation). Developers run Playwright / manual smoke.
+- Agents run Flutter analysis, tests, and builds. CI runs the automated Playwright workflow. Developers handle manual browser smoke.
 
 ## Alpha target: web only
 

@@ -51,7 +51,7 @@ void main() {
       expect(controller.saveFailed(task.id), isTrue);
       expect(controller.tasks, [task]);
 
-      final retry = controller.setCompleted(task.id, true);
+      final retry = controller.retryCompletion(task.id);
       expect(controller.saveFailed(task.id), isFalse);
       final updated = task.copyWith(isDone: true, title: 'Updated by admin');
       repository.snapshots.add([updated]);
@@ -62,6 +62,15 @@ void main() {
       repository.saves.last.complete(task.copyWith(isDone: true));
       expect(await retry, isTrue);
       expect(controller.tasks, [updated]);
+
+      final reopen = controller.setCompleted(task.id, false);
+      repository.saves.last.completeError(StateError('Connection lost'));
+      expect(await reopen, isFalse);
+      expect(controller.saveFailed(task.id), isTrue);
+      repository.snapshots.add([updated.copyWith(isDone: false)]);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.saveFailed(task.id), isFalse);
+      expect(await controller.retryCompletion(task.id), isFalse);
     },
   );
 }

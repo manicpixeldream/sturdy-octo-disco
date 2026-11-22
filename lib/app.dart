@@ -48,6 +48,7 @@ class GavelApp extends StatefulWidget {
     this.onSignOut,
     this.accountEmail,
     this.sharedMemberId,
+    this.persistsLocalWork = true,
     this.storage,
     this.clock,
     this.seed,
@@ -68,6 +69,7 @@ class GavelApp extends StatefulWidget {
   final Future<void> Function()? onSignOut;
   final String? accountEmail;
   final String? sharedMemberId;
+  final bool persistsLocalWork;
   final WorkspaceStorage? storage;
   final Clock? clock;
   final SeedData? seed;
@@ -92,6 +94,7 @@ class _GavelAppState extends State<GavelApp> {
     onboarding: widget.onboarding,
     onSignOut: widget.onSignOut,
     accountEmail: widget.accountEmail,
+    persistsLocalWork: widget.persistsLocalWork,
   );
   late final ThemeController _theme = ThemeController();
   late final SessionController _session;
@@ -121,6 +124,7 @@ class _GavelAppState extends State<GavelApp> {
     _session = SessionController(
       currentTeammateId: widget.sharedMemberId ?? seed.currentTeammateId,
       sharedWorkspace: widget.sharedMemberId != null,
+      persistsLocalWork: widget.persistsLocalWork,
       clock: clock,
     );
     final caseRepository =
@@ -142,7 +146,10 @@ class _GavelAppState extends State<GavelApp> {
     )..load();
     _research = ResearchController(
       widget.researchService ??
-          MockResearchService(caseRepository: caseRepository),
+          MockResearchService(
+            caseRepository: caseRepository,
+            samplePacket: !_session.sharedWorkspace,
+          ),
       _case,
       storage: storage,
     );

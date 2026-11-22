@@ -11,11 +11,14 @@ class PracticeFollowUpDialog extends StatefulWidget {
     required this.currentTeammateId,
     required this.today,
     required this.initialDueDate,
+    required this.onSave,
   });
 
   final List<Teammate> teammates;
   final String currentTeammateId;
   final DateTime today, initialDueDate;
+  final Future<bool> Function(String title, String assigneeId, DateTime dueDate)
+  onSave;
 
   @override
   State<PracticeFollowUpDialog> createState() => _PracticeFollowUpDialogState();
@@ -23,6 +26,8 @@ class PracticeFollowUpDialog extends StatefulWidget {
 
 class _PracticeFollowUpDialogState extends State<PracticeFollowUpDialog> {
   final _title = TextEditingController();
+  bool _saving = false;
+  bool _failed = false;
   late DateTime _dueDate = widget.initialDueDate;
   late String _assigneeId = widget.teammates
       .firstWhere(
@@ -30,6 +35,24 @@ class _PracticeFollowUpDialogState extends State<PracticeFollowUpDialog> {
         orElse: () => widget.teammates.first,
       )
       .id;
+
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() {
+      _saving = true;
+      _failed = false;
+    });
+    final saved = await widget.onSave(_title.text, _assigneeId, _dueDate);
+    if (!mounted) return;
+    if (saved) {
+      Navigator.pop(context, true);
+      return;
+    }
+    setState(() {
+      _saving = false;
+      _failed = true;
+    });
+  }
 
   @override
   void dispose() {
@@ -48,6 +71,7 @@ class _PracticeFollowUpDialogState extends State<PracticeFollowUpDialog> {
             key: const ValueKey('practice_follow_up_title'),
             controller: _title,
             autofocus: true,
+            enabled: !_saving,
             maxLength: 160,
             onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(labelText: 'Task title'),
@@ -64,43 +88,43 @@ class _PracticeFollowUpDialogState extends State<PracticeFollowUpDialog> {
                   child: Text(teammate.name),
                 ),
             ],
-            onChanged: (id) => setState(() => _assigneeId = id!),
+            onChanged: _saving
+                ? null
+                : (id) => setState(() => _assigneeId = id!),
           ),
           const SizedBox(height: Spacing.md),
           OutlinedButton.icon(
             key: const ValueKey('practice_follow_up_due'),
             icon: const Icon(Icons.calendar_today_outlined),
             label: Text('Due ${DateFormat.yMMMd().format(_dueDate)}'),
-            onPressed: () async {
-              final selected = await showDatePicker(
-                context: context,
-                initialDate: _dueDate,
-                firstDate: widget.today,
-                lastDate: DateTime(widget.initialDueDate.year + 5),
-              );
-              if (mounted && selected != null) {
-                setState(() => _dueDate = selected);
-              }
-            },
+            onPressed: _saving
+                ? null
+                : () async {
+                    final selected = await showDatePicker(
+                      context: context,
+                      initialDate: _dueDate,
+                      firstDate: widget.today,
+                      lastDate: DateTime(widget.initialDueDate.year + 5),
+                    );
+                    if (mounted && selected != null) {
+                      setState(() => _dueDate = selected);
+                    }
+                  },
           ),
+          if (_failed)
+            const Text('Could not assign the task. Your draft is still here.'),
         ],
       ),
     ),
     actions: [
       TextButton(
-        onPressed: () => Navigator.pop(context),
+        onPressed: _saving ? null : () => Navigator.pop(context),
         child: const Text('Cancel'),
       ),
       FilledButton(
         key: const ValueKey('practice_follow_up_submit'),
-        onPressed: _title.text.trim().isEmpty
-            ? null
-            : () => Navigator.pop(context, (
-                title: _title.text,
-                assigneeId: _assigneeId,
-                dueDate: _dueDate,
-              )),
-        child: const Text('Assign task'),
+        onPressed: _saving || _title.text.trim().isEmpty ? null : _save,
+        child: Text(_saving ? 'Assigning…' : 'Assign task'),
       ),
     ],
   );

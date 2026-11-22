@@ -9,6 +9,7 @@ import '../../research/research_context.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../data/models/timing_rule.dart';
 import '../../../state/case_controller.dart';
+import '../../../state/session_controller.dart';
 
 class ArgumentsSection extends StatelessWidget {
   const ArgumentsSection({super.key, required this.caseId, this.selectedPhase});
@@ -19,6 +20,7 @@ class ArgumentsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cases = context.watch<CaseController>();
+    final session = context.watch<SessionController>();
     final research = context.watch<ResearchController>();
     final phases = [TrialPhase.opening, TrialPhase.closing];
     if (phases.any((phase) => phase.name == selectedPhase)) {
@@ -28,7 +30,11 @@ class ArgumentsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionHeader(title: 'Argument drafts'),
-        const Text('Drafts save as you type in this browser.'),
+        Text(
+          session.persistsLocalWork
+              ? 'Drafts save as you type in this browser.'
+              : 'Drafts stay in this session.',
+        ),
         for (final phase in phases) ...[
           const SizedBox(height: Spacing.lg),
           TextFormField(

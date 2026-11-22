@@ -25,9 +25,11 @@ class MePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionController>();
+    final roles = session.sharedWorkspace
+        ? null
+        : context.watch<RoleController>();
     final team = context.watch<TeamController>();
     final tasks = context.watch<TaskController>();
-    final roles = context.watch<RoleController>();
     final member = team.byId(session.currentTeammateId);
     final mine = tasks.tasksFor(session.currentTeammateId);
     final done = mine.where((t) => t.isDone).length;
@@ -56,16 +58,18 @@ class MePage extends StatelessWidget {
               ),
             ),
           ],
-          if (team.loadFailed || tasks.loadFailed || roles.loadFailed)
+          if (team.loadFailed || tasks.loadFailed || roles?.loadFailed == true)
             LoadFailure(
               title: 'Your preparation unavailable',
               onRetry: () {
                 team.load();
                 tasks.load();
-                roles.load();
+                roles?.load();
               },
             )
-          else if (!team.isLoaded || !tasks.isLoaded || !roles.isLoaded)
+          else if (!team.isLoaded ||
+              !tasks.isLoaded ||
+              roles?.isLoaded == false)
             const Center(child: CircularProgressIndicator())
           else ...[
             Row(
@@ -128,6 +132,7 @@ class MePage extends StatelessWidget {
                       saving: tasks.isSaving(task.id),
                       failed: tasks.saveFailed(task.id),
                       onChanged: (value) => tasks.setCompleted(task.id, value),
+                      onRetry: () => tasks.retryCompletion(task.id),
                     ),
                 ],
               ),
@@ -143,7 +148,9 @@ class MePage extends StatelessWidget {
             Text(
               session.sharedWorkspace
                   ? 'Changes to your task status are shared with your team.'
-                  : 'Demo profile · Task completion and assignments are saved in this browser.',
+                  : session.persistsLocalWork
+                  ? 'Demo profile · Task completion and assignments are saved in this browser.'
+                  : 'Demo profile · Task changes stay in this session.',
             ),
           ],
         ],

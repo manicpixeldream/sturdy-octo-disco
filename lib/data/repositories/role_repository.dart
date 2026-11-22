@@ -8,3 +8,15 @@ abstract interface class RoleRepository {
   /// Atomically fills an open role and creates its responsibility tasks.
   Future<RoleAssignment> assign(String roleId, String teammateId);
 }
+
+typedef RoleRoster = (String caseId, List<TrialRole>, List<RoleAssignment>);
+
+abstract interface class LiveRoleRepository implements RoleRepository {
+  Stream<RoleRoster> watchRoleRoster();
+
+  Future<RoleAssignment> assignForCase(
+    String caseId,
+    String roleId,
+    String teammateId,
+  );
+}
