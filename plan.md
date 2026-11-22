@@ -24,7 +24,7 @@ Pinned SDK: Flutter **3.50.0** / Dart **3.14.0** (`pubspec.lock`, CI). Workspace
 |---|---|---|
 | v0.1–v0.11 | **Complete** | Foundation through Welcome; see [v1-alpha.md](docs/plans/v1-alpha.md) and review notes below |
 | v1.0 alpha | **Complete** | Alpha features, screen-state audit, goldens, Chrome flow, and coverage |
-| v2 | **In progress** | FlutterFire, Auth/invites, and Firestore reads implemented; shared writes next |
+| v2 | **In progress** | FlutterFire, Auth/invites, and Firestore reads implemented; shared writes in progress |
 | v3 | **Planned** | iPhone + Android device validation (former Beta) |
 | v4 | **Planned** | ChatGPT researcher / case brief via Cloud Functions (former “v3”) |
 | v5 | **Planned** | Pre-launch extras; coach/judge, timer, iPad, later ideas |

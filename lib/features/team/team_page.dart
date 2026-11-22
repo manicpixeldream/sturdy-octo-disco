@@ -94,7 +94,7 @@ class _TeamPageState extends State<TeamPage> {
             WorkspaceColumns(
               primary: shared
                   ? const Text(
-                      'The shared roster and task status are read-only.',
+                      'Update your assigned tasks in Profile. Task status is shared with the team.',
                     )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

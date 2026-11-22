@@ -19,8 +19,8 @@ flutter run -d chrome --dart-define=GAVEL_DEMO=true
 The command above runs the local demo. To exercise account sign-in and team
 invites, omit `--dart-define=GAVEL_DEMO=true` after completing the
 [Firebase setup](docs/plans/v2-firebase-firestore.md#firebase-setup-and-manual-smoke).
-Signed-in members read their team workspace from Firestore. Shared data is
-read-only and private drafts stay in the browser. See the
+Signed-in members read their team workspace from Firestore. They can complete
+or reopen their own tasks. Private drafts stay in the browser. See the
 [team seed instructions](docs/plans/v2-firebase-firestore.md#seed-and-verify-a-team)
 for a sample workspace.
 

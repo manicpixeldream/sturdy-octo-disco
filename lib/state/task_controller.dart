@@ -77,10 +77,14 @@ class TaskController extends LoadController {
     try {
       final updated = await _repository.setCompleted(matches.first, completed);
       if (isDisposed) return false;
-      _tasks = List.unmodifiable([
-        ...?_tasks?.where((t) => t.id != id),
-        updated,
-      ]);
+      // Live snapshots own the list. The response may predate another edit
+      // or the removal of this task.
+      if (_repository is! LiveTaskRepository) {
+        _tasks = List.unmodifiable([
+          ...?_tasks?.where((t) => t.id != id),
+          updated,
+        ]);
+      }
       return true;
     } catch (_) {
       if (!isDisposed) _saveErrors.add(id);
@@ -115,7 +119,8 @@ class TaskController extends LoadController {
     if (_saving.isNotEmpty) return;
     void apply(List<TaskItem> records) {
       _tasks = List.unmodifiable(records);
-      if (storage case final store?) {
+      if (_repository is! LiveTaskRepository && storage != null) {
+        final store = storage!;
         final restored = store.records('followUps', TaskItem.fromMap);
         final existing = _followUps.map((task) => task.id).toSet();
         _followUps.addAll(

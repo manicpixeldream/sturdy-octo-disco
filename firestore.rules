@@ -40,6 +40,13 @@ service cloud.firestore {
           && belongsTo(teamId);
       }
 
+      match /tasks/{taskId} {
+        allow update: if belongsTo(teamId)
+          && resource.data.assigneeId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isDone'])
+          && request.resource.data.isDone is bool;
+      }
+
       match /cases/{caseId}/{collection}/{id} {
         allow read: if collection in ['exhibits', 'witnesses', 'affidavits', 'stipulations', 'timingRules', 'brief']
           && belongsTo(teamId);

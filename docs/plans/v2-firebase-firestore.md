@@ -1,6 +1,6 @@
 # v2 — Firebase and Firestore
 
-**Status:** FlutterFire bootstrap, email Auth + team invites, and the Firestore read path are implemented. Firebase setup and browser smoke are pending. The next implementation slice is the shared write path.
+**Status:** FlutterFire bootstrap, email Auth + team invites, and the Firestore read path are implemented. Firebase setup and browser smoke are pending. The shared write path is in progress.
 
 **Purpose:** Accounts, shared team data, real-time sync, storage, and notifications.
 
@@ -73,10 +73,11 @@ Suggested tags: `v2.1`, `v2.2`, … (or keep working on a `v2` branch until a re
    Account creation, sign-in, email verification, password reset, invite redemption, membership restoration, and sign-out. Cloud setup and browser smoke remain on the checklist.
 
 3. **Firestore repositories (read path)** — implemented.
-   Signed-in members read their team's case, roster, task status, practice schedule, and active-case chat history via Firestore subscriptions. The case brief loads from Firestore. Private drafts stay local, and shared writes remain disabled. An administrator can seed State v. Harmon for one team using the commands below.
+   Signed-in members read their team's case, roster, task status, practice schedule, and active-case chat history via Firestore subscriptions. The case brief loads from Firestore. Private drafts stay local. An administrator can seed State v. Harmon for one team using the commands below.
 
-4. **Write path + real-time UX**  
-   Assignments, tasks, chat sends, and readiness update live for other members; offline persistence on.
+4. **Write path + real-time UX** — in progress.
+   Task completion is implemented. Role assignments, follow-up tasks, chat sends,
+   and offline persistence are pending. Task snapshots update shared readiness.
 
 5. **Storage**  
    Upload case packet PDFs and exhibit images to Firebase Storage; link from case models.
@@ -139,7 +140,7 @@ firebase emulators:exec --project demo-gavel --only firestore "npm --prefix fire
 ## Firestore read checklist
 
 - [x] Connect case, roster, tasks, practice schedule, and chat to Firestore reads.
-- [x] Limit reads to the signed-in member's own team and keep shared writes disabled.
+- [x] Limit reads to the signed-in member's own team.
 - [x] Keep the guest demo and browser-local drafts.
 - [x] Verify the Harmon seed import and team access rules in the emulator (62 seed records, two rules tests).
 - [x] Run Flutter analysis, tests (268 passed), and a production web build.
@@ -165,8 +166,18 @@ node tool/import_harmon.mjs YOUR_FIREBASE_PROJECT YOUR_TEAM_ID /tmp/gavel-harmon
 2. Check that Case shows Harmon, Team shows the roster, Profile shows the mapped
    tasks, and Practice Schedule and Team Chat show imported records.
 3. Change a task title or status in the Firebase console. Confirm it updates in
-   Gavel without a reload and the app has no controls to change the shared status.
+   Gavel without a reload. Use Profile to complete or reopen a task assigned to your account.
 4. Sign in as a member of a different team and confirm the Harmon data is unavailable.
+
+## Shared write checklist
+
+- [x] Let verified team members complete or reopen their own tasks. Rules allow only the completion field to change.
+- [x] Keep task status and readiness in sync through Firestore snapshots.
+- [x] Preserve the previous task state on a failed write and offer retry.
+- [x] Verify task writes with Flutter analysis, 270 Flutter tests, and three Firestore rules tests.
+- [ ] Deploy the reviewed rules and check task completion across two signed-in team accounts.
+- [ ] Enable shared role assignments, follow-up task creation, and chat sends.
+- [ ] Verify offline behavior and enable persistence as appropriate.
 
 ## Done checklist (per slice)
 

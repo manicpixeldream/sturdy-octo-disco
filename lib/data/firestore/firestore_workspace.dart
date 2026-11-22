@@ -212,14 +212,31 @@ class FirestoreTeamRepository implements LiveTeamRepository {
 class FirestoreTaskRepository implements LiveTaskRepository {
   FirestoreTaskRepository(this._team);
   final _Document _team;
+
   @override
-  Stream<List<TaskItem>> watchTasks() =>
-      _records(_team, 'tasks', TaskItem.fromMap);
+  Stream<List<TaskItem>> watchTasks() => _team
+      .collection('tasks')
+      .snapshots(includeMetadataChanges: true)
+      .where((snapshot) => !snapshot.metadata.hasPendingWrites)
+      .map(
+        (snapshot) => [
+          for (final document in snapshot.docs)
+            TaskItem.fromMap(_data(document)),
+        ],
+      );
+
   @override
   Future<List<TaskItem>> fetchTasks() => watchTasks().first;
+
   @override
-  Future<TaskItem> setCompleted(TaskItem task, bool completed) async =>
-      _readOnly();
+  Future<TaskItem> setCompleted(TaskItem task, bool completed) {
+    final document = _team.collection('tasks').doc(task.id);
+    return _team.firestore.runTransaction((transaction) async {
+      final latest = TaskItem.fromMap(_data(await transaction.get(document)));
+      transaction.update(document, {'isDone': completed});
+      return latest.copyWith(isDone: completed);
+    });
+  }
 }
 
 class FirestoreScheduleRepository implements LiveScheduleRepository {

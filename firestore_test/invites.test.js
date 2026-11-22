@@ -105,3 +105,37 @@ test('workspace reads are limited to members of that team', async () => {
   await assertFails(setDoc(doc(tasks(reader, teamId), 'new'), { title: 'Blocked' }));
   await assertFails(updateDoc(exhibit(reader, teamId), { title: 'Blocked' }));
 });
+
+test('only an assignee can change completion and teammates see the update', async () => {
+  const assigneeId = 'task-assignee';
+  const otherTeam = 'other-task-team';
+  const path = (db, team = teamId, id = 'owned') =>
+    doc(db, 'teams', team, 'tasks', id);
+  await env.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, 'memberships', assigneeId), { teamId });
+    await setDoc(doc(db, 'memberships', 'task-teammate'), { teamId });
+    for (const team of [teamId, otherTeam]) {
+      await setDoc(path(db, team), { assigneeId, isDone: false, title: 'Review' });
+    }
+  });
+  const assignee = env.authenticatedContext(assigneeId, { email_verified: true }).firestore();
+  const teammate = env.authenticatedContext('task-teammate', { email_verified: true }).firestore();
+  const unverified = env.authenticatedContext(assigneeId, { email_verified: false }).firestore();
+
+  await assertFails(updateDoc(path(teammate), { isDone: true }));
+  await assertFails(updateDoc(path(unverified), { isDone: true }));
+  await assertFails(updateDoc(path(assignee, otherTeam), { isDone: true }));
+  await assertFails(updateDoc(path(assignee), { isDone: true, title: 'Edited' }));
+  await assertFails(updateDoc(path(assignee), { assigneeId: 'task-teammate' }));
+  await assertFails(updateDoc(path(assignee), { isDone: 'true' }));
+  await assertFails(deleteDoc(path(assignee)));
+  await assertFails(setDoc(path(assignee, teamId, 'new'), { assigneeId, isDone: false }));
+
+  for (const isDone of [true, false]) {
+    await assertSucceeds(updateDoc(path(assignee), { isDone }));
+    const task = await assertSucceeds(getDoc(path(teammate)));
+    assert.equal(task.data().isDone, isDone);
+    assert.equal(task.data().title, 'Review');
+  }
+});
