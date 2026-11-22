@@ -13,8 +13,13 @@ Dependencies are pinned in the committed `pubspec.lock`.
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter run -d chrome
+flutter run -d chrome --dart-define=GAVEL_DEMO=true
 ```
+
+The command above runs the local demo. To exercise account sign-in and team
+invites, omit `--dart-define=GAVEL_DEMO=true` after completing the
+[Firebase setup](docs/plans/v2-firebase-firestore.md#firebase-setup-and-manual-smoke).
+The preparation data still uses demo repositories.
 
 The UI supports phone, tablet, and desktop widths. Global navigation changes
 from a bottom bar to a sidebar on wider screens. The bundled Fraunces and Inter
@@ -168,7 +173,7 @@ Chrome. With Chrome, Node.js 20 or newer, and Python 3 installed, run from the
 repository root:
 
 ```sh
-flutter build web --no-web-resources-cdn
+flutter build web --no-web-resources-cdn --dart-define=GAVEL_DEMO=true
 npm --prefix integration_test ci
 npm --prefix integration_test test
 ```

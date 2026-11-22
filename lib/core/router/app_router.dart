@@ -26,6 +26,8 @@ import 'routes.dart';
 GoRouter createAppRouter({
   String initialLocation = Routes.home,
   Onboarding? onboarding,
+  Future<void> Function()? onSignOut,
+  String? accountEmail,
 }) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -132,7 +134,8 @@ GoRouter createAppRouter({
             routes: [
               GoRoute(
                 path: Routes.me,
-                builder: (context, state) => const MePage(),
+                builder: (context, state) =>
+                    MePage(onSignOut: onSignOut, accountEmail: accountEmail),
                 routes: [
                   GoRoute(
                     path: 'schedule',

@@ -45,6 +45,8 @@ class GavelApp extends StatefulWidget {
     super.key,
     this.initialLocation = Routes.home,
     this.onboarding,
+    this.onSignOut,
+    this.accountEmail,
     this.storage,
     this.clock,
     this.seed,
@@ -62,6 +64,8 @@ class GavelApp extends StatefulWidget {
 
   final String initialLocation;
   final Onboarding? onboarding;
+  final Future<void> Function()? onSignOut;
+  final String? accountEmail;
   final WorkspaceStorage? storage;
   final Clock? clock;
   final SeedData? seed;
@@ -84,6 +88,8 @@ class _GavelAppState extends State<GavelApp> {
   late final GoRouter _router = createAppRouter(
     initialLocation: widget.initialLocation,
     onboarding: widget.onboarding,
+    onSignOut: widget.onSignOut,
+    accountEmail: widget.accountEmail,
   );
   late final ThemeController _theme = ThemeController();
   late final SessionController _session;

@@ -26,11 +26,29 @@ jobs:
       - run: flutter pub get --enforce-lockfile
       - run: flutter analyze
       - run: flutter test
-      - run: flutter build web --no-web-resources-cdn
+      - run: flutter build web --no-web-resources-cdn --dart-define=GAVEL_DEMO=true
       - run: npm ci
         working-directory: integration_test
       - run: npm test
         working-directory: integration_test
+
+  firestore:
+    name: Verify team invite rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firestore_test/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci --prefix firestore_test
+      - run: npx --yes firebase-tools@15.36.0 emulators:exec --project demo-gavel --only firestore "npm --prefix firestore_test test"
 
   ios:
     name: Compare golden snapshots and build iOS (macOS)

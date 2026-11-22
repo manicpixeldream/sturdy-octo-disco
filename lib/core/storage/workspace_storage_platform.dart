@@ -1,3 +1,3 @@
 import 'workspace_storage.dart';
 
-WorkspaceStorage? openWorkspaceStorage() => null;
+WorkspaceStorage? openWorkspaceStorage({String? namespace}) => null;

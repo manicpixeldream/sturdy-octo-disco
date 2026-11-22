@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function verified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function validCode(code) {
+      return code is string && code.matches('^[A-Za-z0-9_-]{24,64}$');
+    }
+
+    function validTeamId(teamId) {
+      return teamId is string && teamId.matches('^[A-Za-z0-9_-]{1,128}$');
+    }
+
+    function activeInvite(invite) {
+      return invite.active == true
+        && invite.expiresAt > request.time
+        && validTeamId(invite.teamId)
+        && exists(/databases/$(database)/documents/teams/$(invite.teamId));
+    }
+
+    function matchesInvite(code, teamId) {
+      let path = /databases/$(database)/documents/teamInvites/$(code);
+      return exists(path)
+        && get(path).data.teamId == teamId
+        && activeInvite(get(path).data);
+    }
+
+    match /teamInvites/{code} {
+      allow get: if verified() && validCode(code) && activeInvite(resource.data);
+    }
+
+    match /memberships/{uid} {
+      allow get: if verified() && request.auth.uid == uid;
+      allow create: if verified()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['teamId', 'inviteCode'])
+        && validTeamId(request.resource.data.teamId)
+        && validCode(request.resource.data.inviteCode)
+        && matchesInvite(request.resource.data.inviteCode, request.resource.data.teamId);
+    }
+  }
+}

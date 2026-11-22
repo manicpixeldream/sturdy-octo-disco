@@ -41,7 +41,7 @@ Use Flutter 3.50.0 and Dart 3.14.0, matching CI. From the repository root:
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter run -d chrome
+flutter run -d chrome --dart-define=GAVEL_DEMO=true
 flutter analyze
 flutter test
 ```
@@ -59,7 +59,7 @@ CI also runs a web build and checks an unsigned iOS build. Developers run the br
 Use the root [plan.md](../plan.md) agent routing table. Detailed plans live under [docs/plans/](plans/).
 
 1. Tag the verified web alpha when ready to publish. The [alpha completion record](plans/v1-alpha.md) captures the hosted checks.
-2. Continue [v2 Firebase / Firestore](plans/v2-firebase-firestore.md) with Auth and team invites.
+2. Continue [v2 Firebase / Firestore](plans/v2-firebase-firestore.md) with the Firestore read path after Firebase setup and Auth smoke.
 3. v3 iPhone + Android device testing (former Beta): [plans/v3-mobile-device-testing.md](plans/v3-mobile-device-testing.md).
 4. v4 ChatGPT LLM (former plan “v3”): [plans/v4-chatgpt-llm.md](plans/v4-chatgpt-llm.md).
 5. v5 pre-launch / later ideas: [plans/v5-prelaunch-and-future.md](plans/v5-prelaunch-and-future.md).

@@ -18,7 +18,10 @@ import 'widgets/my_task_tile.dart';
 import 'widgets/quick_access_grid.dart';
 
 class MePage extends StatelessWidget {
-  const MePage({super.key});
+  const MePage({super.key, this.onSignOut, this.accountEmail});
+
+  final Future<void> Function()? onSignOut;
+  final String? accountEmail;
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionController>();
@@ -32,6 +35,27 @@ class MePage extends StatelessWidget {
       title: 'Profile',
       child: WorkspaceScrollView(
         children: [
+          if (onSignOut case final signOut?) ...[
+            Text(accountEmail ?? ''),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () async {
+                  try {
+                    await signOut();
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Sign out failed. Try again.'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Sign out'),
+              ),
+            ),
+          ],
           if (team.loadFailed || tasks.loadFailed || roles.loadFailed)
             LoadFailure(
               title: 'Your preparation unavailable',
