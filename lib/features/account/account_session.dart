@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 typedef Account = ({String uid, String email, bool verified});
 
@@ -7,6 +8,8 @@ abstract interface class AccountSession {
   Stream<Account?> accounts();
   Stream<String?> membership(String uid);
   Future<void> signIn(String email, String password);
+  bool get supportsGoogleSignIn;
+  Future<void> signInWithGoogle();
   Future<void> register(String email, String password);
   Future<void> sendVerification();
   Future<void> refreshVerification();
@@ -68,6 +71,16 @@ class FirebaseAccountSession implements AccountSession {
   @override
   Future<void> signIn(String email, String password) async {
     await _auth.signInWithEmailAndPassword(email: email, password: password);
+  }
+
+  @override
+  bool get supportsGoogleSignIn => kIsWeb;
+
+  @override
+  Future<void> signInWithGoogle() async {
+    final provider = GoogleAuthProvider()
+      ..setCustomParameters({'prompt': 'select_account'});
+    await _auth.signInWithPopup(provider);
   }
 
   @override

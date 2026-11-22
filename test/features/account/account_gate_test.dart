@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gavel/features/account/account_gate.dart';
 import 'package:gavel/features/account/account_session.dart';
@@ -24,6 +25,19 @@ class _Session implements AccountSession {
     joins.add((uid, code));
     if (code == 'invalid') throw const InviteUnavailable();
     teams[uid]!.add('trial-team');
+  }
+
+  var googleAttempts = 0;
+
+  @override
+  bool get supportsGoogleSignIn => true;
+
+  @override
+  Future<void> signInWithGoogle() async {
+    if (++googleAttempts == 1) {
+      throw FirebaseAuthException(code: 'popup-blocked');
+    }
+    auth.add((uid: 'google', email: 'student@example.com', verified: true));
   }
 
   @override
@@ -93,5 +107,33 @@ void main() {
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
     expect(find.text('Sign in to Gavel'), findsOneWidget);
+  });
+
+  testWidgets('Google sign-in can retry and still requires team membership', (
+    tester,
+  ) async {
+    final session = _Session();
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await session.auth.close();
+      await session.teams['google']!.close();
+    });
+    await tester.pumpWidget(
+      AccountGate(
+        session: session,
+        workspace: (_, _) => const Text('Workspace'),
+      ),
+    );
+    session.auth.add(null);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sign in with Google'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Allow pop-ups'), findsOneWidget);
+    await tester.tap(find.text('Sign in with Google'));
+    await tester.pumpAndSettle();
+    expect(session.googleAttempts, 2);
+    expect(find.text('Join your team'), findsOneWidget);
+    expect(find.text('Workspace'), findsNothing);
   });
 }

@@ -59,7 +59,7 @@ v1 already routes UI → controllers → **interfaces** → mocks. v2 adds imple
 
 ### Auth model
 
-- This iteration uses verified email/password accounts. Google and Apple sign-in can be added together if social sign-in is needed.
+- Accounts can use verified email/password or Google sign-in on the web. Google uses the same team invite and membership checks. Native apps use email/password.
 - `memberships/{uid}` stores one team ID and the invite code used to join. Only the account owner can read it. Clients can create it with a valid invite but cannot modify or delete it.
 - Firebase Auth and a server-confirmed membership gate the normal web, iOS, and Android entry points. Demo builds use the original Welcome flow. The shared workspace reads Firestore data. Private draft storage remains scoped to account and team in the browser.
 
@@ -97,14 +97,20 @@ Suggested tags: `v2.1`, `v2.2`, … (or keep working on a `v2` branch until a re
 - [x] `flutter test` passes (267 tests).
 - [x] Production web build passes.
 - [x] Firestore emulator rules tests pass.
-- [ ] Enable Email/Password auth, provision Firestore and test invites, and deploy the reviewed rules to the target project.
+- [x] Enable Email/Password and Google Auth in the Firebase project and authorize localhost.
+- [ ] Provision Firestore and test invites, and deploy the reviewed rules to the target project.
 - [ ] Complete manual Auth smoke in Edge or Chrome.
 - [x] Commit the implementation.
 - [ ] Tag after manual verification.
 
 ### Firebase setup and manual smoke
 
-Enable Email/Password in Firebase Authentication. Set up Firestore and review
+Enable Email/Password in Firebase Authentication. For web Google sign-in, enable
+Google under **Authentication → Sign-in method**, set Gavel's public display
+name and support email, and add the web app's domain under **Authorized
+domains**. Add `localhost` if you need to test with Flutter locally.
+
+Set up Firestore and review
 `firestore.rules` against the project's existing rules before deploying it. Using
 the Firebase console or Admin SDK, create a document at `teams/{teamId}` and
 another at `teamInvites/{code}` with `teamId` (string), `active` (boolean), and

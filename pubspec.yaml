@@ -34,6 +34,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/auth/google-g.png
 
   fonts:
     - family: Fraunces

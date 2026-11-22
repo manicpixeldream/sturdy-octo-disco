@@ -58,6 +58,12 @@ class _AccountPageState extends State<AccountPage> {
           'invalid-credential' ||
           'wrong-password' ||
           'user-not-found' => 'Check your email and password.',
+          'popup-closed-by-user' || 'cancelled-popup-request' => null,
+          'popup-blocked' =>
+            'Allow pop-ups for this site, then try Google sign-in again.',
+          'unauthorized-domain' => 'Google sign-in is unavailable on this site. You can still sign in with email.',
+          'operation-not-allowed' => 'Google sign-in is unavailable right now. You can still sign in with email.',
+          'account-exists-with-different-credential' => 'This email already has an account. Sign in the way you originally signed up.',
           'weak-password' => 'Choose a stronger password.',
           'email-already-in-use' => 'This email already has an account. Sign in or reset your password.',
           'too-many-requests' => 'Too many attempts. Try again later.',
@@ -196,6 +202,26 @@ class _AccountPageState extends State<AccountPage> {
                             _AuthMode.reset => 'Send reset link',
                           }),
                         ),
+                        if (_mode != _AuthMode.reset &&
+                            widget.session.supportsGoogleSignIn)
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 48),
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xff1f1f1f),
+                              side: const BorderSide(color: Color(0xff747775)),
+                            ),
+                            onPressed: _busy
+                                ? null
+                                : () => _run(widget.session.signInWithGoogle),
+                            icon: Image.asset(
+                              'assets/auth/google-g.png',
+                              width: 20,
+                              height: 20,
+                              excludeFromSemantics: true,
+                            ),
+                            label: const Text('Sign in with Google'),
+                          ),
                         if (_mode == _AuthMode.signIn) ...[
                           TextButton(
                             onPressed: _busy
